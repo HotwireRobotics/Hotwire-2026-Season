@@ -1,0 +1,156 @@
+package frc.robot;
+
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.LimelightHelpers.PoseEstimate;
+import java.util.ArrayList;
+import java.util.List;
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+
+public class Robot extends LoggedRobot {
+  private Command autonomousCommand;
+  private RobotContainer robotContainer;
+  public Pose2d poseEstimate = new Pose2d();
+
+  public Robot() {
+    // Record metadata
+    Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
+    Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
+    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+    Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
+    Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
+    Logger.recordMetadata(
+        "GitDirty",
+        switch (BuildConstants.DIRTY) {
+          case 0 -> "All changes committed";
+          case 1 -> "Uncommitted changes";
+          default -> "Unknown";
+        });
+
+    // Set up data receivers and replay source
+    switch (Constants.currentMode) {
+      case REAL: // Real robot
+        Logger.addDataReceiver(new WPILOGWriter());
+        Logger.addDataReceiver(new NT4Publisher());
+        break;
+
+      case SIM: // ! Not real
+        Logger.addDataReceiver(new NT4Publisher());
+        break;
+
+      case REPLAY:
+        // Replaying a log, set up replay source
+        setUseTiming(false);
+        String logPath = LogFileUtil.findReplayLog();
+        Logger.setReplaySource(new WPILOGReader(logPath));
+        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+        break;
+    }
+
+    Logger.start();
+
+    robotContainer = new RobotContainer();
+  }
+
+  @Override
+  public void robotPeriodic() {
+    Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
+    CommandScheduler.getInstance().run();
+
+    List<PoseEstimate> measurements = new ArrayList<>();
+
+    for (String limelight : Constants.limelights) {
+      LimelightHelpers.SetIMUMode(limelight, 2);
+      // Get current pose
+      Pose2d robotPose = robotContainer.drive.getPose();
+      double headingDeg = robotPose.getRotation().getDegrees();
+
+      LimelightHelpers.setPipelineIndex(limelight, 0);
+
+      // Get pose estimate from limelight
+      PoseEstimate measurement =
+          DriverStation.getAlliance().get().equals(Alliance.Red)
+              ? LimelightHelpers.getBotPoseEstimate_wpiRed_MegaTag2(limelight)
+              : LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+
+      if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3)) {
+        measurements.add(measurement);
+        // Log pose estimate and limelight status
+        Logger.recordOutput(limelight + " detecting", true);
+        poseEstimate = measurement.pose;
+        Logger.recordOutput("Pose Estimate", poseEstimate);
+
+        // Define standard deviation
+        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.05, 0.05, Math.toRadians(2));
+        robotContainer.drive.addVisionMeasurement(
+            measurement.pose, measurement.timestampSeconds, stdDevs);
+      } else {
+        Logger.recordOutput(limelight + " detecting", false);
+      }
+
+      LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
+    }
+  }
+
+  @Override
+  public void disabledInit() {
+    Logger.recordOutput("Robot/Mode", "Disabled");
+  }
+
+  @Override
+  public void disabledPeriodic() {}
+
+  @Override
+  public void autonomousInit() {
+    Logger.recordOutput("Robot/Mode", "Autonomous");
+    autonomousCommand = robotContainer.getAutonomousCommand();
+
+    if (autonomousCommand != null) {
+      Logger.recordOutput("Robot/AutonomousCommand", autonomousCommand.getName());
+      CommandScheduler.getInstance().schedule(autonomousCommand);
+    } else {
+      Logger.recordOutput("Robot/AutonomousCommand", "None");
+    }
+  }
+
+  @Override
+  public void autonomousPeriodic() {}
+
+  @Override
+  public void teleopInit() {
+    Logger.recordOutput("Robot/Mode", "Teleop");
+    if (autonomousCommand != null) {
+      autonomousCommand.cancel();
+    }
+  }
+
+  @Override
+  public void teleopPeriodic() {}
+
+  @Override
+  public void testInit() {
+    Logger.recordOutput("Robot/Mode", "Test");
+    CommandScheduler.getInstance().cancelAll();
+  }
+
+  @Override
+  public void testPeriodic() {}
+
+  @Override
+  public void simulationInit() {}
+
+  @Override
+  public void simulationPeriodic() {}
+}
