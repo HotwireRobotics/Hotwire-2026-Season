@@ -27,13 +27,13 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
   private enum State {
     STOPPED,
     HALTED,
-    HOLDING, // Running feeder
     SPINNING, // Running shooter
     SHOOTING // Running shooter & feeder
   }
 
-  State state = State.STOPPED;
 
+  State state = State.STOPPED;
+  
   @Override
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
@@ -49,17 +49,29 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     return state;
   }
 
-  public Command runFeeder(double speed) {
-    return Commands.run(
+  public Command runShooter(double speed) {
+    return Commands.runOnce(
         () -> {
-          feeder.set(speed);
+          shooter.set(speed);
+          feeder.set(0);
+          if (speed > 0) {
+            state = State.SPINNING;
+          } else {
+            state = State.STOPPED;
+          }
         });
   }
 
-  public Command runShooter(double speed) {
-    return Commands.run(
+  public Command runShooterAndFeeder(double speed) {
+    return Commands.runOnce(
         () -> {
           shooter.set(speed);
+          feeder.set(speed);
+          if (speed > 0) {
+            state = State.SHOOTING;
+          } else {
+            state = State.STOPPED;
+          }
         });
-  }
+  } 
 }
