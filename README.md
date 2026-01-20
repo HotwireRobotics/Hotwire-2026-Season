@@ -6,7 +6,6 @@ This repository is **Hotwire Robotics (2990)**'s new robot code for the 2026 gam
 
 ---
 
-
 ## Limelights
 
 When diagnosing pose estimation with limelights, follow these steps:

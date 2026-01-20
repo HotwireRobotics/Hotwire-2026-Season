@@ -165,9 +165,8 @@ public class RobotContainer {
     Joysticks.operator.a().whileTrue(intake.runRollers(0.6)).onFalse(intake.runRollers(0));
     Joysticks.operator
         .rightBumper()
-        .whileTrue(shooter.runShooter(1))
-        .onFalse(shooter.runShooter(0));
-    Joysticks.operator.leftBumper().whileTrue(shooter.runFeeder(0.5)).onFalse(shooter.runFeeder(0));
+        .whileTrue(shooter.runShooterAndFeeder(1))
+        .onFalse(shooter.runShooterAndFeeder(0));
 
     Joysticks.driver
         .back()
