@@ -25,7 +25,6 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
 
   private enum State {
     STOPPED,
-    HALTED,
     INTAKING // Running rollers
   }
 
@@ -43,9 +42,14 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
   }
 
   public Command runRollers(double speed) {
-    return Commands.run(
+    return Commands.runOnce(
         () -> {
           rollers.set(speed);
+          if (speed > 0) {
+            state = State.STOPPED;
+          } else {
+            state = State.INTAKING;
+          }
         });
   }
 }
