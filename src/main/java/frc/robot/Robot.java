@@ -1,12 +1,17 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Seconds;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.LimelightHelpers.PoseEstimate;
@@ -23,6 +28,8 @@ public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private RobotContainer robotContainer;
   public Pose2d poseEstimate = new Pose2d();
+
+  Timer timer = new Timer();
 
   public Robot() {
     // Record metadata
@@ -102,11 +109,38 @@ public class Robot extends LoggedRobot {
 
       LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
     }
+
+    Time time = Seconds.of(DriverStation.getMatchTime());
+    Boolean isAutonomous = DriverStation.isAutonomous();
+    Time    length = 
+      (isAutonomous) ? 
+        Constants.autoLength  : 
+        Constants.teleopLength;
+    time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(time);
+
+    Logger.recordOutput("Time", time.in(Seconds));
+    Boolean rumble = false;
+
+    for (Time target : (
+      (isAutonomous) ? 
+        Constants.autoTimes : 
+        Constants.teleopTimes
+    )) {
+      double difference = target.minus(time).in(Seconds);
+      if ((Math.abs(difference) < 1) && (difference < 0)) {
+        rumble = true;
+      }
+    }
+
+    Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
   }
 
   @Override
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
+
+    timer.restart();
+    timer.stop();
   }
 
   @Override
@@ -123,6 +157,8 @@ public class Robot extends LoggedRobot {
     } else {
       Logger.recordOutput("Robot/AutonomousCommand", "None");
     }
+
+    timer.start();
   }
 
   @Override
@@ -143,10 +179,16 @@ public class Robot extends LoggedRobot {
   public void testInit() {
     Logger.recordOutput("Robot/Mode", "Test");
     CommandScheduler.getInstance().cancelAll();
+
+    teleopInit();
+
+    timer.start();
   }
 
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    teleopPeriodic();
+  }
 
   @Override
   public void simulationInit() {}

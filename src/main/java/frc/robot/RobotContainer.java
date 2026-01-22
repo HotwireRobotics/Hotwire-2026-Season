@@ -7,7 +7,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
@@ -18,7 +17,6 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
-
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -28,11 +26,7 @@ public class RobotContainer {
   public final ProtoIntake intake;
   public final ProtoShooter shooter;
 
-  // Joysticks
-  private static class Joysticks {
-    public static final CommandXboxController driver = new CommandXboxController(0);
-    public static final CommandXboxController operator = new CommandXboxController(1);
-  }
+  // Constants.Joysticks
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -103,16 +97,16 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> Joysticks.driver.getLeftY(),
-            () -> Joysticks.driver.getLeftX(),
-            () -> -Joysticks.driver.getRightX()));
-    Joysticks.operator
+            () -> Constants.Joysticks.driver.getLeftY(),
+            () -> Constants.Joysticks.driver.getLeftX(),
+            () -> -Constants.Joysticks.driver.getRightX()));
+    Constants.Joysticks.operator
         .rightTrigger()
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
                 drive,
-                () -> Joysticks.driver.getLeftY(),
-                () -> Joysticks.driver.getLeftX(),
+                () -> Constants.Joysticks.driver.getLeftY(),
+                () -> Constants.Joysticks.driver.getLeftX(),
                 () -> {
                   Pose2d robotPose = drive.getPose();
                   Pose2d hubPose = drive.hub;
@@ -128,58 +122,55 @@ public class RobotContainer {
                   return new Rotation2d(angleToHub);
                 }));
     // Lock to 0° when down POV button is helds
-    Joysticks.driver
+    Constants.Joysticks.driver
         .povDown()
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
                 drive,
-                () -> Joysticks.driver.getLeftY(),
-                () -> Joysticks.driver.getLeftX(),
+                () -> Constants.Joysticks.driver.getLeftY(),
+                () -> Constants.Joysticks.driver.getLeftX(),
                 () -> Rotation2d.kZero));
 
     // Hold wheel position.
-    Joysticks.driver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    Constants.Joysticks.driver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     // Reset gyro to 0° when A button is pressed.
-    Joysticks.driver
+    // Constants.Joysticks.driver
+    //     .a()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //                 () ->
+    //                     drive.setPose(
+    //                         new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+    //                 drive).ignoringDisable(true));
+
+    Constants.Joysticks.driver
         .a()
         .onTrue(
             Commands.runOnce(
-                    () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                    () -> {
+                      drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero));
+                      for (String limelight : Constants.limelights) {
+                        LimelightHelpers.SetIMUMode(limelight, 1);
+                        LimelightHelpers.SetRobotOrientation(limelight, 0, 0, 0, 0, 0, 0);
+                        LimelightHelpers.SetIMUMode(limelight, 2);
+                      }
+                    },
                     drive)
                 .ignoringDisable(true));
-    Joysticks.driver
-        .povUp()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  for (String limelight : Constants.limelights) {
-                    LimelightHelpers.SetIMUMode(limelight, 1);
-                    LimelightHelpers.SetRobotOrientation(limelight, 0, 0, 0, 0, 0, 0);
-                    LimelightHelpers.SetIMUMode(limelight, 2);
-                  }
-                }));
 
-    Joysticks.operator.a().whileTrue(intake.runRollers(0.6)).onFalse(intake.runRollers(0));
-    Joysticks.operator
+    Constants.Joysticks.operator
+        .a()
+        .whileTrue(intake.runRollers(0.8))
+        .onFalse(intake.runRollers(0));
+    Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(shooter.runShooterAndFeeder(1))
         .onFalse(shooter.runShooterAndFeeder(0));
 
-    Joysticks.driver
-        .back()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  music.play();
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  music.stop();
-                }));
+    // Constants.Joysticks.driver
+    //     .back()
+    //     .onTrue(Commands.runOnce(() -> ));
   }
 
   public Command getAutonomousCommand() {

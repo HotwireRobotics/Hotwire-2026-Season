@@ -31,9 +31,8 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     SHOOTING // Running shooter & feeder
   }
 
-
   State state = State.STOPPED;
-  
+
   @Override
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
@@ -73,5 +72,5 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
             state = State.STOPPED;
           }
         });
-  } 
+  }
 }
