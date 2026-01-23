@@ -91,17 +91,15 @@ public class RobotContainer {
     // "Drive SysId (Dynamic Reverse)",
     // drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
-    "Shooter SysId (Quasistatic Forward)",
-    shooter.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        "Shooter SysId (Quasistatic Forward)",
+        shooter.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
-    "Shooter SysId (Quasistatic Reverse)",
-    shooter.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        "Shooter SysId (Quasistatic Reverse)",
+        shooter.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
-    "Shooter SysId (Dynamic Forward)",
-    shooter.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        "Shooter SysId (Dynamic Forward)", shooter.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
-    "Shooter SysId (Dynamic Reverse)",
-    shooter.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        "Shooter SysId (Dynamic Reverse)", shooter.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
     configureButtonBindings();
   }

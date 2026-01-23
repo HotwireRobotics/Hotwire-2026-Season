@@ -1,11 +1,11 @@
 package frc.robot.subsystems.shooter;
 
-import com.ctre.phoenix6.SignalLogger;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
-
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -13,9 +13,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Systerface;
-
-import static edu.wpi.first.units.Units.Volts;
-
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoShooter extends SubsystemBase implements Systerface {
@@ -34,17 +31,17 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     // Follower motor for the shooter.
     follower.setControl(new Follower(Constants.MotorIDs.s_shooter, MotorAlignmentValue.Opposed));
 
-    m_sysIdRoutine = new SysIdRoutine(
-      new SysIdRoutine.Config(
-        null, null, null, // Use default config
-        (state) -> Logger.recordOutput("SysIdTestState", state.toString())
-      ),
-      new SysIdRoutine.Mechanism(
-        (voltage) -> this.runShooterVolts(voltage),
-        null, // No log consumer, since data is recorded by AdvantageKit
-        this
-      )
-);
+    m_sysIdRoutine =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> this.runShooterVolts(voltage),
+                null, // No log consumer, since data is recorded by AdvantageKit
+                this));
   }
 
   private enum State {
@@ -90,7 +87,8 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
       state = State.STOPPED;
     } else {
       state = State.SPINNING;
-    };
+    }
+    ;
   }
 
   public Command runShooterAndFeeder(double speed) {
@@ -113,5 +111,4 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
     return m_sysIdRoutine.dynamic(direction);
   }
-
 }
