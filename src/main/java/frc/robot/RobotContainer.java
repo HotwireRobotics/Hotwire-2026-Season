@@ -177,7 +177,7 @@ public class RobotContainer {
         .onFalse(intake.runRollers(0));
     Constants.Joysticks.operator
         .rightBumper()
-        .whileTrue(shooter.runShooterAndFeeder(1))
+        .whileTrue(shooter.runShooterAndFeeder(0.55))
         .onFalse(shooter.runShooterAndFeeder(0));
 
     // Constants.Joysticks.driver
