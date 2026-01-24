@@ -17,10 +17,10 @@ public final class Constants {
 
   public static final double lerp = 1; // 1.7
   public static final String[] limelights = {"limelight-one", "limelight-two"};
-  public static final Time[] autoTimes =   {Seconds.of(8)};
+  public static final Time[] autoTimes = {Seconds.of(8)};
   public static final Time[] teleopTimes = {Seconds.of(12)};
-  public static final Time autoLength =     Seconds.of(20);
-  public static final Time teleopLength =   Seconds.of(140);
+  public static final Time autoLength = Seconds.of(20);
+  public static final Time teleopLength = Seconds.of(140);
 
   public static class MotorIDs {
     public static final Integer i_rollers = 10;

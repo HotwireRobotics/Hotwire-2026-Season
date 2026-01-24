@@ -1,11 +1,16 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Systerface;
 import org.littletonrobotics.junction.Logger;
@@ -14,14 +19,29 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
   public TalonFX feeder;
   public TalonFX shooter;
   public TalonFX follower;
+  private final SysIdRoutine m_sysIdRoutine;
+  private final VoltageOut m_voltReq;
 
   public ProtoShooter() {
     feeder = new TalonFX(Constants.MotorIDs.s_feeder);
     shooter = new TalonFX(Constants.MotorIDs.s_shooter);
     follower = new TalonFX(Constants.MotorIDs.s_follower);
+    m_voltReq = new VoltageOut(0.0);
 
     // Follower motor for the shooter.
     follower.setControl(new Follower(Constants.MotorIDs.s_shooter, MotorAlignmentValue.Opposed));
+
+    m_sysIdRoutine =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> this.runShooterVolts(voltage),
+                null, // No log consumer, since data is recorded by AdvantageKit
+                this));
   }
 
   private enum State {
@@ -61,6 +81,16 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
         });
   }
 
+  public void runShooterVolts(Voltage voltage) {
+    shooter.setControl(m_voltReq.withOutput(voltage.in(Volts)));
+    if (voltage.in(Volts) == 0.0) {
+      state = State.STOPPED;
+    } else {
+      state = State.SPINNING;
+    }
+    ;
+  }
+
   public Command runShooterAndFeeder(double speed) {
     return Commands.runOnce(
         () -> {
@@ -72,5 +102,13 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
             state = State.STOPPED;
           }
         });
+  }
+
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutine.quasistatic(direction);
+  }
+
+  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutine.dynamic(direction);
   }
 }
