@@ -1,4 +1,4 @@
-package frc.robot.subsystems.intake;
+package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -12,19 +12,19 @@ import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends SubsystemBase implements Systerface {
 
-  public TalonFX rollers;
-  public TalonFX follower;
+  private TalonFX rollers;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    follower = new TalonFX(Constants.MotorIDs.i_follower);
+    //follower = new TalonFX(Constants.MotorIDs.i_follower);
 
     // Follower motor for rollers.
-    follower.setControl(new Follower(Constants.MotorIDs.i_rollers, MotorAlignmentValue.Aligned));
+   // follower.setControl(new Follower(Constants.MotorIDs.i_rollers, MotorAlignmentValue.Aligned));
   }
 
   private enum State {
     STOPPED,
+    HALTED,
     INTAKING // Running rollers
   }
 
@@ -41,15 +41,31 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
     Logger.recordOutput("Intake/RollersCurrent", rollers.getSupplyCurrent().getValue());
   }
 
-  public Command runRollers(double speed) {
-    return Commands.runOnce(
+  public Command runRollersConstantCommand(double speed) {
+    return Commands.run(
         () -> {
           rollers.set(speed);
-          if (speed > 0) {
-            state = State.STOPPED;
-          } else {
-            state = State.INTAKING;
-          }
         });
   }
+  public void setRollers(double speed) {
+    rollers.set(speed);
+  }
+  public void setVoltage(double volt) {
+    rollers.setVoltage(volt);
+  }
+  public Command setVoltageCommand(double volt) {
+    return Commands.run(
+      () -> {
+        rollers.setVoltage(volt);
+      });
+  }
+  public void stopRollers() {
+    rollers.set(0);
+  }
+  public Command stopRollersCommand() {
+    return Commands.run(
+        () -> {
+          rollers.set(0);
+        });
+    }
 }
