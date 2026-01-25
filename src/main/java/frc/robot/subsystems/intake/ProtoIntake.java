@@ -1,8 +1,6 @@
-package frc.robot.subsystems.drive;
+package frc.robot.subsystems.intake;
 
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -16,10 +14,10 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    //follower = new TalonFX(Constants.MotorIDs.i_follower);
+    // follower = new TalonFX(Constants.MotorIDs.i_follower);
 
     // Follower motor for rollers.
-   // follower.setControl(new Follower(Constants.MotorIDs.i_rollers, MotorAlignmentValue.Aligned));
+    // follower.setControl(new Follower(Constants.MotorIDs.i_rollers, MotorAlignmentValue.Aligned));
   }
 
   private enum State {
@@ -47,25 +45,30 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
           rollers.set(speed);
         });
   }
+
   public void setRollers(double speed) {
     rollers.set(speed);
   }
+
   public void setVoltage(double volt) {
     rollers.setVoltage(volt);
   }
+
   public Command setVoltageCommand(double volt) {
     return Commands.run(
-      () -> {
-        rollers.setVoltage(volt);
-      });
+        () -> {
+          rollers.setVoltage(volt);
+        });
   }
+
   public void stopRollers() {
     rollers.set(0);
   }
+
   public Command stopRollersCommand() {
     return Commands.run(
         () -> {
           rollers.set(0);
         });
-    }
+  }
 }

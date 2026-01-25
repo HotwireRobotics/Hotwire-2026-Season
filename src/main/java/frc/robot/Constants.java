@@ -32,6 +32,8 @@ public final class Constants {
     public static final Integer s_feeder = 13;
     public static final Integer s_shooter = 12;
     public static final Integer s_follower = 14;
+    public static final Integer h_upperFeed = null; // todo Change
+    public static final Integer h_lowerFeed = null;
   }
 
   /*
