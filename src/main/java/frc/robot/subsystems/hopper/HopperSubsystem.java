@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Systerface;
+import org.littletonrobotics.junction.Logger;
 
 public class HopperSubsystem extends SubsystemBase implements Systerface {
   private final TalonFX upperFeed;
@@ -25,8 +26,7 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
     lowerSpeedtest = SmartDashboard.getNumber("lowerSpeed", 0);
     SmartDashboard.putNumber("upperSpeed", upperSpeedtest);
     SmartDashboard.putNumber("lowerSpeed", lowerSpeedtest);
-    
-    
+
     // m_sysIdRoutine =
     //     new SysIdRoutine(
     //         new SysIdRoutine.Config(
@@ -53,12 +53,12 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
   @Override
   public void periodic() {
     // Logger.recordOutput("Hopper/State", state.toString());
-    // Logger.recordOutput("Hopper/upperFeed/Velocity", upperFeed.getVelocity().getValue());
-    // Logger.recordOutput("Hopper/lowerFeed/Velocity", lowerFeed.getVelocity().getValue());
-    // Logger.recordOutput("Hopper/upperFeed/Current", upperFeed.getVelocity().getValue());
-    // Logger.recordOutput("Hopper/lowerFeed/Current", lowerFeed.getVelocity().getValue());
-    upperSpeedtest = SmartDashboard.getNumber("upperSpeed", 0);
-    lowerSpeedtest = SmartDashboard.getNumber("lowerSpeed", 0);
+    Logger.recordOutput("Hopper/upperFeed/Velocity", upperFeed.getVelocity().getValue());
+    Logger.recordOutput("Hopper/lowerFeed/Velocity", lowerFeed.getVelocity().getValue());
+    Logger.recordOutput("Hopper/upperFeed/Current", upperFeed.getSupplyCurrent().getValue());
+    Logger.recordOutput("Hopper/lowerFeed/Current", lowerFeed.getSupplyCurrent().getValue());
+    // upperSpeedtest = Smartdash
+    // lowerSpeedtest = SmartDashboard.getNumber("lowerSpeed", 0);
   }
 
   public Command runHopper(double speed) {
@@ -72,8 +72,8 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
   public Command runHoppertest() {
     return Commands.run(
         () -> {
-          upperFeed.set(upperSpeedtest);
-          lowerFeed.set(lowerSpeedtest);
+          upperFeed.set(SmartDashboard.getNumber("upperSpeed", 0));
+          lowerFeed.set(SmartDashboard.getNumber("lowerSpeed", 0));
         });
   }
 

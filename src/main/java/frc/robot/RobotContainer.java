@@ -198,7 +198,7 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .leftBumper()
-        .whileTrue(hopper.runHopper(0.7))
+        .whileTrue(hopper.runHopper(0.9))
         .onFalse(hopper.runHopper(0));
 
     // Constants.Joysticks.driver
