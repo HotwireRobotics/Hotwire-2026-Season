@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.LimelightHelpers.PoseEstimate;
@@ -69,6 +70,8 @@ public class Robot extends LoggedRobot {
     Logger.start();
 
     robotContainer = new RobotContainer();
+
+    SmartDashboard.putNumber("Shooter Power", robotContainer.shooterPower);
   }
 
   @Override
@@ -126,6 +129,10 @@ public class Robot extends LoggedRobot {
     }
 
     Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
+
+    robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
+    robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
+    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter Power", 0.0);
   }
 
   @Override
@@ -137,7 +144,11 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    for (String limelight : Constants.limelights) {
+      LimelightHelpers.SetThrottle(limelight, 150);
+    }
+  }
 
   @Override
   public void autonomousInit() {
@@ -166,7 +177,11 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    for (String limelight : Constants.limelights) {
+      LimelightHelpers.SetThrottle(limelight, 0);
+    }
+  }
 
   @Override
   public void testInit() {

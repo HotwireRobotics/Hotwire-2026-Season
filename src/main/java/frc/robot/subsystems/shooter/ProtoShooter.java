@@ -1,11 +1,14 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -21,12 +24,14 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
   public TalonFX follower;
   private final SysIdRoutine m_sysIdRoutine;
   private final VoltageOut m_voltReq;
+  private final VelocityVoltage m_velVolt;
 
   public ProtoShooter() {
     feeder = new TalonFX(Constants.MotorIDs.s_feeder);
     shooter = new TalonFX(Constants.MotorIDs.s_shooter);
     follower = new TalonFX(Constants.MotorIDs.s_follower);
     m_voltReq = new VoltageOut(0.0);
+    m_velVolt = new VelocityVoltage(0.0);
 
     // Follower motor for the shooter.
     follower.setControl(new Follower(Constants.MotorIDs.s_shooter, MotorAlignmentValue.Opposed));
@@ -81,6 +86,26 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
         });
   }
 
+  public void runShooterVel(AngularVelocity velocity) {
+    shooter.setControl(m_velVolt.withVelocity(velocity));
+    if (velocity.in(RotationsPerSecond) == 0.0) {
+      state = State.STOPPED;
+    } else {
+      state = State.SPINNING;
+    }
+    ;
+  }
+
+  public void runFeederVel(AngularVelocity velocity) {
+    feeder.setControl(m_velVolt.withVelocity(velocity));
+    if (velocity.in(RotationsPerSecond) == 0.0) {
+      state = State.STOPPED;
+    } else {
+      state = State.SPINNING;
+    }
+    ;
+  }
+
   public void runShooterVolts(Voltage voltage) {
     shooter.setControl(m_voltReq.withOutput(voltage.in(Volts)));
     if (voltage.in(Volts) == 0.0) {
@@ -89,6 +114,14 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
       state = State.SPINNING;
     }
     ;
+  }
+
+  public Command runShooterAndFeeder(AngularVelocity velocity) {
+    return Commands.runOnce(
+        () -> {
+          runShooterVel(velocity);
+          runFeederVel(velocity);
+        });
   }
 
   public Command runShooterAndFeeder(double speed) {
