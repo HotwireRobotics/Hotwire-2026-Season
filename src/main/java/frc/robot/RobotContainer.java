@@ -183,11 +183,14 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .a()
-        .whileTrue(intake.runRollers(0.5))
+        .whileTrue(intake.runRollers(0.7))
         .onFalse(intake.runRollers(0));
     Constants.Joysticks.operator
         .rightBumper()
-        .whileTrue(shooter.runShooterAndFeeder(0.90))
+        .whileTrue(
+            // Use range (1 < n ≤ 100) or (0 ≤ n ≤ 1)
+            shooter.runShooterAndFeeder(
+                (Math.abs(shooterPower) > 1) ? shooterPower / 100 : shooterPower))
         .onFalse(shooter.runShooterAndFeeder(0));
 
     // Constants.Joysticks.driver

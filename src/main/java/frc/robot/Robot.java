@@ -144,7 +144,11 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    for (String limelight : Constants.limelights) {
+      LimelightHelpers.SetThrottle(limelight, 150);
+    }
+  }
 
   @Override
   public void autonomousInit() {
@@ -173,7 +177,11 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    for (String limelight : Constants.limelights) {
+      LimelightHelpers.SetThrottle(limelight, 0);
+    }
+  }
 
   @Override
   public void testInit() {
