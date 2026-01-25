@@ -19,6 +19,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import org.littletonrobotics.junction.Logger;
@@ -29,6 +30,7 @@ public class RobotContainer {
   public final Drive drive;
   public final ProtoIntake intake;
   public final ProtoShooter shooter;
+  public final HopperSubsystem hopper;
   public double feederVelocity = 0;
   public double shooterVelocity = 0;
   public double shooterPower = 0;
@@ -75,6 +77,7 @@ public class RobotContainer {
 
     intake = new ProtoIntake();
     shooter = new ProtoShooter();
+    hopper = new HopperSubsystem();
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
@@ -192,6 +195,11 @@ public class RobotContainer {
             shooter.runShooterAndFeeder(
                 (Math.abs(shooterPower) > 1) ? shooterPower / 100 : shooterPower))
         .onFalse(shooter.runShooterAndFeeder(0));
+
+    Constants.Joysticks.operator
+        .leftBumper()
+        .whileTrue(hopper.runHopper(0.7))
+        .onFalse(hopper.runHopper(0));
 
     // Constants.Joysticks.driver
     //     .back()
