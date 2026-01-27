@@ -2,8 +2,10 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
@@ -27,12 +29,15 @@ public final class Constants {
   public static final Time teleopLength = Seconds.of(140);
 
   public static class MotorIDs {
-    public static final Integer i_rollers = 10;
+    public static final Integer i_rollers = 17;
     public static final Integer i_follower = 11;
     public static final Integer s_feeder = 13;
     public static final Integer s_shooter = 12;
     public static final Integer s_follower = 14;
   }
+
+  public static final PathConstraints constraints =
+      new PathConstraints(2.9, 2.9, Units.degreesToRadians(540), Units.degreesToRadians(720));
 
   /*
    * Game element poses relative to blue origin.
