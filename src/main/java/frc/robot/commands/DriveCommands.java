@@ -1,5 +1,10 @@
 package frc.robot.commands;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -14,6 +19,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
@@ -297,6 +303,33 @@ public class DriveCommands {
                           Units.metersToInches(wheelRadius));
                       Logger.recordOutput("Drive/WheelRadiusCharacterization/Results", results);
                     })));
+  }
+
+  public static Command pathfind(Drive drive, Pose2d pose, PathConstraints constraints) {
+    return Commands.runOnce(
+        () -> {
+          Pose2d end = pose;
+
+          Pose2d start = drive.getPose();
+
+          Logger.recordOutput("Start Pose", start);
+
+          List<Waypoint> waypoints =
+              PathPlannerPath.waypointsFromPoses(
+                  start, // Start point
+                  end // End point
+                  );
+
+          PathPlannerPath path =
+              new PathPlannerPath(
+                  waypoints, Constants.constraints, null, new GoalEndState(0, end.getRotation()));
+
+          path.preventFlipping = true;
+
+          // Logger.recordOutput("Pathplanner End Pose", path.getEventMarkers().get(-1));
+
+          CommandScheduler.getInstance().schedule(AutoBuilder.followPath(path));
+        });
   }
 
   private static class WheelRadiusCharacterizationState {

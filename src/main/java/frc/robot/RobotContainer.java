@@ -81,24 +81,20 @@ public class RobotContainer {
     SmartDashboard.putNumber("Feeder Velocity", feederVelocity);
     SmartDashboard.putNumber("Shooter Velocity", shooterVelocity);
 
-    // autoChooser.addOption(
-    // "Drive Wheel Radius Characterization",
-    // DriveCommands.wheelRadiusCharacterization(drive));
-    // autoChooser.addOption(
-    // "Drive Simple FF Characterization",
-    // DriveCommands.feedforwardCharacterization(drive));
-    // autoChooser.addOption(
-    // "Drive SysId (Quasistatic Forward)",
-    // drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    // autoChooser.addOption(
-    // "Drive SysId (Quasistatic Reverse)",
-    // drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    // autoChooser.addOption(
-    // "Drive SysId (Dynamic Forward)",
-    // drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    // autoChooser.addOption(
-    // "Drive SysId (Dynamic Reverse)",
-    // drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+    autoChooser.addOption(
+        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    autoChooser.addOption(
+        "Drive SysId (Quasistatic Forward)",
+        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Drive SysId (Quasistatic Reverse)",
+        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
         "Shooter SysId (Quasistatic Forward)",
         shooter.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
@@ -118,16 +114,16 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> Constants.Joysticks.driver.getLeftY(),
-            () -> Constants.Joysticks.driver.getLeftX(),
+            () -> -Constants.Joysticks.driver.getLeftY(),
+            () -> -Constants.Joysticks.driver.getLeftX(),
             () -> -Constants.Joysticks.driver.getRightX()));
     Constants.Joysticks.operator
         .rightTrigger()
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
                 drive,
-                () -> Constants.Joysticks.driver.getLeftY(),
-                () -> Constants.Joysticks.driver.getLeftX(),
+                () -> -Constants.Joysticks.driver.getLeftY(),
+                () -> -Constants.Joysticks.driver.getLeftX(),
                 () -> {
                   Pose2d robotPose = drive.getPose();
                   Pose2d hubPose = drive.hub;
@@ -142,6 +138,25 @@ public class RobotContainer {
 
                   return new Rotation2d(angleToHub);
                 }));
+    // Constants.Joysticks.operator
+    //     .leftTrigger()
+    //     .whileTrue(
+    //         DriveCommands.joystickDriveAtAngle(
+    //         drive,
+    //         () -> Constants.Joysticks.driver.getLeftY(),
+    //         () -> Constants.Joysticks.driver.getLeftX(),
+    //         () -> {
+    //           Pose2d robotPose = drive.getPose();
+
+    //           for (String limelight : Constants.limelights) {
+    //             // y = 0.321
+    //           }
+
+    //           double rot = ;
+
+    //           return new Rotation2d(rot);
+    //         }));
+
     // Lock to 0° when down POV button is helds
     Constants.Joysticks.driver
         .povDown()
@@ -173,18 +188,17 @@ public class RobotContainer {
                       drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero));
                       for (String limelight : Constants.limelights) {
                         LimelightHelpers.SetIMUMode(limelight, 1);
-                        LimelightHelpers.SetRobotOrientation(
-                            limelight, drive.getPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+                        LimelightHelpers.SetRobotOrientation(limelight, 0, 0, 0, 0, 0, 0);
                         LimelightHelpers.SetIMUMode(limelight, 2);
                       }
                     },
                     drive)
                 .ignoringDisable(true));
 
-    Constants.Joysticks.operator
-        .a()
-        .whileTrue(intake.runRollers(0.7))
-        .onFalse(intake.runRollers(0));
+    // Constants.Joysticks.operator
+    //     .a()
+    //     .whileTrue(intake.runRollersPercent(0.4))
+    //     .onFalse(intake.runRollersPercent(0.0));
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
@@ -192,6 +206,10 @@ public class RobotContainer {
             shooter.runShooterAndFeeder(
                 (Math.abs(shooterPower) > 1) ? shooterPower / 100 : shooterPower))
         .onFalse(shooter.runShooterAndFeeder(0));
+
+    Constants.Joysticks.driver
+        .povUp()
+        .whileTrue(DriveCommands.pathfind(drive, Constants.Poses.tower, Constants.constraints));
 
     // Constants.Joysticks.driver
     //     .back()
