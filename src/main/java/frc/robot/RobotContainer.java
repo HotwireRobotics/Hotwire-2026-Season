@@ -6,6 +6,8 @@ import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -21,6 +23,8 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
+import java.util.ArrayList;
+import java.util.List;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -126,17 +130,18 @@ public class RobotContainer {
                 () -> -Constants.Joysticks.driver.getLeftX(),
                 () -> {
                   Pose2d robotPose = drive.getPose();
-                  Pose2d hubPose = drive.hub;
+                  Pose2d hubPose = Constants.Poses.hub;
 
                   // Calculate the angle from the robot to the hub
-                  double angleToHub =
-                      Math.atan2(
-                          hubPose.getY() - robotPose.getY(), hubPose.getX() - robotPose.getX());
+                  double hubDirection =
+                      Math.atan(
+                          (hubPose.getY() - robotPose.getY())
+                              / (hubPose.getX() - robotPose.getX()));
 
-                  angleToHub = Math.IEEEremainder(Math.pow(angleToHub, 2.1), 2 * Math.PI);
-                  Logger.recordOutput("Angle to Hub", angleToHub);
+                  Angle toHub = Radians.of(Math.IEEEremainder(hubDirection, 2 * Math.PI));
+                  Logger.recordOutput("Angle to Hub", toHub.in(Degrees));
 
-                  return new Rotation2d(angleToHub);
+                  return new Rotation2d(toHub);
                 }));
     // Constants.Joysticks.operator
     //     .leftTrigger()
@@ -207,13 +212,14 @@ public class RobotContainer {
                 (Math.abs(shooterPower) > 1) ? shooterPower / 100 : shooterPower))
         .onFalse(shooter.runShooterAndFeeder(0));
 
+    List<Pose2d> towerPoses = new ArrayList<Pose2d>();
+    towerPoses.add(
+        Constants.Poses.tower.transformBy(
+            new Transform2d(Meters.of(0.5), Meters.of(0), Rotation2d.kZero)));
+    towerPoses.add(Constants.Poses.tower);
     Constants.Joysticks.driver
         .povUp()
-        .whileTrue(DriveCommands.pathfind(drive, Constants.Poses.tower, Constants.constraints));
-
-    // Constants.Joysticks.driver
-    //     .back()
-    //     .onTrue(Commands.runOnce(() -> ));
+        .whileTrue(DriveCommands.pathfind(drive, towerPoses, Constants.constraints));
   }
 
   public Command getAutonomousCommand() {

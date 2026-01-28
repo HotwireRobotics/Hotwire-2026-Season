@@ -25,6 +25,7 @@ import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
@@ -319,6 +320,31 @@ public class DriveCommands {
                   start, // Start point
                   end // End point
                   );
+
+          PathPlannerPath path =
+              new PathPlannerPath(
+                  waypoints, Constants.constraints, null, new GoalEndState(0, end.getRotation()));
+
+          path.preventFlipping = true;
+
+          // Logger.recordOutput("Pathplanner End Pose", path.getEventMarkers().get(-1));
+
+          CommandScheduler.getInstance().schedule(AutoBuilder.followPath(path));
+        });
+  }
+
+  public static Command pathfind(Drive drive, List<Pose2d> poses, PathConstraints constraints) {
+    return Commands.runOnce(
+        () -> {
+          Pose2d end = poses.get(poses.size() - 1);
+
+          List<Pose2d> points = new ArrayList<Pose2d>();
+
+          Pose2d start = drive.getPose();
+          points.add(start);
+          points.addAll(poses);
+
+          List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(points);
 
           PathPlannerPath path =
               new PathPlannerPath(

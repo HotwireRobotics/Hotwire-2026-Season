@@ -2,6 +2,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -22,6 +23,11 @@ public final class Constants {
   public static class Joysticks {
     public static final CommandXboxController driver = new CommandXboxController(0);
     public static final CommandXboxController operator = new CommandXboxController(1);
+  }
+
+  public static class Control {
+    public static final PIDConstants translationPID = new PIDConstants(15.0, 0.0, 0.0);
+    public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.0);
   }
 
   public static final double lerp = 1; // 1.7
@@ -56,7 +62,7 @@ public final class Constants {
 
   public static class Poses {
     public static final Pose2d tower =
-        flipAlliance(new Pose2d(Meters.of(1.6), Meters.of(4.162), new Rotation2d()));
+        flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.168), new Rotation2d()));
     public static final Pose2d hub =
         flipAlliance(new Pose2d(Meters.of(4.611), Meters.of(4.021), new Rotation2d()));
   }
