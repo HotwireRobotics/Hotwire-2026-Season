@@ -14,10 +14,6 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    // follower = new TalonFX(Constants.MotorIDs.i_follower);
-
-    // Follower motor for rollers.
-    // follower.setControl(new Follower(Constants.MotorIDs.i_rollers, MotorAlignmentValue.Aligned));
   }
 
   private enum State {

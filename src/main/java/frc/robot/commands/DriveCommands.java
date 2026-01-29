@@ -351,8 +351,6 @@ public class DriveCommands {
 
           path.preventFlipping = true;
 
-          // Logger.recordOutput("Pathplanner End Pose", path.getEventMarkers().get(-1));
-
           CommandScheduler.getInstance().schedule(AutoBuilder.followPath(path));
         });
   }
