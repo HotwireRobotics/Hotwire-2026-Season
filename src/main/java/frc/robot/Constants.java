@@ -2,11 +2,17 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
@@ -19,6 +25,13 @@ public final class Constants {
     public static final CommandXboxController operator = new CommandXboxController(1);
   }
 
+  public static class Control {
+    public static final PIDConstants translationPID = new PIDConstants(15.0, 0.0, 0.0);
+    public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.6);
+    public static final double ANGLE_KP = rotationPID.kP;
+    public static final double ANGLE_KD = rotationPID.kD;
+  }
+
   public static final double lerp = 1; // 1.7
   public static final String[] limelights = {"limelight-one", "limelight-two"};
   public static final Time[] autoTimes = {Seconds.of(8)};
@@ -27,21 +40,34 @@ public final class Constants {
   public static final Time teleopLength = Seconds.of(140);
 
   public static class MotorIDs {
-    public static final Integer i_rollers = 10;
+    public static final Integer i_rollers = 17;
     public static final Integer i_follower = 11;
     public static final Integer s_feeder = 13;
     public static final Integer s_shooter = 12;
     public static final Integer s_follower = 14;
   }
 
+  public static final PathConstraints constraints =
+      new PathConstraints(2.9, 2.9, Units.degreesToRadians(540), Units.degreesToRadians(720));
+
   /*
    * Game element poses relative to blue origin.
    */
+  public static Translation2d middle = new Translation2d(Meters.of(8.27), Meters.of(4.01));
+
+  public static Pose2d flipAlliance(Pose2d pose) {
+    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+      return pose.rotateAround(middle, Rotation2d.k180deg);
+    }
+    return pose;
+  }
+
   public static class Poses {
+    // X: 14.916m, Y: 3.875m
     public static final Pose2d tower =
-        new Pose2d(Meters.of(1.868), Meters.of(4.162), new Rotation2d());
+        flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.146), new Rotation2d()));
     public static final Pose2d hub =
-        new Pose2d(Meters.of(4.611), Meters.of(4.021), new Rotation2d());
+        flipAlliance(new Pose2d(Meters.of(4.611), Meters.of(4.021), new Rotation2d()));
   }
 
   // Derived from relationship between distance (ft) and rotation (RPM).

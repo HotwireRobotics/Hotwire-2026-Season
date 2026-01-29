@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.ModuleConfig;
-import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.util.PathPlannerLogging;
@@ -115,7 +114,7 @@ public class Drive extends SubsystemBase {
         this::getChassisSpeeds,
         this::runVelocity,
         new PPHolonomicDriveController(
-            new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
+            Constants.Control.translationPID, Constants.Control.translationPID),
         PP_CONFIG,
         () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
         this);
@@ -140,8 +139,6 @@ public class Drive extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
   }
-
-  public Pose2d hub;
 
   @Override
   public void periodic() {
@@ -206,19 +203,6 @@ public class Drive extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
-
-    // Track hub position
-    hub =
-        (DriverStation.getAlliance().get().equals(Alliance.Red))
-            ? new Pose2d(new Translation2d(Meters.of(4.611), Meters.of(4.021)), Rotation2d.kZero)
-            : new Pose2d(
-                new Translation2d(Meters.of(16.54 - 4.611), Meters.of(4.021)), Rotation2d.kZero);
-    Logger.recordOutput("Hub Pose", hub);
-
-    Logger.recordOutput(
-        "Hub Rotation",
-        Math.atan((hub.getX() - getPose().getX()) / (hub.getY() - getPose().getY()))
-            + ((hub.getY() - getPose().getY()) < 0 ? 180 : 0));
   }
 
   /**
