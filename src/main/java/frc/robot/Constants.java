@@ -26,6 +26,8 @@ public final class Constants {
   }
 
   public static class Control {
+    public static final double ANGLE_KP = 8.0;
+    public static final double ANGLE_KD = 0.6;
     public static final PIDConstants translationPID = new PIDConstants(15.0, 0.0, 0.0);
     public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.0);
   }
@@ -61,8 +63,9 @@ public final class Constants {
   }
 
   public static class Poses {
+    // X: 14.916m, Y: 3.875m
     public static final Pose2d tower =
-        flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.168), new Rotation2d()));
+        flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.146), new Rotation2d()));
     public static final Pose2d hub =
         flipAlliance(new Pose2d(Meters.of(4.611), Meters.of(4.021), new Rotation2d()));
   }
