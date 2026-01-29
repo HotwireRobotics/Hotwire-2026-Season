@@ -143,24 +143,6 @@ public class RobotContainer {
 
                   return new Rotation2d(toHub);
                 }));
-    // Constants.Joysticks.operator
-    //     .leftTrigger()
-    //     .whileTrue(
-    //         DriveCommands.joystickDriveAtAngle(
-    //         drive,
-    //         () -> Constants.Joysticks.driver.getLeftY(),
-    //         () -> Constants.Joysticks.driver.getLeftX(),
-    //         () -> {
-    //           Pose2d robotPose = drive.getPose();
-
-    //           for (String limelight : Constants.limelights) {
-    //             // y = 0.321
-    //           }
-
-    //           double rot = ;
-
-    //           return new Rotation2d(rot);
-    //         }));
 
     // Lock to 0° when down POV button is helds
     Constants.Joysticks.driver

@@ -26,10 +26,10 @@ public final class Constants {
   }
 
   public static class Control {
-    public static final double ANGLE_KP = 8.0;
-    public static final double ANGLE_KD = 0.6;
     public static final PIDConstants translationPID = new PIDConstants(15.0, 0.0, 0.0);
-    public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.0);
+    public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.6);
+    public static final double ANGLE_KP = rotationPID.kP;
+    public static final double ANGLE_KD = rotationPID.kD;
   }
 
   public static final double lerp = 1; // 1.7

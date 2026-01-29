@@ -140,8 +140,6 @@ public class Drive extends SubsystemBase {
                 (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
   }
 
-  public Pose2d hub;
-
   @Override
   public void periodic() {
     odometryLock.lock(); // Prevents odometry updates while reading data
@@ -205,19 +203,6 @@ public class Drive extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
-
-    // Track hub position
-    hub =
-        (DriverStation.getAlliance().get().equals(Alliance.Red))
-            ? new Pose2d(new Translation2d(Meters.of(4.611), Meters.of(4.021)), Rotation2d.kZero)
-            : new Pose2d(
-                new Translation2d(Meters.of(16.54 - 4.611), Meters.of(4.021)), Rotation2d.kZero);
-    Logger.recordOutput("Hub Pose", hub);
-
-    Logger.recordOutput(
-        "Hub Rotation",
-        Math.atan((hub.getX() - getPose().getX()) / (hub.getY() - getPose().getY()))
-            + ((hub.getY() - getPose().getY()) < 0 ? 180 : 0));
   }
 
   /**

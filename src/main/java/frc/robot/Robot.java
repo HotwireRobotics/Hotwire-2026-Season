@@ -79,6 +79,37 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
     CommandScheduler.getInstance().run();
 
+    // Localization and orienttion feeding
+    processLimelightMeasurements();
+
+    // Tracking
+    Time time = Seconds.of(DriverStation.getMatchTime());
+    Boolean isAutonomous = DriverStation.isAutonomous();
+    Time length = (isAutonomous) ? Constants.autoLength : Constants.teleopLength;
+    time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(time);
+
+    // Controller haptic indicators
+    Logger.recordOutput("Time", time.in(Seconds));
+    Boolean rumble = false;
+
+    for (Time target : ((isAutonomous) ? Constants.autoTimes : Constants.teleopTimes)) {
+      double difference = target.minus(time).in(Seconds);
+      if ((Math.abs(difference) < 1) && (difference < 0)) {
+        rumble = true;
+      }
+    }
+
+    Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
+
+    robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
+    robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
+    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter Power", 0.0);
+
+    Logger.recordOutput("Hub Pose", Constants.Poses.hub);
+    Logger.recordOutput("Tower Pose", Constants.Poses.tower);
+  }
+
+  private void processLimelightMeasurements() {
     List<PoseEstimate> measurements = new ArrayList<>();
 
     for (String limelight : Constants.limelights) {
@@ -112,30 +143,6 @@ public class Robot extends LoggedRobot {
 
       LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
     }
-
-    Time time = Seconds.of(DriverStation.getMatchTime());
-    Boolean isAutonomous = DriverStation.isAutonomous();
-    Time length = (isAutonomous) ? Constants.autoLength : Constants.teleopLength;
-    time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(time);
-
-    Logger.recordOutput("Time", time.in(Seconds));
-    Boolean rumble = false;
-
-    for (Time target : ((isAutonomous) ? Constants.autoTimes : Constants.teleopTimes)) {
-      double difference = target.minus(time).in(Seconds);
-      if ((Math.abs(difference) < 1) && (difference < 0)) {
-        rumble = true;
-      }
-    }
-
-    Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
-
-    robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
-    robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
-    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter Power", 0.0);
-
-    Logger.recordOutput("Hub Pose", Constants.Poses.hub);
-    Logger.recordOutput("Tower Pose", Constants.Poses.tower);
   }
 
   @Override
