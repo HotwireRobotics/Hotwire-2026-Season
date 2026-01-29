@@ -182,10 +182,10 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    // Constants.Joysticks.operator
-    //     .a()
-    //     .whileTrue(intake.runRollersPercent(0.4))
-    //     .onFalse(intake.runRollersPercent(0.0));
+    Constants.Joysticks.operator
+        .a()
+        .whileTrue(intake.runRollersPercent(0.7))
+        .onFalse(intake.runRollersPercent(0.0));
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
