@@ -5,10 +5,17 @@ import static edu.wpi.first.units.Units.*;
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.path.PathConstraints;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
@@ -19,6 +26,13 @@ public final class Constants {
   public static class Joysticks {
     public static final CommandXboxController driver = new CommandXboxController(0);
     public static final CommandXboxController operator = new CommandXboxController(1);
+  }
+
+  public static class Control {
+    public static final PIDConstants translationPID = new PIDConstants(15.0, 0.0, 0.0);
+    public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.6);
+    public static final double ANGLE_KP = rotationPID.kP;
+    public static final double ANGLE_KD = rotationPID.kD;
   }
 
   public static final double lerp = 1; // 1.7
@@ -42,11 +56,21 @@ public final class Constants {
   /*
    * Game element poses relative to blue origin.
    */
+  public static Translation2d middle = new Translation2d(Meters.of(8.27), Meters.of(4.01));
+
+  public static Pose2d flipAlliance(Pose2d pose) {
+    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+      return pose.rotateAround(middle, Rotation2d.k180deg);
+    }
+    return pose;
+  }
+
   public static class Poses {
+    // X: 14.916m, Y: 3.875m
     public static final Pose2d tower =
-        new Pose2d(Meters.of(1.868), Meters.of(4.162), new Rotation2d());
+        flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.146), new Rotation2d()));
     public static final Pose2d hub =
-        new Pose2d(Meters.of(4.611), Meters.of(4.021), new Rotation2d());
+        flipAlliance(new Pose2d(Meters.of(4.611), Meters.of(4.021), new Rotation2d()));
   }
 
   // Derived from relationship between distance (ft) and rotation (RPM).
