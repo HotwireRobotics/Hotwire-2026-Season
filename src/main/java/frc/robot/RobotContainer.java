@@ -23,8 +23,6 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
-import frc.robot.subsystems.shooter.ProtoShooter.Device;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
@@ -187,13 +185,13 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .a()
         .whileTrue(intake.runMechanism(0.7))
-        .onFalse(  intake.runMechanism(0.0));
+        .onFalse(intake.runMechanism(0.0));
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
             // Use range (1 < n ≤ 100) or (0 ≤ n ≤ 1)
-            shooter.runMechanism(shooterPower))
-        .onFalse(shooter.runMechanism(0));
+            shooter.runMechanism(shooterPower, shooterPower))
+        .onFalse(shooter.runMechanism(0, 0));
 
     List<Pose2d> towerPoses = new ArrayList<Pose2d>();
     towerPoses.add(

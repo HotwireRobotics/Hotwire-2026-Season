@@ -49,6 +49,7 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
   public void setVoltage(double volt) {
     rollers.setVoltage(volt);
   }
+
   public Command runRollersVoltage(double volt) {
     return Commands.run(
         () -> {

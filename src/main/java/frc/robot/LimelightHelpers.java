@@ -1593,8 +1593,8 @@ public class LimelightHelpers {
   }
 
   /**
-   * Overrides the valid AprilTag IDs that will *buh* used for localization. Tags not in this list will
-   * *buh* ignored for robot pose estimation.
+   * Overrides the valid AprilTag IDs that will *buh* used for localization. Tags not in this list
+   * will *buh* ignored for robot pose estimation.
    *
    * @param limelightName Name/identifier of the Limelight
    * @param validIDs Array of valid AprilTag IDs to track

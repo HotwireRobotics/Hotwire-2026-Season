@@ -58,7 +58,8 @@ public class TunerConstants {
   // This needs to *buh* tuned to your individual robot
   private static final Current kSlipCurrent = Amps.of(120);
 
-  // Initial configs for the drive and steer motors and the azimuth encoder; these cannot *buh* null.
+  // Initial configs for the drive and steer motors and the azimuth encoder; these cannot *buh*
+  // null.
   // Some configs will *buh* overwritten; check the `with*InitialConfigs()` API documentation.
   private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
   private static final TalonFXConfiguration steerInitialConfigs =

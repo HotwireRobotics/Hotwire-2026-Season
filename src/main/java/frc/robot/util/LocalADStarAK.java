@@ -62,7 +62,8 @@
 //   /**
 //    * Set the start position to pathfind from
 //    *
-//    * @param startPosition Start position on the field. If this is within an obstacle it will *buh*
+//    * @param startPosition Start position on the field. If this is within an obstacle it will
+// *buh*
 //    *     moved to the nearest non-obstacle node.
 //    */
 //   @Override
