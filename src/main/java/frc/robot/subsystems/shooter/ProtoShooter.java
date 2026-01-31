@@ -1,8 +1,13 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.Dictionary;
+import java.util.HashMap;
+
+import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -10,6 +15,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -19,22 +25,66 @@ import frc.robot.Systerface;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoShooter extends SubsystemBase implements Systerface {
-  public TalonFX feeder;
-  public TalonFX shooter;
-  public TalonFX follower;
+  private final TalonFX feeder;
   private final SysIdRoutine m_sysIdRoutine;
   private final VoltageOut m_voltReq;
   private final VelocityVoltage m_velVolt;
+  private final ShooterModule rightModule;
+  private final ShooterModule leftModule;
+
+  public enum Device {
+    FEEDER, RIGHT, LEFT, BOTH
+  }
+
+  private final HashMap<Device, Object> devices = new HashMap<Device, Object>();
+
+  private class ShooterModule {
+
+    TalonFX shooter;
+    TalonFX follower;
+
+    public ShooterModule(int deviceID, int followerID) {
+      shooter =  new TalonFX(deviceID);
+      follower = new TalonFX(followerID);
+
+      follower.setControl(
+        new Follower(
+          deviceID, MotorAlignmentValue.Opposed
+        ));
+    }
+
+    public void runModule(double speed) {
+      shooter.set(speed);
+    }
+
+    public void setControl(ControlRequest control) {
+      shooter.setControl(control);
+    }
+  }
 
   public ProtoShooter() {
     feeder = new TalonFX(Constants.MotorIDs.s_feeder);
-    shooter = new TalonFX(Constants.MotorIDs.s_shooter);
-    follower = new TalonFX(Constants.MotorIDs.s_follower);
+
+    rightModule = new ShooterModule(
+      Constants.MotorIDs.s_shooterR,
+      Constants.MotorIDs.s_followerR
+    );
+
+    leftModule = new ShooterModule(
+      Constants.MotorIDs.s_shooterL,
+      Constants.MotorIDs.s_followerL
+    );
+
+    TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
+
+    devices.put(Device.FEEDER,feeder);
+    devices.put(Device.RIGHT, rightModule.shooter);
+    devices.put(Device.LEFT,  leftModule.shooter);
+    devices.put(Device.BOTH,  shooters);
+
+
     m_voltReq = new VoltageOut(0.0);
     m_velVolt = new VelocityVoltage(0.0);
-
-    // Follower motor for the shooter.
-    follower.setControl(new Follower(Constants.MotorIDs.s_shooter, MotorAlignmentValue.Opposed));
 
     m_sysIdRoutine =
         new SysIdRoutine(
@@ -53,7 +103,7 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     STOPPED,
     HALTED,
     SPINNING, // Running shooter
-    SHOOTING // Running shooter & feeder
+    FIRING // Running shooter & feeder
   }
 
   State state = State.STOPPED;
@@ -61,80 +111,56 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
   @Override
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
-    Logger.recordOutput("Shooter/Feeder/Velocity", feeder.getVelocity().getValue());
-    Logger.recordOutput("Shooter/Shooter/Velocity", shooter.getVelocity().getValue());
-    Logger.recordOutput("Shooter/Follower/Velocity", follower.getVelocity().getValue());
-    Logger.recordOutput("Shooter/Feeder/Current", feeder.getSupplyCurrent().getValue());
-    Logger.recordOutput("Shooter/Shooter/Current", shooter.getSupplyCurrent().getValue());
-    Logger.recordOutput("Shooter/Follower/Current", follower.getSupplyCurrent().getValue());
+    // Logger.recordOutput("Shooter/Feeder/Velocity", feeder.getVelocity().getValue());
+    // Logger.recordOutput("Shooter/Shooter/Velocity", shooter.getVelocity().getValue());
+    // Logger.recordOutput("Shooter/Follower/Velocity", follower.getVelocity().getValue());
+    // Logger.recordOutput("Shooter/Feeder/Current", feeder.getSupplyCurrent().getValue());
+    // Logger.recordOutput("Shooter/Shooter/Current", shooter.getSupplyCurrent().getValue());
+    // Logger.recordOutput("Shooter/Follower/Current", follower.getSupplyCurrent().getValue());
   }
 
   public Object getState() {
     return state;
   }
 
-  public Command runShooter(double speed) {
+  public Command runMechanism(double speed) {
     return Commands.runOnce(
         () -> {
-          shooter.set(speed);
+          rightModule.runModule(speed);
+          leftModule .runModule(speed);
           feeder.set(0);
-          if (speed > 0) {
-            state = State.SPINNING;
-          } else {
-            state = State.STOPPED;
-          }
         });
   }
 
+  public Command runDevice(Device device, double speed) {
+    Object group = devices.get(device);
+    return Commands.runOnce((group instanceof TalonFX[]) ? () -> {
+        for (TalonFX motor : (TalonFX[]) group) {
+          motor.set(speed);
+        }
+    } : () -> ((TalonFX) group).set(speed));
+  }
+
   public void runShooterVel(AngularVelocity velocity) {
-    shooter.setControl(m_velVolt.withVelocity(velocity));
-    if (velocity.in(RotationsPerSecond) == 0.0) {
-      state = State.STOPPED;
-    } else {
-      state = State.SPINNING;
-    }
-    ;
+    rightModule.setControl(m_velVolt.withVelocity(velocity));
+    leftModule .setControl(m_velVolt.withVelocity(velocity));
   }
 
   public void runFeederVel(AngularVelocity velocity) {
     feeder.setControl(m_velVolt.withVelocity(velocity));
-    if (velocity.in(RotationsPerSecond) == 0.0) {
-      state = State.STOPPED;
-    } else {
-      state = State.SPINNING;
-    }
-    ;
   }
 
   public void runShooterVolts(Voltage voltage) {
-    shooter.setControl(m_voltReq.withOutput(voltage.in(Volts)));
-    if (voltage.in(Volts) == 0.0) {
-      state = State.STOPPED;
-    } else {
-      state = State.SPINNING;
-    }
-    ;
+    rightModule.setControl(m_voltReq.withOutput(voltage.in(Volts)));
+    leftModule .setControl(m_voltReq.withOutput(voltage.in(Volts)));
   }
 
-  public Command runShooterAndFeeder(AngularVelocity velocity) {
+  public Command runMechanismVelocity(AngularVelocity feeder, AngularVelocity shooter) {
     return Commands.runOnce(
-        () -> {
-          runShooterVel(velocity);
-          runFeederVel(velocity);
-        });
-  }
-
-  public Command runShooterAndFeeder(double speed) {
-    return Commands.runOnce(
-        () -> {
-          shooter.set(speed);
-          feeder.set(speed);
-          if (speed > 0) {
-            state = State.SHOOTING;
-          } else {
-            state = State.STOPPED;
-          }
-        });
+      () -> {
+        runShooterVel(shooter);
+        runFeederVel (feeder);
+      });
   }
 
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {

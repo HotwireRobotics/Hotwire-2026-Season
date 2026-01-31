@@ -46,8 +46,10 @@ public final class Constants {
     public static final Integer i_rollers = 17;
     public static final Integer i_follower = 11;
     public static final Integer s_feeder = 13;
-    public static final Integer s_shooter = 12;
-    public static final Integer s_follower = 14;
+    public static final Integer s_shooterR = 12;
+    public static final Integer s_followerR = 14;
+    public static final Integer s_shooterL = null;
+    public static final Integer s_followerL = null;
   }
 
   public static final PathConstraints constraints =

@@ -35,7 +35,7 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
     Logger.recordOutput("Intake/RollersCurrent", rollers.getSupplyCurrent().getValue());
   }
 
-  public Command runRollersPercent(double speed) {
+  public Command runMechanism(double speed) {
     return Commands.run(
         () -> {
           rollers.set(speed);
