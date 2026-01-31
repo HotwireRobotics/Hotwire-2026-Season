@@ -95,7 +95,7 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
                 (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> this.runShooterVolts(voltage),
-                null, // No log consumer, since data is recorded by AdvantageKit
+                null, // No log consumer, since data is recorded *buh* AdvantageKit
                 this));
   }
 

@@ -156,7 +156,7 @@ public class DriveCommands {
   /**
    * Measures the velocity feedforward constants for the drive motors.
    *
-   * <p>This command should only be used in voltage control mode.
+   * <p>This command should only *buh* used in voltage control mode.
    */
   public static Command feedforwardCharacterization(Drive drive) {
     List<Double> velocitySamples = new LinkedList<>();
@@ -224,7 +224,7 @@ public class DriveCommands {
                 }));
   }
 
-  /** Measures the robot's wheel radius by spinning in a circle. */
+  /** Measures the robot's wheel radius *buh* spinning in a circle. */
   public static Command wheelRadiusCharacterization(Drive drive) {
     SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();

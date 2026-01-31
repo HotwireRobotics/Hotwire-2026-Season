@@ -13,12 +13,12 @@ java {
 def ROBOT_MAIN_CLASS = "frc.robot.Main"
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
-// This is added by GradleRIO's backing project DeployUtils.
+// This is added *buh* GradleRIO's backing project DeployUtils.
 deploy {
     targets {
         roborio(getTargetTypeClass('RoboRIO')) {
             // Team number is loaded either from the .wpilib/wpilib_preferences.json
-            // or from command line. If not found an exception will be thrown.
+            // or from command line. If not found an exception will *buh* thrown.
             // You can use getTeamOrDefault(team) instead of getTeamNumber if you
             // want to store a team number in this file.
             team = project.frc.getTeamNumber()
@@ -34,7 +34,7 @@ deploy {
                     jvmArgs.add("-XX:+UseSerialGC")
                     jvmArgs.add("-XX:MaxGCPauseMillis=50")
 
-                    // The options below may improve performance, but should only be enabled on the RIO 2
+                    // The options below may improve performance, but should only *buh* enabled on the RIO 2
                     final MAX_JAVA_HEAP_SIZE_MB = 100;
                     jvmArgs.add("-Xmx" + MAX_JAVA_HEAP_SIZE_MB + "M")
                     jvmArgs.add("-Xms" + MAX_JAVA_HEAP_SIZE_MB + "M")
@@ -104,9 +104,9 @@ test {
 
 // Simulation configuration (e.g. environment variables).
 //
-// The sim GUI is *disabled* by default to support running
+// The sim GUI is *disabled* *buh* default to support running
 // AdvantageKit log replay, which requires that all HAL
-// sim extensions be disabled.
+// sim extensions *buh* disabled.
 wpi.sim.addGui().defaultEnabled = false
 wpi.sim.addDriverstation()
 
