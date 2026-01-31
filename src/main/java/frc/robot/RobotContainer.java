@@ -6,6 +6,8 @@ import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -22,6 +24,8 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
+import java.util.ArrayList;
+import java.util.List;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -84,24 +88,20 @@ public class RobotContainer {
     SmartDashboard.putNumber("Feeder Velocity", feederVelocity);
     SmartDashboard.putNumber("Shooter Velocity", shooterVelocity);
 
-    // autoChooser.addOption(
-    // "Drive Wheel Radius Characterization",
-    // DriveCommands.wheelRadiusCharacterization(drive));
-    // autoChooser.addOption(
-    // "Drive Simple FF Characterization",
-    // DriveCommands.feedforwardCharacterization(drive));
-    // autoChooser.addOption(
-    // "Drive SysId (Quasistatic Forward)",
-    // drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    // autoChooser.addOption(
-    // "Drive SysId (Quasistatic Reverse)",
-    // drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    // autoChooser.addOption(
-    // "Drive SysId (Dynamic Forward)",
-    // drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    // autoChooser.addOption(
-    // "Drive SysId (Dynamic Reverse)",
-    // drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+    autoChooser.addOption(
+        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    autoChooser.addOption(
+        "Drive SysId (Quasistatic Forward)",
+        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Drive SysId (Quasistatic Reverse)",
+        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
         "Shooter SysId (Quasistatic Forward)",
         shooter.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
@@ -121,30 +121,32 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> Constants.Joysticks.driver.getLeftY(),
-            () -> Constants.Joysticks.driver.getLeftX(),
+            () -> -Constants.Joysticks.driver.getLeftY(),
+            () -> -Constants.Joysticks.driver.getLeftX(),
             () -> -Constants.Joysticks.driver.getRightX()));
     Constants.Joysticks.operator
         .rightTrigger()
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
                 drive,
-                () -> Constants.Joysticks.driver.getLeftY(),
-                () -> Constants.Joysticks.driver.getLeftX(),
+                () -> -Constants.Joysticks.driver.getLeftY(),
+                () -> -Constants.Joysticks.driver.getLeftX(),
                 () -> {
                   Pose2d robotPose = drive.getPose();
-                  Pose2d hubPose = drive.hub;
+                  Pose2d hubPose = Constants.Poses.hub;
 
                   // Calculate the angle from the robot to the hub
-                  double angleToHub =
-                      Math.atan2(
-                          hubPose.getY() - robotPose.getY(), hubPose.getX() - robotPose.getX());
+                  double hubDirection =
+                      Math.atan(
+                          (hubPose.getY() - robotPose.getY())
+                              / (hubPose.getX() - robotPose.getX()));
 
-                  angleToHub = Math.IEEEremainder(Math.pow(angleToHub, 2.1), 2 * Math.PI);
-                  Logger.recordOutput("Angle to Hub", angleToHub);
+                  Angle toHub = Radians.of(Math.IEEEremainder(hubDirection, 2 * Math.PI));
+                  Logger.recordOutput("Angle to Hub", toHub.in(Degrees));
 
-                  return new Rotation2d(angleToHub);
+                  return new Rotation2d(toHub);
                 }));
+
     // Lock to 0° when down POV button is helds
     Constants.Joysticks.driver
         .povDown()
@@ -176,8 +178,7 @@ public class RobotContainer {
                       drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero));
                       for (String limelight : Constants.limelights) {
                         LimelightHelpers.SetIMUMode(limelight, 1);
-                        LimelightHelpers.SetRobotOrientation(
-                            limelight, drive.getPose().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+                        LimelightHelpers.SetRobotOrientation(limelight, 0, 0, 0, 0, 0, 0);
                         LimelightHelpers.SetIMUMode(limelight, 2);
                       }
                     },
