@@ -10,7 +10,10 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
+
 def ROBOT_MAIN_CLASS = "frc.robot.Main"
+
+def mode  = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "\\mode.json").text)
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
@@ -35,10 +38,12 @@ deploy {
                     jvmArgs.add("-XX:MaxGCPauseMillis=50")
 
                     // The options below may improve performance, but should only be enabled on the RIO 2
-                    final MAX_JAVA_HEAP_SIZE_MB = 100;
-                    jvmArgs.add("-Xmx" + MAX_JAVA_HEAP_SIZE_MB + "M")
-                    jvmArgs.add("-Xms" + MAX_JAVA_HEAP_SIZE_MB + "M")
-                    jvmArgs.add("-XX:+AlwaysPreTouch")
+                    if (!mode.test) {
+                        final MAX_JAVA_HEAP_SIZE_MB = 100;
+                        jvmArgs.add("-Xmx" + MAX_JAVA_HEAP_SIZE_MB + "M")
+                        jvmArgs.add("-Xms" + MAX_JAVA_HEAP_SIZE_MB + "M")
+                        jvmArgs.add("-XX:+AlwaysPreTouch")
+                    }
                 }
 
                 // Static files artifact

@@ -1,15 +1,23 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -25,6 +33,9 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
   private final SysIdRoutine m_sysIdRoutine;
   private final VoltageOut m_voltReq;
   private final VelocityVoltage m_velVolt;
+  private final TalonFXConfiguration shooterConfig;
+
+  public final FlywheelSim simulation;
 
   public ProtoShooter() {
     feeder = new TalonFX(Constants.MotorIDs.s_feeder);
@@ -47,6 +58,11 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
                 (voltage) -> this.runShooterVolts(voltage),
                 null, // No log consumer, since data is recorded by AdvantageKit
                 this));
+
+    shooterConfig = Constants.Control.talonFXConfiguration.clone();
+    shooter.getConfigurator().apply(shooterConfig);
+
+    simulation = new FlywheelSim(LinearSystemId.identifyVelocitySystem(Constants.Control.shooterV, Constants.Control.shooterA), DCMotor.getKrakenX60(2));
   }
 
   private enum State {
@@ -143,5 +159,9 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
 
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
     return m_sysIdRoutine.dynamic(direction);
+  }
+
+  public MomentOfInertia sysIdShooterMOI() {
+    return KilogramSquareMeters.of(simulation.getJKgMetersSquared());
   }
 }

@@ -2,9 +2,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
-import com.pathplanner.lib.path.PathConstraints;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -33,6 +32,23 @@ public final class Constants {
     public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.6);
     public static final double ANGLE_KP = rotationPID.kP;
     public static final double ANGLE_KD = rotationPID.kD;
+
+    // Feedforward constants for shooter
+    public static final PIDConstants shooterPID = new PIDConstants(1, 0, 0);
+    // Feedback constants for shooter
+    public static final double       shooterS   = 0;
+    public static final double       shooterV   = 0;
+    public static final double       shooterA   = 0;
+    public static final double       shooterP   = 0;
+
+    public static final TalonFXConfiguration talonFXConfiguration =
+        new TalonFXConfiguration()
+            .withSlot0(new Slot0Configs()
+              .withKS(Constants.Control.shooterS)
+              .withKV(Constants.Control.shooterS)
+              .withKA(Constants.Control.shooterS)
+              .withKP(Constants.Control.shooterS)
+            );
   }
 
   public static final double lerp = 1; // 1.7
