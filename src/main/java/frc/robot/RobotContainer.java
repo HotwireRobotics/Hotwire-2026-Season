@@ -192,7 +192,7 @@ public class RobotContainer {
         .rightBumper()
         .whileTrue(
             // Use range (1 < n ≤ 100) or (0 ≤ n ≤ 1)
-            shooter.runDevice(Device.RIGHT, shooterPower))
+            shooter.runMechanism(shooterPower))
         .onFalse(shooter.runMechanism(0));
 
     List<Pose2d> towerPoses = new ArrayList<Pose2d>();

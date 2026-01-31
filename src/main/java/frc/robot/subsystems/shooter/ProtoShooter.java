@@ -4,8 +4,10 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.List;
 
 import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.Follower;
@@ -26,7 +28,8 @@ import org.littletonrobotics.junction.Logger;
 
 public class ProtoShooter extends SubsystemBase implements Systerface {
   private final TalonFX feeder;
-  private final SysIdRoutine m_sysIdRoutine;
+  private final SysIdRoutine m_sysIdRoutineRight;
+  private final SysIdRoutine m_SysIdRoutineLeft;
   private final VoltageOut m_voltReq;
   private final VelocityVoltage m_velVolt;
   private final ShooterModule rightModule;
@@ -37,6 +40,7 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
   }
 
   private final HashMap<Device, Object> devices = new HashMap<Device, Object>();
+  private List<Device> active = new ArrayList<Device>();
 
   private class ShooterModule {
 
@@ -86,7 +90,7 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     m_voltReq = new VoltageOut(0.0);
     m_velVolt = new VelocityVoltage(0.0);
 
-    m_sysIdRoutine =
+    m_sysIdRoutineRight =
         new SysIdRoutine(
             new SysIdRoutine.Config(
                 null,
@@ -94,8 +98,19 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
                 null, // Use default config
                 (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
             new SysIdRoutine.Mechanism(
-                (voltage) -> this.runShooterVolts(voltage),
-                null, // No log consumer, since data is recorded *buh* AdvantageKit
+                (voltage) -> runDeviceVoltage(Device.RIGHT, voltage),
+                null,
+                this));
+    m_SysIdRoutineLeft =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.LEFT, voltage),
+                null,
                 this));
   }
 
@@ -117,6 +132,18 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     // Logger.recordOutput("Shooter/Feeder/Current", feeder.getSupplyCurrent().getValue());
     // Logger.recordOutput("Shooter/Shooter/Current", shooter.getSupplyCurrent().getValue());
     // Logger.recordOutput("Shooter/Follower/Current", follower.getSupplyCurrent().getValue());
+
+    if (
+      active.contains(Device.LEFT) ||
+      active.contains(Device.BOTH) ||
+      active.contains(Device.RIGHT)
+    ) {
+      if (active.contains(Device.FEEDER)) {
+        state = State.FIRING;
+      } else {
+        state = State.SPINNING;
+      }
+    }
   }
 
   public Object getState() {
@@ -132,42 +159,67 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
         });
   }
 
-  public Command runDevice(Device device, double speed) {
+  private TalonFX[] getDevices(Device device) {
     Object group = devices.get(device);
-    return Commands.runOnce((group instanceof TalonFX[]) ? () -> {
-        for (TalonFX motor : (TalonFX[]) group) {
-          motor.set(speed);
-        }
-    } : () -> ((TalonFX) group).set(speed));
+    if (group instanceof TalonFX[]) {
+      return ((TalonFX[]) group);
+    } else {
+      TalonFX[] items = {(TalonFX) group};
+      return items;
+    }
   }
 
-  public void runShooterVel(AngularVelocity velocity) {
-    rightModule.setControl(m_velVolt.withVelocity(velocity));
-    leftModule .setControl(m_velVolt.withVelocity(velocity));
+  // Device control methods
+  public void runDevice(Device device, double speed) {
+    for (TalonFX d : getDevices(device)) {
+      d.set(speed);
+    }
+
+    if (speed == 0) {
+      active.remove(device);
+    } else {
+      active.add(device);
+    }
   }
 
-  public void runFeederVel(AngularVelocity velocity) {
-    feeder.setControl(m_velVolt.withVelocity(velocity));
+  public void runDeviceVelocity(Device device, AngularVelocity velocity) {
+    for (TalonFX d : getDevices(device)) {
+      d.setControl(m_velVolt.withVelocity(velocity));
+    }
+
+    if (velocity.in(RotationsPerSecond) == 0) {
+      active.remove(device);
+    } else {
+      active.add(device);
+    }
   }
 
-  public void runShooterVolts(Voltage voltage) {
-    rightModule.setControl(m_voltReq.withOutput(voltage.in(Volts)));
-    leftModule .setControl(m_voltReq.withOutput(voltage.in(Volts)));
+  public void runDeviceVoltage(Device device, Voltage voltage) {
+    for (TalonFX d : getDevices(device)) {
+      d.setControl(m_voltReq.withOutput(voltage.in(Volts)));
+    }
+
+    if (voltage.in(Volts) == 0) {
+      active.remove(device);
+    } else {
+      active.add(device);
+    }
   }
 
+  // Mechanism control commands
   public Command runMechanismVelocity(AngularVelocity feeder, AngularVelocity shooter) {
     return Commands.runOnce(
       () -> {
-        runShooterVel(shooter);
-        runFeederVel (feeder);
+        runDeviceVelocity(Device.BOTH,  shooter);
+        runDeviceVelocity(Device.FEEDER, feeder);
       });
   }
 
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutine.quasistatic(direction);
+    return m_sysIdRoutineRight.quasistatic(direction);
   }
 
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutine.dynamic(direction);
+    return m_sysIdRoutineRight.dynamic(direction);
   }
 }
