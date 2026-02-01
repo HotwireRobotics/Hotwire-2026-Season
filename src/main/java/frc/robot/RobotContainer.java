@@ -21,8 +21,14 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
+import frc.robot.subsystems.shooter.ShooterIO;
+import frc.robot.subsystems.shooter.ShooterIOSim;
+import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import java.util.ArrayList;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
@@ -77,8 +83,30 @@ public class RobotContainer {
         break;
     }
 
-    intake = new ProtoIntake();
-    shooter = new ProtoShooter();
+    // Intake: real hardware, sim, or empty IO for replay (inputs from log)
+    switch (Constants.currentMode) {
+      case REAL:
+        intake = new ProtoIntake(new IntakeIOTalonFX());
+        break;
+      case SIM:
+        intake = new ProtoIntake(new IntakeIOSim());
+        break;
+      default:
+        intake = new ProtoIntake(new IntakeIO() {});
+        break;
+    }
+    // Shooter: real hardware, sim, or empty IO for replay (inputs from log)
+    switch (Constants.currentMode) {
+      case REAL:
+        shooter = new ProtoShooter(new ShooterIOTalonFX());
+        break;
+      case SIM:
+        shooter = new ProtoShooter(new ShooterIOSim());
+        break;
+      default:
+        shooter = new ProtoShooter(new ShooterIO() {});
+        break;
+    }
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 

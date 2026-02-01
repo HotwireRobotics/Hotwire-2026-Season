@@ -1,46 +1,27 @@
 package frc.robot.subsystems.intake;
 
-import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.StatusSignal;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
-import frc.robot.subsystems.shooter.ProtoShooter.Device;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
 
-  private final TalonFX rollers;
-  // Cached status signals for one refreshAll() per cycle (efficient CAN usage)
-  private final StatusSignal<?> rollersVel, rollersVoltage, rollersCurrent, rollersTemp;
+  private final IntakeIO io;
+  private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
 
   public enum Device {
     ROLLERS
   }
 
-  public ProtoIntake() {
-    rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    defineDevice(Device.ROLLERS, rollers);
-
-    // Cache status signals for batched refresh (one CAN sync per cycle)
-    rollersVel = rollers.getVelocity();
-    rollersVoltage = rollers.getMotorVoltage();
-    rollersCurrent = rollers.getSupplyCurrent();
-    rollersTemp = rollers.getDeviceTemp();
+  public ProtoIntake(IntakeIO io) {
+    this.io = io;
   }
 
   private enum State {
     STOPPED,
-    INTAKING // Running rollers
+    INTAKING
   }
 
   State state = State.STOPPED;
@@ -51,16 +32,10 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   @Override
   public void periodic() {
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake", inputs);
+
     Logger.recordOutput("Intake/State", state.toString());
-
-    // One batched CAN refresh per cycle, then read cached values (efficient)
-    BaseStatusSignal.refreshAll(rollersVel, rollersVoltage, rollersCurrent, rollersTemp);
-
-    // Log velocity (rpm), voltage, current, temp with unit metadata
-    Logger.recordOutput("Intake/Rollers/Velocity", rollersVel.getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput("Intake/Rollers/Voltage", rollersVoltage.getValueAsDouble(), "V");
-    Logger.recordOutput("Intake/Rollers/Current", rollersCurrent.getValueAsDouble(), "A");
-    Logger.recordOutput("Intake/Rollers/Temperature", rollersTemp.getValueAsDouble(), "°C");
 
     if (isActiveDevice(Device.ROLLERS)) {
       state = State.INTAKING;
@@ -69,23 +44,19 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     }
   }
 
-  // Device control methods
+  /** Run the rollers at the given output (-1 to 1). */
   public void runDevice(Device device, double speed) {
-    for (TalonFX d : getDevices(device)) {
-      d.set(speed);
-    }
-
-    if (speed == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
+    if (device == Device.ROLLERS) {
+      io.setRollersOutput(speed);
+      if (speed == 0) {
+        specifyInactiveDevice(device);
+      } else {
+        specifyActiveDevice(device);
+      }
     }
   }
 
   public Command runMechanism(double speed) {
-    return Commands.run(
-      () -> {
-        runDevice(Device.ROLLERS, speed);
-      });
+    return Commands.run(() -> runDevice(Device.ROLLERS, speed));
   }
 }
