@@ -15,7 +15,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private final TalonFX rollers;
   // Cached status signals for one refreshAll() per cycle (efficient CAN usage)
-  private final StatusSignal<?> rollersVel, rollersVoltage, rollersCurrent, rollersTemp;
+  private final StatusSignal<?> rollersPos, rollersVel, rollersVoltage, rollersCurrent, rollersTemp;
 
   public enum Device {
     ROLLERS
@@ -26,6 +26,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     defineDevice(Device.ROLLERS, rollers);
 
     // Cache status signals for batched refresh (one CAN sync per cycle)
+    rollersPos = rollers.getPosition();
     rollersVel = rollers.getVelocity();
     rollersVoltage = rollers.getMotorVoltage();
     rollersCurrent = rollers.getSupplyCurrent();
@@ -48,9 +49,10 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     Logger.recordOutput("Intake/State", state.toString());
 
     // One batched CAN refresh per cycle, then read cached values (efficient)
-    BaseStatusSignal.refreshAll(rollersVel, rollersVoltage, rollersCurrent, rollersTemp);
+    BaseStatusSignal.refreshAll(rollersPos, rollersVel, rollersVoltage, rollersCurrent, rollersTemp);
 
-    // Log velocity (rpm), voltage, current, temp with unit metadata
+    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
+    Logger.recordOutput("Intake/Rollers/Position", rollersPos.getValueAsDouble(), "rot");
     Logger.recordOutput("Intake/Rollers/Velocity", rollersVel.getValueAsDouble() * 60, "rpm");
     Logger.recordOutput("Intake/Rollers/Voltage", rollersVoltage.getValueAsDouble(), "V");
     Logger.recordOutput("Intake/Rollers/Current", rollersCurrent.getValueAsDouble(), "A");
