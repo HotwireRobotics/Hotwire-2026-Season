@@ -1,20 +1,14 @@
 package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import frc.robot.subsystems.shooter.ProtoShooter.Device;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
@@ -84,8 +78,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public Command runMechanism(double speed) {
     return Commands.run(
-      () -> {
-        runDevice(Device.ROLLERS, speed);
-      });
+        () -> {
+          runDevice(Device.ROLLERS, speed);
+        });
   }
 }
