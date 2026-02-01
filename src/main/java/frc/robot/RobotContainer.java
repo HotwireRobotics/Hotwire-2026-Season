@@ -104,14 +104,16 @@ public class RobotContainer {
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
         "Shooter SysId (Quasistatic Forward)",
-        shooter.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
         "Shooter SysId (Quasistatic Reverse)",
-        shooter.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
-        "Shooter SysId (Dynamic Forward)", shooter.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        "Shooter SysId (Dynamic Forward)",
+        shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
-        "Shooter SysId (Dynamic Reverse)", shooter.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        "Shooter SysId (Dynamic Reverse)",
+        shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse));
 
     configureButtonBindings();
   }
@@ -187,15 +189,14 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .a()
-        .whileTrue(intake.runRollersConstantCommand(0.7))
-        .onFalse(intake.runRollersConstantCommand(0));
+        .whileTrue(intake.runMechanism(0.7))
+        .onFalse(intake.runMechanism(0.0));
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
             // Use range (1 < n ≤ 100) or (0 ≤ n ≤ 1)
-            shooter.runShooterAndFeeder(
-                (Math.abs(shooterPower) > 1) ? shooterPower / 100 : shooterPower))
-        .onFalse(shooter.runShooterAndFeeder(0));
+            shooter.runMechanism(shooterPower, shooterPower))
+        .onFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator
         .leftBumper()

@@ -3,57 +3,133 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoShooter extends SubsystemBase implements Systerface {
-  public TalonFX feeder;
-  public TalonFX shooter;
-  public TalonFX follower;
-  private final SysIdRoutine m_sysIdRoutine;
+public class ProtoShooter extends ModularSubsystem implements Systerface {
+  private final SysIdRoutine m_sysIdRoutineRight;
+  private final SysIdRoutine m_sysIdRoutineLeft;
   private final VoltageOut m_voltReq;
   private final VelocityVoltage m_velVolt;
+  private final ShooterModule rightModule;
+  private final ShooterModule leftModule;
+
+  // Cached status signals for one refreshAll() per cycle (efficient CAN usage)
+  private final StatusSignal<?> leftVel, leftVoltage, leftCurrent, leftTemp;
+  private final StatusSignal<?> rightVel, rightVoltage, rightCurrent, rightTemp;
+  private final StatusSignal<?> leftFollowerVel,
+      leftFollowerVoltage,
+      leftFollowerCurrent,
+      leftFollowerTemp;
+  private final StatusSignal<?> rightFollowerVel,
+      rightFollowerVoltage,
+      rightFollowerCurrent,
+      rightFollowerTemp;
+
+  public enum Device {
+    RIGHT_FEEDER,
+    RIGHT_SHOOTER,
+    LEFT_FEEDER,
+    LEFT_SHOOTER,
+    BOTH_FEEDER,
+    BOTH_SHOOTER
+  }
+
+  // private final HashMap<Device, Object> devices = new HashMap<Device, Object>();
+  // private List<Device> active = new ArrayList<Device>();
+
+  private class ShooterModule {
+
+    TalonFX shooter;
+    TalonFX feeder;
+
+    public ShooterModule(int deviceID, int followerID) {
+      shooter = new TalonFX(deviceID);
+      feeder = new TalonFX(followerID);
+    }
+
+    public void runModule(double speed) {
+      shooter.set(speed);
+    }
+
+    public void setControl(ControlRequest control) {
+      shooter.setControl(control);
+    }
+  }
 
   public ProtoShooter() {
-    feeder = new TalonFX(Constants.MotorIDs.s_feeder);
-    shooter = new TalonFX(Constants.MotorIDs.s_shooter);
-    follower = new TalonFX(Constants.MotorIDs.s_follower);
+
+    rightModule = new ShooterModule(Constants.MotorIDs.s_shooterR, Constants.MotorIDs.s_feederR);
+    leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feederL);
+
+    final TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
+    final TalonFX[] feeders = {leftModule.feeder, rightModule.feeder};
+
+    defineDevice(Device.RIGHT_FEEDER, rightModule.feeder);
+    defineDevice(Device.LEFT_FEEDER, rightModule.feeder);
+    defineDevice(Device.RIGHT_SHOOTER, rightModule.shooter);
+    defineDevice(Device.LEFT_SHOOTER, leftModule.shooter);
+    defineDevice(Device.BOTH_FEEDER, feeders);
+    defineDevice(Device.BOTH_SHOOTER, shooters);
+
     m_voltReq = new VoltageOut(0.0);
     m_velVolt = new VelocityVoltage(0.0);
 
-    // Follower motor for the shooter.
-    follower.setControl(new Follower(Constants.MotorIDs.s_shooter, MotorAlignmentValue.Opposed));
-
-    m_sysIdRoutine =
+    m_sysIdRoutineRight =
         new SysIdRoutine(
             new SysIdRoutine.Config(
                 null,
                 null,
                 null, // Use default config
-                (state) -> Logger.recordOutput("Shooter/SysIdTestState", state.toString())),
+                (state) -> Logger.recordOutput("Shooter/SysIdState/Right", state.toString())),
             new SysIdRoutine.Mechanism(
-                (voltage) -> this.runShooterVolts(voltage),
-                null, // No log consumer, since data is recorded by AdvantageKit
-                this));
+                (voltage) -> runDeviceVoltage(Device.RIGHT_SHOOTER, voltage), null, this));
+    m_sysIdRoutineLeft =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("Shooter/SysIdState/Left", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.LEFT_SHOOTER, voltage), null, this));
+
+    // Cache status signals for batched refresh (one CAN sync per cycle)
+    leftVel = leftModule.shooter.getVelocity();
+    leftVoltage = leftModule.shooter.getMotorVoltage();
+    leftCurrent = leftModule.shooter.getSupplyCurrent();
+    leftTemp = leftModule.shooter.getDeviceTemp();
+    rightVel = rightModule.shooter.getVelocity();
+    rightVoltage = rightModule.shooter.getMotorVoltage();
+    rightCurrent = rightModule.shooter.getSupplyCurrent();
+    rightTemp = rightModule.shooter.getDeviceTemp();
+    leftFollowerVel = leftModule.feeder.getVelocity();
+    leftFollowerVoltage = leftModule.feeder.getMotorVoltage();
+    leftFollowerCurrent = leftModule.feeder.getSupplyCurrent();
+    leftFollowerTemp = leftModule.feeder.getDeviceTemp();
+    rightFollowerVel = rightModule.feeder.getVelocity();
+    rightFollowerVoltage = rightModule.feeder.getMotorVoltage();
+    rightFollowerCurrent = rightModule.feeder.getSupplyCurrent();
+    rightFollowerTemp = rightModule.feeder.getDeviceTemp();
   }
 
   private enum State {
     STOPPED,
-    HALTED,
     SPINNING, // Running shooter
-    SHOOTING // Running shooter & feeder
+    FIRING // Running shooter & feeder
   }
 
   State state = State.STOPPED;
@@ -61,87 +137,134 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
   @Override
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
-    Logger.recordOutput("Shooter/Feeder/Velocity", feeder.getVelocity().getValue());
-    Logger.recordOutput("Shooter/Shooter/Velocity", shooter.getVelocity().getValue());
-    Logger.recordOutput("Shooter/Follower/Velocity", follower.getVelocity().getValue());
-    Logger.recordOutput("Shooter/Feeder/Current", feeder.getSupplyCurrent().getValue());
-    Logger.recordOutput("Shooter/Shooter/Current", shooter.getSupplyCurrent().getValue());
-    Logger.recordOutput("Shooter/Follower/Current", follower.getSupplyCurrent().getValue());
+
+    // One batched CAN refresh per cycle, then read cached values (efficient)
+    BaseStatusSignal.refreshAll(
+        leftVel,
+        leftVoltage,
+        leftCurrent,
+        leftTemp,
+        rightVel,
+        rightVoltage,
+        rightCurrent,
+        rightTemp,
+        leftFollowerVel,
+        leftFollowerVoltage,
+        leftFollowerCurrent,
+        leftFollowerTemp,
+        rightFollowerVel,
+        rightFollowerVoltage,
+        rightFollowerCurrent,
+        rightFollowerTemp);
+
+    // Log velocity (rpm), voltage, current, temp with unit metadata
+    Logger.recordOutput("Shooter/Left/Velocity", leftVel.getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput("Shooter/Left/Voltage", leftVoltage.getValueAsDouble(), "V");
+    Logger.recordOutput("Shooter/Left/Current", leftCurrent.getValueAsDouble(), "A");
+    Logger.recordOutput("Shooter/Left/Temperature", leftTemp.getValueAsDouble(), "°C");
+    Logger.recordOutput("Shooter/Right/Velocity", rightVel.getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput("Shooter/Right/Voltage", rightVoltage.getValueAsDouble(), "V");
+    Logger.recordOutput("Shooter/Right/Current", rightCurrent.getValueAsDouble(), "A");
+    Logger.recordOutput("Shooter/Right/Temperature", rightTemp.getValueAsDouble(), "°C");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Velocity", leftFollowerVel.getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Voltage", leftFollowerVoltage.getValueAsDouble(), "V");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Current", leftFollowerCurrent.getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Temperature", leftFollowerTemp.getValueAsDouble(), "°C");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Velocity", rightFollowerVel.getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Voltage", rightFollowerVoltage.getValueAsDouble(), "V");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Current", rightFollowerCurrent.getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Temperature", rightFollowerTemp.getValueAsDouble(), "°C");
+
+    if (isActiveDevice(Device.BOTH_SHOOTER)) {
+      if (isActiveDevice(Device.BOTH_FEEDER)) {
+        state = State.FIRING;
+      } else {
+        state = State.SPINNING;
+      }
+    } else {
+      state = State.STOPPED;
+    }
   }
 
   public Object getState() {
     return state;
   }
 
-  public Command runShooter(double speed) {
+  // Device control methods
+  public void runDevice(Device device, double speed) {
+    for (TalonFX d : getDevices(device)) {
+      d.set(speed);
+    }
+
+    if (speed == 0) {
+      specifyInactiveDevice(device);
+    } else {
+      specifyActiveDevice(device);
+    }
+  }
+
+  public void runDeviceVelocity(Device device, AngularVelocity velocity) {
+    for (TalonFX d : getDevices(device)) {
+      d.setControl(m_velVolt.withVelocity(velocity));
+    }
+
+    if (velocity.in(RotationsPerSecond) == 0) {
+      specifyInactiveDevice(device);
+    } else {
+      specifyActiveDevice(device);
+    }
+  }
+
+  public void runDeviceVoltage(Device device, Voltage voltage) {
+    for (TalonFX d : getDevices(device)) {
+      d.setControl(m_voltReq.withOutput(voltage.in(Volts)));
+    }
+
+    if (voltage.in(Volts) == 0) {
+      specifyInactiveDevice(device);
+    } else {
+      specifyActiveDevice(device);
+    }
+  }
+
+  // Mechanism control commands
+  public Command runMechanism(double feeder, double shooter) {
     return Commands.runOnce(
         () -> {
-          shooter.set(speed);
-          feeder.set(0);
-          if (speed > 0) {
-            state = State.SPINNING;
-          } else {
-            state = State.STOPPED;
-          }
+          runDevice(Device.BOTH_SHOOTER, shooter);
+          runDevice(Device.BOTH_FEEDER, feeder);
         });
   }
 
-  public void runShooterVel(AngularVelocity velocity) {
-    shooter.setControl(m_velVolt.withVelocity(velocity));
-    if (velocity.in(RotationsPerSecond) == 0.0) {
-      state = State.STOPPED;
-    } else {
-      state = State.SPINNING;
-    }
-    ;
-  }
-
-  public void runFeederVel(AngularVelocity velocity) {
-    feeder.setControl(m_velVolt.withVelocity(velocity));
-    if (velocity.in(RotationsPerSecond) == 0.0) {
-      state = State.STOPPED;
-    } else {
-      state = State.SPINNING;
-    }
-    ;
-  }
-
-  public void runShooterVolts(Voltage voltage) {
-    shooter.setControl(m_voltReq.withOutput(voltage.in(Volts)));
-    if (voltage.in(Volts) == 0.0) {
-      state = State.STOPPED;
-    } else {
-      state = State.SPINNING;
-    }
-    ;
-  }
-
-  public Command runShooterAndFeeder(AngularVelocity velocity) {
+  public Command runMechanismVelocity(AngularVelocity feeder, AngularVelocity shooter) {
     return Commands.runOnce(
         () -> {
-          runShooterVel(velocity);
-          runFeederVel(velocity);
+          runDeviceVelocity(Device.BOTH_SHOOTER, shooter);
+          runDeviceVelocity(Device.BOTH_FEEDER, feeder);
         });
   }
 
-  public Command runShooterAndFeeder(double speed) {
-    return Commands.runOnce(
-        () -> {
-          shooter.set(speed);
-          feeder.set(speed);
-          if (speed > 0) {
-            state = State.SHOOTING;
-          } else {
-            state = State.STOPPED;
-          }
-        });
+  public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineRight.quasistatic(direction);
   }
 
-  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutine.quasistatic(direction);
+  public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineRight.dynamic(direction);
   }
 
-  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutine.dynamic(direction);
+  public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.dynamic(direction);
   }
 }

@@ -1,4 +1,4 @@
-# This gitignore has been specially created by the WPILib team.
+# This gitignore has been specially created *buh* the WPILib team.
 # If you remove items from this file, intellisense might break.
 
 ### C++ ###
@@ -63,7 +63,7 @@ hs_err_pid*
 ### Linux ###
 *~
 
-# temporary files which can be created if a process still has a handle open of a deleted file
+# temporary files which can *buh* created if a process still has a handle open of a deleted file
 .fuse_hidden*
 
 # KDE directory preferences

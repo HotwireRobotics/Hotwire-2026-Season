@@ -1,28 +1,39 @@
 package frc.robot.subsystems.intake;
 
+import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import frc.robot.subsystems.shooter.ProtoShooter.Device;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoIntake extends SubsystemBase implements Systerface {
+public class ProtoIntake extends ModularSubsystem implements Systerface {
 
-  private TalonFX rollers;
+  private final TalonFX rollers;
+  // Cached status signals for one refreshAll() per cycle (efficient CAN usage)
+  private final StatusSignal<?> rollersVel, rollersVoltage, rollersCurrent, rollersTemp;
+
+  public enum Device {
+    ROLLERS
+  }
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    // follower = new TalonFX(Constants.MotorIDs.i_follower);
+    defineDevice(Device.ROLLERS, rollers);
 
-    // Follower motor for rollers.
-    // follower.setControl(new Follower(Constants.MotorIDs.i_rollers, MotorAlignmentValue.Aligned));
+    // Cache status signals for batched refresh (one CAN sync per cycle)
+    rollersVel = rollers.getVelocity();
+    rollersVoltage = rollers.getMotorVoltage();
+    rollersCurrent = rollers.getSupplyCurrent();
+    rollersTemp = rollers.getDeviceTemp();
   }
 
   private enum State {
     STOPPED,
-    HALTED,
     INTAKING // Running rollers
   }
 
@@ -35,40 +46,40 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
   @Override
   public void periodic() {
     Logger.recordOutput("Intake/State", state.toString());
-    Logger.recordOutput("Intake/RollersVelocity", rollers.getVelocity().getValue());
-    Logger.recordOutput("Intake/RollersCurrent", rollers.getSupplyCurrent().getValue());
+
+    // One batched CAN refresh per cycle, then read cached values (efficient)
+    BaseStatusSignal.refreshAll(rollersVel, rollersVoltage, rollersCurrent, rollersTemp);
+
+    // Log velocity (rpm), voltage, current, temp with unit metadata
+    Logger.recordOutput("Intake/Rollers/Velocity", rollersVel.getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput("Intake/Rollers/Voltage", rollersVoltage.getValueAsDouble(), "V");
+    Logger.recordOutput("Intake/Rollers/Current", rollersCurrent.getValueAsDouble(), "A");
+    Logger.recordOutput("Intake/Rollers/Temperature", rollersTemp.getValueAsDouble(), "°C");
+
+    if (isActiveDevice(Device.ROLLERS)) {
+      state = State.INTAKING;
+    } else {
+      state = State.STOPPED;
+    }
   }
 
-  public Command runRollersPercent(double speed) {
+  // Device control methods
+  public void runDevice(Device device, double speed) {
+    for (TalonFX d : getDevices(device)) {
+      d.set(speed);
+    }
+
+    if (speed == 0) {
+      specifyInactiveDevice(device);
+    } else {
+      specifyActiveDevice(device);
+    }
+  }
+
+  public Command runMechanism(double speed) {
     return Commands.run(
         () -> {
-          rollers.set(speed);
-        });
-  }
-
-  public void setRollers(double speed) {
-    rollers.set(speed);
-  }
-
-  public void setVoltage(double volt) {
-    rollers.setVoltage(volt);
-  }
-
-  public Command setVoltageCommand(double volt) {
-    return Commands.run(
-        () -> {
-          rollers.setVoltage(volt);
-        });
-  }
-
-  public void stopRollers() {
-    rollers.set(0);
-  }
-
-  public Command stopRollersCommand() {
-    return Commands.run(
-        () -> {
-          rollers.set(0);
+          runDevice(Device.ROLLERS, speed);
         });
   }
 }

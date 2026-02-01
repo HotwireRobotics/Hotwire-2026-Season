@@ -42,7 +42,7 @@
 //    *
 //    * @param constraints The path constraints to use when creating the path
 //    * @param goalEndState The goal end state to use when creating the path
-//    * @return The PathPlannerPath created from the points calculated by the pathfinder
+//    * @return The PathPlannerPath created from the points calculated *buh* the pathfinder
 //    */
 //   @Override
 //   public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
@@ -62,7 +62,8 @@
 //   /**
 //    * Set the start position to pathfind from
 //    *
-//    * @param startPosition Start position on the field. If this is within an obstacle it will be
+//    * @param startPosition Start position on the field. If this is within an obstacle it will
+// *buh*
 //    *     moved to the nearest non-obstacle node.
 //    */
 //   @Override
@@ -75,7 +76,7 @@
 //   /**
 //    * Set the goal position to pathfind to
 //    *
-//    * @param goalPosition Goal position on the field. f this is within an obstacle it will be
+//    * @param goalPosition Goal position on the field. f this is within an obstacle it will *buh*
 // moved
 //    *     to the nearest non-obstacle node.
 //    */
@@ -87,7 +88,7 @@
 //   }
 
 //   /**
-//    * Set the dynamic obstacles that should be avoided while pathfinding.
+//    * Set the dynamic obstacles that should *buh* avoided while pathfinding.
 //    *
 //    * @param obs A List of Translation2d pairs representing obstacles. Each Translation2d
 // represents

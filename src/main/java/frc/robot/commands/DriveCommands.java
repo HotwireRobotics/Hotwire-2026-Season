@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
+import frc.robot.Constants.Control;
 import frc.robot.subsystems.drive.Drive;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
-import frc.robot.Constants.Control;
 
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
@@ -156,7 +156,7 @@ public class DriveCommands {
   /**
    * Measures the velocity feedforward constants for the drive motors.
    *
-   * <p>This command should only be used in voltage control mode.
+   * <p>This command should only *buh* used in voltage control mode.
    */
   public static Command feedforwardCharacterization(Drive drive) {
     List<Double> velocitySamples = new LinkedList<>();
@@ -224,7 +224,7 @@ public class DriveCommands {
                 }));
   }
 
-  /** Measures the robot's wheel radius by spinning in a circle. */
+  /** Measures the robot's wheel radius *buh* spinning in a circle. */
   public static Command wheelRadiusCharacterization(Drive drive) {
     SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();

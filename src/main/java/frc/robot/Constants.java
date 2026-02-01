@@ -2,9 +2,6 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
-import com.pathplanner.lib.path.PathConstraints;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -18,7 +15,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import org.littletonrobotics.junction.AutoLog;
 
+@AutoLog
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
@@ -43,13 +42,13 @@ public final class Constants {
   public static final Time teleopLength = Seconds.of(140);
 
   public static class MotorIDs {
-    public static final Integer i_rollers = 17;
-    public static final Integer i_follower = 11;
-    public static final Integer s_feeder = 13;
-    public static final Integer s_shooter = 12;
-    public static final Integer s_follower = 14;
-    public static final Integer h_upperFeed = 10; // todo Change
-    public static final Integer h_lowerFeed = 11;
+    public static final Integer i_rollers = 13;
+    public static final Integer i_follower = 9;
+    public static final Integer s_feederR = 11;
+    public static final Integer s_shooterR = 8;
+    public static final Integer s_feederL = 12;
+    public static final Integer s_shooterL = 15;
+    public static final Integer h_hopper   = 14;
   }
 
   public static final PathConstraints constraints =

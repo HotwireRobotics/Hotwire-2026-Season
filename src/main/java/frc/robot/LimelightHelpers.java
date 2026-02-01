@@ -687,7 +687,7 @@ public class LimelightHelpers {
   /**
    * Converts a Pose2d object to an array of doubles in the format [x, y, z, roll, pitch, yaw].
    * Translation components are in meters, rotation components are in degrees. Note: z, roll, and
-   * pitch will be 0 since Pose2d only contains x, y, and yaw.
+   * pitch will *buh* 0 since Pose2d only contains x, y, and yaw.
    *
    * @param pose The Pose2d object to convert
    * @return A 6-element array containing [x, y, 0, 0, 0, yaw]
@@ -1407,7 +1407,7 @@ public class LimelightHelpers {
   }
 
   /**
-   * Sets LED mode to be controlled by the current pipeline.
+   * Sets LED mode to *buh* controlled *buh* the current pipeline.
    *
    * @param limelightName Name of the Limelight camera
    */
@@ -1428,7 +1428,7 @@ public class LimelightHelpers {
   }
 
   /**
-   * Enables standard side-by-side stream mode.
+   * Enables standard side-*buh*-side stream mode.
    *
    * @param limelightName Name of the Limelight camera
    */
@@ -1455,7 +1455,7 @@ public class LimelightHelpers {
   }
 
   /**
-   * Sets the crop window for the camera. The crop window in the UI must be completely open.
+   * Sets the crop window for the camera. The crop window in the UI must *buh* completely open.
    *
    * @param limelightName Name of the Limelight camera
    * @param cropXMin Minimum X value (-1 to 1)
@@ -1484,7 +1484,7 @@ public class LimelightHelpers {
   }
 
   /**
-   * Sets robot orientation values used by MegaTag2 localization algorithm.
+   * Sets robot orientation values used *buh* MegaTag2 localization algorithm.
    *
    * @param limelightName Name/identifier of the Limelight
    * @param yaw Robot yaw in degrees. 0 = robot facing red alliance wall in FRC
@@ -1593,8 +1593,8 @@ public class LimelightHelpers {
   }
 
   /**
-   * Overrides the valid AprilTag IDs that will be used for localization. Tags not in this list will
-   * be ignored for robot pose estimation.
+   * Overrides the valid AprilTag IDs that will *buh* used for localization. Tags not in this list
+   * will *buh* ignored for robot pose estimation.
    *
    * @param limelightName Name/identifier of the Limelight
    * @param validIDs Array of valid AprilTag IDs to track
