@@ -21,6 +21,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class RobotContainer {
   public final Drive drive;
   public final ProtoIntake intake;
   public final ProtoShooter shooter;
+  public final HopperSubsystem hopper;
   public double feederVelocity = 0;
   public double shooterVelocity = 0;
   public double shooterPower = 0;
@@ -79,6 +81,7 @@ public class RobotContainer {
 
     intake = new ProtoIntake();
     shooter = new ProtoShooter();
+    hopper = new HopperSubsystem();
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
@@ -184,8 +187,8 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .a()
-        .whileTrue(intake.runRollersPercent(0.7))
-        .onFalse(intake.runRollersPercent(0.0));
+        .whileTrue(intake.runRollersConstantCommand(0.7))
+        .onFalse(intake.runRollersConstantCommand(0));
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
@@ -194,14 +197,14 @@ public class RobotContainer {
                 (Math.abs(shooterPower) > 1) ? shooterPower / 100 : shooterPower))
         .onFalse(shooter.runShooterAndFeeder(0));
 
-    List<Pose2d> towerPoses = new ArrayList<Pose2d>();
-    towerPoses.add(
-        Constants.Poses.tower.transformBy(
-            new Transform2d(Meters.of(0.5), Meters.of(0), Rotation2d.kZero)));
-    towerPoses.add(Constants.Poses.tower);
-    Constants.Joysticks.driver
-        .povUp()
-        .whileTrue(DriveCommands.pathfind(drive, towerPoses, Constants.constraints));
+    Constants.Joysticks.operator
+        .leftBumper()
+        .whileTrue(hopper.runHopper(0.9))
+        .onFalse(hopper.runHopper(0));
+
+    // Constants.Joysticks.driver
+    //     .back()
+    //     .onTrue(Commands.runOnce(() -> ));
   }
 
   public Command getAutonomousCommand() {

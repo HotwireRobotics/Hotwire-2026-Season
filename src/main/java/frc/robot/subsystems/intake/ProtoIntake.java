@@ -14,6 +14,10 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
+    // follower = new TalonFX(Constants.MotorIDs.i_follower);
+
+    // Follower motor for rollers.
+    // follower.setControl(new Follower(Constants.MotorIDs.i_rollers, MotorAlignmentValue.Aligned));
   }
 
   private enum State {
@@ -49,7 +53,8 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
   public void setVoltage(double volt) {
     rollers.setVoltage(volt);
   }
-  public Command runRollersVoltage(double volt) {
+
+  public Command setVoltageCommand(double volt) {
     return Commands.run(
         () -> {
           rollers.setVoltage(volt);
