@@ -28,13 +28,15 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final ShooterModule leftModule;
 
   // Cached status signals for one refreshAll() per cycle (efficient CAN usage)
-  private final StatusSignal<?> leftVel, leftVoltage, leftCurrent, leftTemp;
-  private final StatusSignal<?> rightVel, rightVoltage, rightCurrent, rightTemp;
-  private final StatusSignal<?> leftFollowerVel,
+  private final StatusSignal<?> leftPos, leftVel, leftVoltage, leftCurrent, leftTemp;
+  private final StatusSignal<?> rightPos, rightVel, rightVoltage, rightCurrent, rightTemp;
+  private final StatusSignal<?> leftFollowerPos,
+      leftFollowerVel,
       leftFollowerVoltage,
       leftFollowerCurrent,
       leftFollowerTemp;
-  private final StatusSignal<?> rightFollowerVel,
+  private final StatusSignal<?> rightFollowerPos,
+      rightFollowerVel,
       rightFollowerVoltage,
       rightFollowerCurrent,
       rightFollowerTemp;
@@ -108,18 +110,22 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
                 (voltage) -> runDeviceVoltage(Device.LEFT_SHOOTER, voltage), null, this));
 
     // Cache status signals for batched refresh (one CAN sync per cycle)
+    leftPos = leftModule.shooter.getPosition();
     leftVel = leftModule.shooter.getVelocity();
     leftVoltage = leftModule.shooter.getMotorVoltage();
     leftCurrent = leftModule.shooter.getSupplyCurrent();
     leftTemp = leftModule.shooter.getDeviceTemp();
+    rightPos = rightModule.shooter.getPosition();
     rightVel = rightModule.shooter.getVelocity();
     rightVoltage = rightModule.shooter.getMotorVoltage();
     rightCurrent = rightModule.shooter.getSupplyCurrent();
     rightTemp = rightModule.shooter.getDeviceTemp();
+    leftFollowerPos = leftModule.feeder.getPosition();
     leftFollowerVel = leftModule.feeder.getVelocity();
     leftFollowerVoltage = leftModule.feeder.getMotorVoltage();
     leftFollowerCurrent = leftModule.feeder.getSupplyCurrent();
     leftFollowerTemp = leftModule.feeder.getDeviceTemp();
+    rightFollowerPos = rightModule.feeder.getPosition();
     rightFollowerVel = rightModule.feeder.getVelocity();
     rightFollowerVoltage = rightModule.feeder.getMotorVoltage();
     rightFollowerCurrent = rightModule.feeder.getSupplyCurrent();
@@ -140,32 +146,40 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 
     // One batched CAN refresh per cycle, then read cached values (efficient)
     BaseStatusSignal.refreshAll(
+        leftPos,
         leftVel,
         leftVoltage,
         leftCurrent,
         leftTemp,
+        rightPos,
         rightVel,
         rightVoltage,
         rightCurrent,
         rightTemp,
+        leftFollowerPos,
         leftFollowerVel,
         leftFollowerVoltage,
         leftFollowerCurrent,
         leftFollowerTemp,
+        rightFollowerPos,
         rightFollowerVel,
         rightFollowerVoltage,
         rightFollowerCurrent,
         rightFollowerTemp);
 
-    // Log velocity (rpm), voltage, current, temp with unit metadata
+    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
+    Logger.recordOutput("Shooter/Left/Position", leftPos.getValueAsDouble(), "rot");
     Logger.recordOutput("Shooter/Left/Velocity", leftVel.getValueAsDouble() * 60, "rpm");
     Logger.recordOutput("Shooter/Left/Voltage", leftVoltage.getValueAsDouble(), "V");
     Logger.recordOutput("Shooter/Left/Current", leftCurrent.getValueAsDouble(), "A");
     Logger.recordOutput("Shooter/Left/Temperature", leftTemp.getValueAsDouble(), "°C");
+    Logger.recordOutput("Shooter/Right/Position", rightPos.getValueAsDouble(), "rot");
     Logger.recordOutput("Shooter/Right/Velocity", rightVel.getValueAsDouble() * 60, "rpm");
     Logger.recordOutput("Shooter/Right/Voltage", rightVoltage.getValueAsDouble(), "V");
     Logger.recordOutput("Shooter/Right/Current", rightCurrent.getValueAsDouble(), "A");
     Logger.recordOutput("Shooter/Right/Temperature", rightTemp.getValueAsDouble(), "°C");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Position", leftFollowerPos.getValueAsDouble(), "rot");
     Logger.recordOutput(
         "Shooter/LeftFollower/Velocity", leftFollowerVel.getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
@@ -174,6 +188,8 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         "Shooter/LeftFollower/Current", leftFollowerCurrent.getValueAsDouble(), "A");
     Logger.recordOutput(
         "Shooter/LeftFollower/Temperature", leftFollowerTemp.getValueAsDouble(), "°C");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Position", rightFollowerPos.getValueAsDouble(), "rot");
     Logger.recordOutput(
         "Shooter/RightFollower/Velocity", rightFollowerVel.getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
