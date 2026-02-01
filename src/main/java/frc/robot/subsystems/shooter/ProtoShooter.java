@@ -16,13 +16,14 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoShooter extends SubsystemBase implements Systerface {
+public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final TalonFX feeder;
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_SysIdRoutineLeft;
@@ -38,8 +39,8 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     BOTH
   }
 
-  private final HashMap<Device, Object> devices = new HashMap<Device, Object>();
-  private List<Device> active = new ArrayList<Device>();
+  // private final HashMap<Device, Object> devices = new HashMap<Device, Object>();
+  // private List<Device> active = new ArrayList<Device>();
 
   private class ShooterModule {
 
@@ -70,10 +71,10 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
 
     TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
 
-    devices.put(Device.FEEDER, feeder);
-    devices.put(Device.RIGHT, rightModule.shooter);
-    devices.put(Device.LEFT, leftModule.shooter);
-    devices.put(Device.BOTH, shooters);
+    defineDevice(Device.FEEDER, feeder);
+    defineDevice(Device.RIGHT, rightModule.shooter);
+    defineDevice(Device.LEFT, leftModule.shooter);
+    defineDevice(Device.BOTH, shooters);
 
     m_voltReq = new VoltageOut(0.0);
     m_velVolt = new VelocityVoltage(0.0);
@@ -117,10 +118,10 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     // Logger.recordOutput("Shooter/Shooter/Current", shooter.getSupplyCurrent().getValue());
     // Logger.recordOutput("Shooter/Follower/Current", follower.getSupplyCurrent().getValue());
 
-    if (active.contains(Device.LEFT)
-        || active.contains(Device.BOTH)
-        || active.contains(Device.RIGHT)) {
-      if (active.contains(Device.FEEDER)) {
+    if (isActiveDevice(Device.LEFT)
+        || isActiveDevice(Device.BOTH)
+        || isActiveDevice(Device.RIGHT)) {
+      if (isActiveDevice(Device.FEEDER)) {
         state = State.FIRING;
       } else {
         state = State.SPINNING;
@@ -132,16 +133,6 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     return state;
   }
 
-  private TalonFX[] getDevices(Device device) {
-    Object group = devices.get(device);
-    if (group instanceof TalonFX[]) {
-      return ((TalonFX[]) group);
-    } else {
-      TalonFX[] items = {(TalonFX) group};
-      return items;
-    }
-  }
-
   // Device control methods
   public void runDevice(Device device, double speed) {
     for (TalonFX d : getDevices(device)) {
@@ -149,9 +140,9 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     }
 
     if (speed == 0) {
-      active.remove(device);
+      specifyInactiveDevice(device);
     } else {
-      active.add(device);
+      specifyActiveDevice(device);
     }
   }
 
@@ -161,9 +152,9 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     }
 
     if (velocity.in(RotationsPerSecond) == 0) {
-      active.remove(device);
+      specifyInactiveDevice(device);
     } else {
-      active.add(device);
+      specifyActiveDevice(device);
     }
   }
 
@@ -173,27 +164,27 @@ public class ProtoShooter extends SubsystemBase implements Systerface {
     }
 
     if (voltage.in(Volts) == 0) {
-      active.remove(device);
+      specifyInactiveDevice(device);
     } else {
-      active.add(device);
+      specifyActiveDevice(device);
     }
   }
 
   // Mechanism control commands
   public Command runMechanism(double feeder, double shooter) {
     return Commands.runOnce(
-        () -> {
-          runDevice(Device.BOTH, shooter);
-          runDevice(Device.FEEDER, feeder);
-        });
+      () -> {
+        runDevice(Device.BOTH, shooter);
+        runDevice(Device.FEEDER, feeder);
+      });
   }
 
   public Command runMechanismVelocity(AngularVelocity feeder, AngularVelocity shooter) {
     return Commands.runOnce(
-        () -> {
-          runDeviceVelocity(Device.BOTH, shooter);
-          runDeviceVelocity(Device.FEEDER, feeder);
-        });
+      () -> {
+        runDeviceVelocity(Device.BOTH, shooter);
+        runDeviceVelocity(Device.FEEDER, feeder);
+      });
   }
   
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
