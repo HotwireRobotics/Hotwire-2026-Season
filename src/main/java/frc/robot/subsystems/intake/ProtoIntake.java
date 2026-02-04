@@ -49,7 +49,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     Logger.recordOutput("Intake/State", state.toString());
 
     // One batched CAN refresh per cycle, then read cached values (efficient)
-    BaseStatusSignal.refreshAll(rollersPos, rollersVel, rollersVoltage, rollersCurrent, rollersTemp);
+    BaseStatusSignal.refreshAll(
+        rollersPos, rollersVel, rollersVoltage, rollersCurrent, rollersTemp);
 
     // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
     Logger.recordOutput("Intake/Rollers/Position", rollersPos.getValueAsDouble(), "rot");

@@ -6,7 +6,6 @@ import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -24,8 +23,6 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
-import java.util.ArrayList;
-import java.util.List;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -88,31 +85,43 @@ public class RobotContainer {
     SmartDashboard.putNumber("Feeder Velocity", feederVelocity);
     SmartDashboard.putNumber("Shooter Velocity", shooterVelocity);
 
+    // autoChooser.addOption(
+    //     "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+    // autoChooser.addOption(
+    //     "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    // autoChooser.addOption(
+    //     "Drive SysId (Quasistatic Forward)",
+    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Drive SysId (Quasistatic Reverse)",
+    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    // autoChooser.addOption(
+    //     "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
-        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-    autoChooser.addOption(
-        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Shooter SysId (Quasistatic Forward)",
+        "Right Shooter SysId (Quasistatic Forward)",
         shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
-        "Shooter SysId (Quasistatic Reverse)",
+        "Right Shooter SysId (Quasistatic Reverse)",
         shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
-        "Shooter SysId (Dynamic Forward)",
+        "Left Shooter SysId (Quasistatic Forward)",
+        shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Left Shooter SysId (Quasistatic Reverse)",
+        shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Right Shooter SysId (Dynamic Forward)",
+        shooter.sysIdDynamicRight(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Right Shooter SysId (Dynamic Reverse)",
+        shooter.sysIdDynamicRight(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Left Shooter SysId (Dynamic Forward)",
         shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
-        "Shooter SysId (Dynamic Reverse)",
+        "Left Shooter SysId (Dynamic Reverse)",
         shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse));
 
     configureButtonBindings();
@@ -195,7 +204,7 @@ public class RobotContainer {
         .rightBumper()
         .whileTrue(
             // Use range (1 < n ≤ 100) or (0 ≤ n ≤ 1)
-            shooter.runMechanism(shooterPower, shooterPower))
+            shooter.runMechanism(0.3, 0.3))
         .onFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator
