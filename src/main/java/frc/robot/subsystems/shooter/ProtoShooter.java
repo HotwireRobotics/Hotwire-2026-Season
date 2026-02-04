@@ -3,8 +3,6 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -26,20 +24,6 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final VelocityVoltage m_velVolt;
   private final ShooterModule rightModule;
   private final ShooterModule leftModule;
-
-  // Cached status signals for one refreshAll() per cycle (efficient CAN usage)
-  private final StatusSignal<?> leftPos, leftVel, leftVoltage, leftCurrent, leftTemp;
-  private final StatusSignal<?> rightPos, rightVel, rightVoltage, rightCurrent, rightTemp;
-  private final StatusSignal<?> leftFollowerPos,
-      leftFollowerVel,
-      leftFollowerVoltage,
-      leftFollowerCurrent,
-      leftFollowerTemp;
-  private final StatusSignal<?> rightFollowerPos,
-      rightFollowerVel,
-      rightFollowerVoltage,
-      rightFollowerCurrent,
-      rightFollowerTemp;
 
   public enum Device {
     RIGHT_FEEDER,
@@ -108,28 +92,6 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
                 (state) -> Logger.recordOutput("Shooter/SysIdState/Left", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.LEFT_SHOOTER, voltage), null, this));
-
-    // Cache status signals for batched refresh (one CAN sync per cycle)
-    leftPos = leftModule.shooter.getPosition();
-    leftVel = leftModule.shooter.getVelocity();
-    leftVoltage = leftModule.shooter.getMotorVoltage();
-    leftCurrent = leftModule.shooter.getSupplyCurrent();
-    leftTemp = leftModule.shooter.getDeviceTemp();
-    rightPos = rightModule.shooter.getPosition();
-    rightVel = rightModule.shooter.getVelocity();
-    rightVoltage = rightModule.shooter.getMotorVoltage();
-    rightCurrent = rightModule.shooter.getSupplyCurrent();
-    rightTemp = rightModule.shooter.getDeviceTemp();
-    leftFollowerPos = leftModule.feeder.getPosition();
-    leftFollowerVel = leftModule.feeder.getVelocity();
-    leftFollowerVoltage = leftModule.feeder.getMotorVoltage();
-    leftFollowerCurrent = leftModule.feeder.getSupplyCurrent();
-    leftFollowerTemp = leftModule.feeder.getDeviceTemp();
-    rightFollowerPos = rightModule.feeder.getPosition();
-    rightFollowerVel = rightModule.feeder.getVelocity();
-    rightFollowerVoltage = rightModule.feeder.getMotorVoltage();
-    rightFollowerCurrent = rightModule.feeder.getSupplyCurrent();
-    rightFollowerTemp = rightModule.feeder.getDeviceTemp();
   }
 
   private enum State {
@@ -144,59 +106,67 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
 
-    // One batched CAN refresh per cycle, then read cached values (efficient)
-    BaseStatusSignal.refreshAll(
-        leftPos,
-        leftVel,
-        leftVoltage,
-        leftCurrent,
-        leftTemp,
-        rightPos,
-        rightVel,
-        rightVoltage,
-        rightCurrent,
-        rightTemp,
-        leftFollowerPos,
-        leftFollowerVel,
-        leftFollowerVoltage,
-        leftFollowerCurrent,
-        leftFollowerTemp,
-        rightFollowerPos,
-        rightFollowerVel,
-        rightFollowerVoltage,
-        rightFollowerCurrent,
-        rightFollowerTemp);
-
     // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
-    Logger.recordOutput("Shooter/Left/Position", leftPos.getValueAsDouble(), "rot");
-    Logger.recordOutput("Shooter/Left/Velocity", leftVel.getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput("Shooter/Left/Voltage", leftVoltage.getValueAsDouble(), "V");
-    Logger.recordOutput("Shooter/Left/Current", leftCurrent.getValueAsDouble(), "A");
-    Logger.recordOutput("Shooter/Left/Temperature", leftTemp.getValueAsDouble(), "°C");
-    Logger.recordOutput("Shooter/Right/Position", rightPos.getValueAsDouble(), "rot");
-    Logger.recordOutput("Shooter/Right/Velocity", rightVel.getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput("Shooter/Right/Voltage", rightVoltage.getValueAsDouble(), "V");
-    Logger.recordOutput("Shooter/Right/Current", rightCurrent.getValueAsDouble(), "A");
-    Logger.recordOutput("Shooter/Right/Temperature", rightTemp.getValueAsDouble(), "°C");
-    Logger.recordOutput("Shooter/LeftFollower/Position", leftFollowerPos.getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Velocity", leftFollowerVel.getValueAsDouble() * 60, "rpm");
+        "Shooter/Left/Position", leftModule.shooter.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Voltage", leftFollowerVoltage.getValueAsDouble(), "V");
+        "Shooter/Left/Velocity", leftModule.shooter.getVelocity().getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Current", leftFollowerCurrent.getValueAsDouble(), "A");
+        "Shooter/Left/Voltage", leftModule.shooter.getMotorVoltage().getValueAsDouble(), "V");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Temperature", leftFollowerTemp.getValueAsDouble(), "°C");
+        "Shooter/Left/Current", leftModule.shooter.getSupplyCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
-        "Shooter/RightFollower/Position", rightFollowerPos.getValueAsDouble(), "rot");
+        "Shooter/Left/Temperature", leftModule.shooter.getDeviceTemp().getValueAsDouble(), "°C");
     Logger.recordOutput(
-        "Shooter/RightFollower/Velocity", rightFollowerVel.getValueAsDouble() * 60, "rpm");
+        "Shooter/Right/Position", rightModule.shooter.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Shooter/RightFollower/Voltage", rightFollowerVoltage.getValueAsDouble(), "V");
+        "Shooter/Right/Velocity", rightModule.shooter.getVelocity().getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
-        "Shooter/RightFollower/Current", rightFollowerCurrent.getValueAsDouble(), "A");
+        "Shooter/Right/Voltage", rightModule.shooter.getMotorVoltage().getValueAsDouble(), "V");
     Logger.recordOutput(
-        "Shooter/RightFollower/Temperature", rightFollowerTemp.getValueAsDouble(), "°C");
+        "Shooter/Right/Current", rightModule.shooter.getSupplyCurrent().getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Shooter/Right/Temperature", rightModule.shooter.getDeviceTemp().getValueAsDouble(), "°C");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Position",
+        leftModule.feeder.getPosition().getValueAsDouble(),
+        "rot");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Velocity",
+        leftModule.feeder.getVelocity().getValueAsDouble() * 60,
+        "rpm");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Voltage",
+        leftModule.feeder.getMotorVoltage().getValueAsDouble(),
+        "V");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Current",
+        leftModule.feeder.getSupplyCurrent().getValueAsDouble(),
+        "A");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Temperature",
+        leftModule.feeder.getDeviceTemp().getValueAsDouble(),
+        "°C");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Position",
+        rightModule.feeder.getPosition().getValueAsDouble(),
+        "rot");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Velocity",
+        rightModule.feeder.getVelocity().getValueAsDouble() * 60,
+        "rpm");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Voltage",
+        rightModule.feeder.getMotorVoltage().getValueAsDouble(),
+        "V");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Current",
+        rightModule.feeder.getSupplyCurrent().getValueAsDouble(),
+        "A");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Temperature",
+        rightModule.feeder.getDeviceTemp().getValueAsDouble(),
+        "°C");
 
     if (isActiveDevice(Device.BOTH_SHOOTER)) {
       if (isActiveDevice(Device.BOTH_FEEDER)) {
