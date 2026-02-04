@@ -12,14 +12,17 @@ import org.littletonrobotics.junction.Logger;
 public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private final TalonFX rollers;
+  private final TalonFX lower;
 
   public enum Device {
-    ROLLERS
+    ROLLERS, LOWER
   }
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
+    lower =   new TalonFX(Constants.MotorIDs.i_follower);
     defineDevice(Device.ROLLERS, rollers);
+    defineDevice(Device.LOWER, lower);
   }
 
   private enum State {
@@ -72,6 +75,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
+          runDevice(Device.LOWER,   speed);
         });
   }
 }

@@ -128,9 +128,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     Logger.recordOutput(
         "Shooter/Right/Temperature", rightModule.shooter.getDeviceTemp().getValueAsDouble(), "°C");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Position",
-        leftModule.feeder.getPosition().getValueAsDouble(),
-        "rot");
+        "Shooter/LeftFollower/Position", leftModule.feeder.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
         "Shooter/LeftFollower/Velocity",
         leftModule.feeder.getVelocity().getValueAsDouble() * 60,
