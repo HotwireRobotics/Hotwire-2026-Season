@@ -15,8 +15,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import org.littletonrobotics.junction.AutoLog;
 
-// @AutoLog
+@AutoLog
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
@@ -47,8 +48,7 @@ public final class Constants {
     public static final Integer s_shooterR = 8;
     public static final Integer s_feederL = 12;
     public static final Integer s_shooterL = 15;
-    public static final Integer h_upperFeed = 14;
-    public static final Integer h_lowerFeed = 17;
+    public static final Integer h_hopper   = 14;
   }
 
   public static final PathConstraints constraints =
@@ -64,7 +64,7 @@ public final class Constants {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
-  }
+  } // 1:3 gear ratio for the top rollers
 
   public static class Poses {
     // X: 14.916m, Y: 3.875m
