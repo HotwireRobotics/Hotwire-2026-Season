@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -15,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoShooter extends ModularSubsystem implements Systerface {
@@ -24,6 +26,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final VelocityVoltage m_velVolt;
   private final ShooterModule rightModule;
   private final ShooterModule leftModule;
+  private final Slot0Configs shooterRPSControl;
 
   public enum Device {
     RIGHT_FEEDER,
@@ -49,6 +52,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 
     public void runModule(double speed) {
       shooter.set(speed);
+      feeder.set(speed);
     }
 
     public void setControl(ControlRequest control) {
@@ -60,6 +64,11 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 
     rightModule = new ShooterModule(Constants.MotorIDs.s_shooterR, Constants.MotorIDs.s_feederR);
     leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feederL);
+
+    shooterRPSControl = new Slot0Configs();
+    shooterRPSControl.kV = 0.11451;
+    shooterRPSControl.kS = 0.19361;
+    // shooterRPSControl.kA = 0.0072326;
 
     final TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
     final TalonFX[] feeders = {leftModule.feeder, rightModule.feeder};
@@ -92,6 +101,14 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
                 (state) -> Logger.recordOutput("Shooter/SysIdState/Left", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.LEFT_SHOOTER, voltage), null, this));
+
+    // for (TalonFX motor : getDevices(shooters)) {
+    //   motor.getConfigurator().apply(shooterRPSControl);
+    // }
+    rightModule.shooter.getConfigurator().apply(shooterRPSControl);
+    leftModule.shooter.getConfigurator().apply(shooterRPSControl);
+    rightModule.feeder.getConfigurator().apply(shooterRPSControl);
+    leftModule.feeder.getConfigurator().apply(shooterRPSControl);
   }
 
   private enum State {
@@ -232,6 +249,15 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         () -> {
           runDeviceVelocity(Device.BOTH_SHOOTER, shooter);
           runDeviceVelocity(Device.BOTH_FEEDER, feeder);
+        });
+  }
+
+  public Command runMechanismVelocity(
+      Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
+    return Commands.runOnce(
+        () -> {
+          runDeviceVelocity(Device.BOTH_SHOOTER, shooter.get());
+          runDeviceVelocity(Device.BOTH_FEEDER, feeder.get());
         });
   }
 

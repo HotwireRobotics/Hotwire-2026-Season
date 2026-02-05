@@ -199,18 +199,18 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .a()
         .whileTrue(intake.runMechanism(0.7))
-        .onFalse(intake.runMechanism(0.0));
+        .whileFalse(intake.runMechanism(0.0));
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
             // Use range (1 < n ≤ 100) or (0 ≤ n ≤ 1)
-            shooter.runMechanism(0.3, 0.3))
-        .onFalse(shooter.runMechanism(0, 0));
+            shooter.runMechanismVelocity(() -> Constants.regress(), () -> Constants.regress()))
+        .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator
         .leftBumper()
         .whileTrue(hopper.runHopper(0.9))
-        .onFalse(hopper.runHopper(0));
+        .whileFalse(hopper.runHopper(0));
 
     // Constants.Joysticks.driver
     //     .back()

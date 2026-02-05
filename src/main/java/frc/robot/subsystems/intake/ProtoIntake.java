@@ -15,12 +15,13 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   private final TalonFX lower;
 
   public enum Device {
-    ROLLERS, LOWER
+    ROLLERS,
+    LOWER
   }
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    lower =   new TalonFX(Constants.MotorIDs.i_follower);
+    lower = new TalonFX(Constants.MotorIDs.i_follower);
     defineDevice(Device.ROLLERS, rollers);
     defineDevice(Device.LOWER, lower);
   }
@@ -75,7 +76,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
-          runDevice(Device.LOWER,   speed);
+          runDevice(Device.LOWER, speed);
         });
   }
 }
