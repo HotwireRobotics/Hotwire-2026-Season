@@ -5,15 +5,40 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Collect from Outpost"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake On"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Collect from Outpost"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Wait Collect"
           }
         },
         {
           "type": "path",
           "data": {
             "pathName": "Shoot from Outpost"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot All"
           }
         },
         {
