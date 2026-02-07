@@ -22,8 +22,10 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     lower = new TalonFX(Constants.MotorIDs.i_follower);
-    defineDevice(Device.ROLLERS, rollers);
-    defineDevice(Device.LOWER, lower);
+    defineDevice(
+      new DevicePointer(Device.ROLLERS, rollers),
+      new DevicePointer(Device.LOWER, lower)
+    );
   }
 
   private enum State {
