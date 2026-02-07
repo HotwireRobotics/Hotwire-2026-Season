@@ -1,7 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -14,22 +12,18 @@ import org.littletonrobotics.junction.Logger;
 public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private final TalonFX rollers;
-  // Cached status signals for one refreshAll() per cycle (efficient CAN usage)
-  private final StatusSignal<?> rollersVel, rollersVoltage, rollersCurrent, rollersTemp;
+  private final TalonFX lower;
 
   public enum Device {
-    ROLLERS
+    ROLLERS,
+    LOWER
   }
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
+    lower = new TalonFX(Constants.MotorIDs.i_follower);
     defineDevice(Device.ROLLERS, rollers);
-
-    // Cache status signals for batched refresh (one CAN sync per cycle)
-    rollersVel = rollers.getVelocity();
-    rollersVoltage = rollers.getMotorVoltage();
-    rollersCurrent = rollers.getSupplyCurrent();
-    rollersTemp = rollers.getDeviceTemp();
+    defineDevice(Device.LOWER, lower);
   }
 
   private enum State {
@@ -47,14 +41,16 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Intake/State", state.toString());
 
-    // One batched CAN refresh per cycle, then read cached values (efficient)
-    BaseStatusSignal.refreshAll(rollersVel, rollersVoltage, rollersCurrent, rollersTemp);
-
-    // Log velocity (rpm), voltage, current, temp with unit metadata
-    Logger.recordOutput("Intake/Rollers/Velocity", rollersVel.getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput("Intake/Rollers/Voltage", rollersVoltage.getValueAsDouble(), "V");
-    Logger.recordOutput("Intake/Rollers/Current", rollersCurrent.getValueAsDouble(), "A");
-    Logger.recordOutput("Intake/Rollers/Temperature", rollersTemp.getValueAsDouble(), "°C");
+    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
+    Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
+    Logger.recordOutput(
+        "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput(
+        "Intake/Rollers/Voltage", rollers.getMotorVoltage().getValueAsDouble(), "V");
+    Logger.recordOutput(
+        "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
 
     if (isActiveDevice(Device.ROLLERS)) {
       state = State.INTAKING;
@@ -80,6 +76,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
+          runDevice(Device.LOWER, speed);
         });
   }
 }

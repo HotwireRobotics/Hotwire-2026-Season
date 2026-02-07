@@ -3,8 +3,7 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -17,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoShooter extends ModularSubsystem implements Systerface {
@@ -26,18 +26,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final VelocityVoltage m_velVolt;
   private final ShooterModule rightModule;
   private final ShooterModule leftModule;
-
-  // Cached status signals for one refreshAll() per cycle (efficient CAN usage)
-  private final StatusSignal<?> leftVel, leftVoltage, leftCurrent, leftTemp;
-  private final StatusSignal<?> rightVel, rightVoltage, rightCurrent, rightTemp;
-  private final StatusSignal<?> leftFollowerVel,
-      leftFollowerVoltage,
-      leftFollowerCurrent,
-      leftFollowerTemp;
-  private final StatusSignal<?> rightFollowerVel,
-      rightFollowerVoltage,
-      rightFollowerCurrent,
-      rightFollowerTemp;
+  private final Slot0Configs shooterRPSControl;
 
   public enum Device {
     RIGHT_FEEDER,
@@ -63,6 +52,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 
     public void runModule(double speed) {
       shooter.set(speed);
+      feeder.set(speed);
     }
 
     public void setControl(ControlRequest control) {
@@ -74,6 +64,11 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 
     rightModule = new ShooterModule(Constants.MotorIDs.s_shooterR, Constants.MotorIDs.s_feederR);
     leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feederL);
+
+    shooterRPSControl = new Slot0Configs();
+    shooterRPSControl.kV = 0.11451;
+    shooterRPSControl.kS = 0.19361;
+    // shooterRPSControl.kA = 0.0072326;
 
     final TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
     final TalonFX[] feeders = {leftModule.feeder, rightModule.feeder};
@@ -107,23 +102,13 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.LEFT_SHOOTER, voltage), null, this));
 
-    // Cache status signals for batched refresh (one CAN sync per cycle)
-    leftVel = leftModule.shooter.getVelocity();
-    leftVoltage = leftModule.shooter.getMotorVoltage();
-    leftCurrent = leftModule.shooter.getSupplyCurrent();
-    leftTemp = leftModule.shooter.getDeviceTemp();
-    rightVel = rightModule.shooter.getVelocity();
-    rightVoltage = rightModule.shooter.getMotorVoltage();
-    rightCurrent = rightModule.shooter.getSupplyCurrent();
-    rightTemp = rightModule.shooter.getDeviceTemp();
-    leftFollowerVel = leftModule.feeder.getVelocity();
-    leftFollowerVoltage = leftModule.feeder.getMotorVoltage();
-    leftFollowerCurrent = leftModule.feeder.getSupplyCurrent();
-    leftFollowerTemp = leftModule.feeder.getDeviceTemp();
-    rightFollowerVel = rightModule.feeder.getVelocity();
-    rightFollowerVoltage = rightModule.feeder.getMotorVoltage();
-    rightFollowerCurrent = rightModule.feeder.getSupplyCurrent();
-    rightFollowerTemp = rightModule.feeder.getDeviceTemp();
+    // for (TalonFX motor : getDevices(shooters)) {
+    //   motor.getConfigurator().apply(shooterRPSControl);
+    // }
+    rightModule.shooter.getConfigurator().apply(shooterRPSControl);
+    leftModule.shooter.getConfigurator().apply(shooterRPSControl);
+    rightModule.feeder.getConfigurator().apply(shooterRPSControl);
+    leftModule.feeder.getConfigurator().apply(shooterRPSControl);
   }
 
   private enum State {
@@ -138,50 +123,65 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
 
-    // One batched CAN refresh per cycle, then read cached values (efficient)
-    BaseStatusSignal.refreshAll(
-        leftVel,
-        leftVoltage,
-        leftCurrent,
-        leftTemp,
-        rightVel,
-        rightVoltage,
-        rightCurrent,
-        rightTemp,
-        leftFollowerVel,
-        leftFollowerVoltage,
-        leftFollowerCurrent,
-        leftFollowerTemp,
-        rightFollowerVel,
-        rightFollowerVoltage,
-        rightFollowerCurrent,
-        rightFollowerTemp);
-
-    // Log velocity (rpm), voltage, current, temp with unit metadata
-    Logger.recordOutput("Shooter/Left/Velocity", leftVel.getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput("Shooter/Left/Voltage", leftVoltage.getValueAsDouble(), "V");
-    Logger.recordOutput("Shooter/Left/Current", leftCurrent.getValueAsDouble(), "A");
-    Logger.recordOutput("Shooter/Left/Temperature", leftTemp.getValueAsDouble(), "°C");
-    Logger.recordOutput("Shooter/Right/Velocity", rightVel.getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput("Shooter/Right/Voltage", rightVoltage.getValueAsDouble(), "V");
-    Logger.recordOutput("Shooter/Right/Current", rightCurrent.getValueAsDouble(), "A");
-    Logger.recordOutput("Shooter/Right/Temperature", rightTemp.getValueAsDouble(), "°C");
+    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
     Logger.recordOutput(
-        "Shooter/LeftFollower/Velocity", leftFollowerVel.getValueAsDouble() * 60, "rpm");
+        "Shooter/Left/Position", leftModule.shooter.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Voltage", leftFollowerVoltage.getValueAsDouble(), "V");
+        "Shooter/Left/Velocity", leftModule.shooter.getVelocity().getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Current", leftFollowerCurrent.getValueAsDouble(), "A");
+        "Shooter/Left/Voltage", leftModule.shooter.getMotorVoltage().getValueAsDouble(), "V");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Temperature", leftFollowerTemp.getValueAsDouble(), "°C");
+        "Shooter/Left/Current", leftModule.shooter.getSupplyCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
-        "Shooter/RightFollower/Velocity", rightFollowerVel.getValueAsDouble() * 60, "rpm");
+        "Shooter/Left/Temperature", leftModule.shooter.getDeviceTemp().getValueAsDouble(), "°C");
     Logger.recordOutput(
-        "Shooter/RightFollower/Voltage", rightFollowerVoltage.getValueAsDouble(), "V");
+        "Shooter/Right/Position", rightModule.shooter.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Shooter/RightFollower/Current", rightFollowerCurrent.getValueAsDouble(), "A");
+        "Shooter/Right/Velocity", rightModule.shooter.getVelocity().getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
-        "Shooter/RightFollower/Temperature", rightFollowerTemp.getValueAsDouble(), "°C");
+        "Shooter/Right/Voltage", rightModule.shooter.getMotorVoltage().getValueAsDouble(), "V");
+    Logger.recordOutput(
+        "Shooter/Right/Current", rightModule.shooter.getSupplyCurrent().getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Shooter/Right/Temperature", rightModule.shooter.getDeviceTemp().getValueAsDouble(), "°C");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Position", leftModule.feeder.getPosition().getValueAsDouble(), "rot");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Velocity",
+        leftModule.feeder.getVelocity().getValueAsDouble() * 60,
+        "rpm");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Voltage",
+        leftModule.feeder.getMotorVoltage().getValueAsDouble(),
+        "V");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Current",
+        leftModule.feeder.getSupplyCurrent().getValueAsDouble(),
+        "A");
+    Logger.recordOutput(
+        "Shooter/LeftFollower/Temperature",
+        leftModule.feeder.getDeviceTemp().getValueAsDouble(),
+        "°C");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Position",
+        rightModule.feeder.getPosition().getValueAsDouble(),
+        "rot");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Velocity",
+        rightModule.feeder.getVelocity().getValueAsDouble() * 60,
+        "rpm");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Voltage",
+        rightModule.feeder.getMotorVoltage().getValueAsDouble(),
+        "V");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Current",
+        rightModule.feeder.getSupplyCurrent().getValueAsDouble(),
+        "A");
+    Logger.recordOutput(
+        "Shooter/RightFollower/Temperature",
+        rightModule.feeder.getDeviceTemp().getValueAsDouble(),
+        "°C");
 
     if (isActiveDevice(Device.BOTH_SHOOTER)) {
       if (isActiveDevice(Device.BOTH_FEEDER)) {
@@ -249,6 +249,49 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         () -> {
           runDeviceVelocity(Device.BOTH_SHOOTER, shooter);
           runDeviceVelocity(Device.BOTH_FEEDER, feeder);
+        });
+  }
+
+  public Command runMechanismVelocity(
+      Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
+    return Commands.runOnce(
+        () -> {
+          runDeviceVelocity(Device.BOTH_SHOOTER, shooter.get());
+          runDeviceVelocity(Device.BOTH_FEEDER, feeder.get());
+        });
+  }
+
+  public Command runRightModule(double feeder, double shooter) {
+    return Commands.runOnce(
+        () -> {
+          runDevice(Device.RIGHT_SHOOTER, shooter);
+          runDevice(Device.RIGHT_FEEDER, feeder);
+        });
+  }
+
+  public Command runLeftModule(double feeder, double shooter) {
+    return Commands.runOnce(
+        () -> {
+          runDevice(Device.RIGHT_SHOOTER, shooter);
+          runDevice(Device.RIGHT_FEEDER, feeder);
+        });
+  }
+
+  public Command runRightModuleVelocity(
+      Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
+    return Commands.runOnce(
+        () -> {
+          runDeviceVelocity(Device.RIGHT_SHOOTER, shooter.get());
+          runDeviceVelocity(Device.RIGHT_FEEDER, feeder.get());
+        });
+  }
+
+  public Command runLeftModuleVelocity(
+      Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
+    return Commands.runOnce(
+        () -> {
+          runDeviceVelocity(Device.LEFT_SHOOTER, shooter.get());
+          runDeviceVelocity(Device.LEFT_FEEDER, feeder.get());
         });
   }
 

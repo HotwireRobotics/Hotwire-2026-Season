@@ -6,12 +6,14 @@ import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -24,8 +26,7 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -88,32 +89,60 @@ public class RobotContainer {
     SmartDashboard.putNumber("Feeder Velocity", feederVelocity);
     SmartDashboard.putNumber("Shooter Velocity", shooterVelocity);
 
+    // autoChooser.addOption(
+    //     "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+    // autoChooser.addOption(
+    //     "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    // autoChooser.addOption(
+    //     "Drive SysId (Quasistatic Forward)",
+    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Drive SysId (Quasistatic Reverse)",
+    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    // autoChooser.addOption(
+    //     "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
-        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-    autoChooser.addOption(
-        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Shooter SysId (Quasistatic Forward)",
+        "Right Shooter SysId (Quasistatic Forward)",
         shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
-        "Shooter SysId (Quasistatic Reverse)",
+        "Right Shooter SysId (Quasistatic Reverse)",
         shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
-        "Shooter SysId (Dynamic Forward)",
+        "Left Shooter SysId (Quasistatic Forward)",
+        shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Left Shooter SysId (Quasistatic Reverse)",
+        shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Right Shooter SysId (Dynamic Forward)",
+        shooter.sysIdDynamicRight(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Right Shooter SysId (Dynamic Reverse)",
+        shooter.sysIdDynamicRight(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Left Shooter SysId (Dynamic Forward)",
         shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
-        "Shooter SysId (Dynamic Reverse)",
+        "Left Shooter SysId (Dynamic Reverse)",
         shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse));
+
+    autoChooser.addOption(
+        "SysId Right Shooter Analysis",
+        new SequentialCommandGroup(
+            shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kForward),
+            shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kReverse),
+            shooter.sysIdDynamicRight(SysIdRoutine.Direction.kForward),
+            shooter.sysIdDynamicRight(SysIdRoutine.Direction.kReverse)));
+
+    autoChooser.addOption(
+        "SysId Left Shooter Analysis",
+        new SequentialCommandGroup(
+            shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kForward),
+            shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse),
+            shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
+            shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse)));
 
     configureButtonBindings();
   }
@@ -146,7 +175,7 @@ public class RobotContainer {
                   Angle toHub = Radians.of(Math.IEEEremainder(hubDirection, 2 * Math.PI));
                   Logger.recordOutput("Angle to Hub", toHub.in(Degrees));
 
-                  return new Rotation2d(toHub);
+                  return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
                 }));
 
     // Lock to 0° when down POV button is helds
@@ -190,18 +219,41 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .a()
         .whileTrue(intake.runMechanism(0.7))
-        .onFalse(intake.runMechanism(0.0));
+        .whileFalse(intake.runMechanism(0.0));
+
+    Supplier<AngularVelocity> velocity =
+        () -> {
+          //   return Constants.regress(
+          //
+          // Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
+          return RPM.of(shooterPower);
+        };
+
     Constants.Joysticks.operator
         .rightBumper()
-        .whileTrue(
-            // Use range (1 < n ≤ 100) or (0 ≤ n ≤ 1)
-            shooter.runMechanism(shooterPower, shooterPower))
-        .onFalse(shooter.runMechanism(0, 0));
+        .whileTrue(shooter.runRightModuleVelocity(velocity, velocity))
+        .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator
         .leftBumper()
+        .whileTrue(
+            shooter
+                .runLeftModuleVelocity(velocity, velocity)
+                .alongWith(
+                    Commands.runOnce(
+                        () -> Constants.Joysticks.operator.setRumble(RumbleType.kLeftRumble, 0.2))))
+        .whileFalse(shooter.runMechanism(0, 0));
+
+    Constants.Joysticks.operator
+        .leftBumper()
+        .onFalse(
+            Commands.runOnce(
+                () -> Constants.Joysticks.operator.setRumble(RumbleType.kLeftRumble, 0.0)));
+
+    Constants.Joysticks.driver
+        .leftBumper()
         .whileTrue(hopper.runHopper(0.9))
-        .onFalse(hopper.runHopper(0));
+        .whileFalse(hopper.runHopper(0));
 
     // Constants.Joysticks.driver
     //     .back()

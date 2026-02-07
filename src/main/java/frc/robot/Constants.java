@@ -15,9 +15,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import org.littletonrobotics.junction.AutoLog;
 
-@AutoLog
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
@@ -35,7 +33,7 @@ public final class Constants {
   }
 
   public static final double lerp = 1; // 1.7
-  public static final String[] limelights = {"limelight-one", "limelight-two"};
+  public static final String[] limelights = {"limelight-one"};
   public static final Time[] autoTimes = {Seconds.of(8)};
   public static final Time[] teleopTimes = {Seconds.of(12)};
   public static final Time autoLength = Seconds.of(20);
@@ -48,7 +46,8 @@ public final class Constants {
     public static final Integer s_shooterR = 8;
     public static final Integer s_feederL = 12;
     public static final Integer s_shooterL = 15;
-    public static final Integer h_hopper   = 14;
+    public static final Integer h_upperFeed = 14;
+    public static final Integer h_lowerFeed = 17;
   }
 
   public static final PathConstraints constraints =
@@ -57,7 +56,7 @@ public final class Constants {
   /*
    * Game element poses relative to blue origin.
    */
-  public static Translation2d middle = new Translation2d(Meters.of(8.27), Meters.of(4.01));
+  public static final Translation2d middle = new Translation2d(Meters.of(8.27), Meters.of(4.01));
 
   public static Pose2d flipAlliance(Pose2d pose) {
     if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
@@ -75,10 +74,10 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (ft) and rotation (RPM).
-  public double base = 1172.95283;
-  public double exponential = 0.583488;
+  public static double base = 405.35844;
+  public static double exponential = 0.820738;
 
-  public AngularVelocity regress(Distance distance) {
+  public static AngularVelocity regress(Distance distance) {
     return RPM.of(base * Math.pow(distance.in(Feet), exponential));
   }
 

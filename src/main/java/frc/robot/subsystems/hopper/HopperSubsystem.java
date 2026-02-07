@@ -53,12 +53,27 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
   @Override
   public void periodic() {
     // Logger.recordOutput("Hopper/State", state.toString());
-    Logger.recordOutput("Hopper/upperFeed/Velocity", upperFeed.getVelocity().getValue());
-    Logger.recordOutput("Hopper/lowerFeed/Velocity", lowerFeed.getVelocity().getValue());
-    Logger.recordOutput("Hopper/upperFeed/Current", upperFeed.getSupplyCurrent().getValue());
-    Logger.recordOutput("Hopper/lowerFeed/Current", lowerFeed.getSupplyCurrent().getValue());
-    // upperSpeedtest = Smartdash
-    // lowerSpeedtest = SmartDashboard.getNumber("lowerSpeed", 0);
+    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
+    Logger.recordOutput(
+        "Hopper/upperFeed/Position", upperFeed.getPosition().getValueAsDouble(), "rot");
+    Logger.recordOutput(
+        "Hopper/upperFeed/Velocity", upperFeed.getVelocity().getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput(
+        "Hopper/upperFeed/Voltage", upperFeed.getMotorVoltage().getValueAsDouble(), "V");
+    Logger.recordOutput(
+        "Hopper/upperFeed/Current", upperFeed.getSupplyCurrent().getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Hopper/upperFeed/Temperature", upperFeed.getDeviceTemp().getValueAsDouble(), "°C");
+    Logger.recordOutput(
+        "Hopper/lowerFeed/Position", lowerFeed.getPosition().getValueAsDouble(), "rot");
+    Logger.recordOutput(
+        "Hopper/lowerFeed/Velocity", lowerFeed.getVelocity().getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput(
+        "Hopper/lowerFeed/Voltage", lowerFeed.getMotorVoltage().getValueAsDouble(), "V");
+    Logger.recordOutput(
+        "Hopper/lowerFeed/Current", lowerFeed.getSupplyCurrent().getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Hopper/lowerFeed/Temperature", lowerFeed.getDeviceTemp().getValueAsDouble(), "°C");
   }
 
   public Command runHopper(double speed) {
