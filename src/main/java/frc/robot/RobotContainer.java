@@ -2,11 +2,14 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -200,11 +203,15 @@ public class RobotContainer {
         .a()
         .whileTrue(intake.runMechanism(0.7))
         .whileFalse(intake.runMechanism(0.0));
+    Supplier<AngularVelocity> velocity = () -> {
+
+        return Constants.regress(Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
+    };
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
             // Use range (1 < n ≤ 100) or (0 ≤ n ≤ 1)
-            shooter.runMechanismVelocity(() -> Constants.regress(), () -> Constants.regress()))
+            shooter.runMechanismVelocity(velocity, velocity))
         .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator
