@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -127,6 +128,24 @@ public class RobotContainer {
         "Left Shooter SysId (Dynamic Reverse)",
         shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse));
 
+    autoChooser.addOption(
+        "SysId Right Shooter Analysis", 
+        new SequentialCommandGroup(
+            shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kForward),
+            shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kReverse),
+            shooter.sysIdDynamicRight(SysIdRoutine.Direction.kForward),
+            shooter.sysIdDynamicRight(SysIdRoutine.Direction.kReverse) 
+    ));
+
+    autoChooser.addOption(
+        "SysId Left Shooter Analysis", 
+        new SequentialCommandGroup(
+            shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kForward),
+            shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse),
+            shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
+            shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse) 
+    ));
+
     configureButtonBindings();
   }
 
@@ -203,18 +222,24 @@ public class RobotContainer {
         .a()
         .whileTrue(intake.runMechanism(0.7))
         .whileFalse(intake.runMechanism(0.0));
+        
     Supplier<AngularVelocity> velocity = () -> {
-
         return Constants.regress(Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
     };
+
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
-            // Use range (1 < n ≤ 100) or (0 ≤ n ≤ 1)
-            shooter.runMechanismVelocity(velocity, velocity))
+            shooter.runRightModuleVelocity(velocity, velocity))
         .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator
+        .leftBumper()
+        .whileTrue(
+            shooter.runLeftModuleVelocity(velocity, velocity))
+        .whileFalse(shooter.runMechanism(0, 0));
+
+    Constants.Joysticks.driver
         .leftBumper()
         .whileTrue(hopper.runHopper(0.9))
         .whileFalse(hopper.runHopper(0));

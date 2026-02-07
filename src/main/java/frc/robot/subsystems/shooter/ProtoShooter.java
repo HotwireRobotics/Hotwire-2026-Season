@@ -261,6 +261,39 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         });
   }
 
+  public Command runRightModule(double feeder, double shooter) {
+    return Commands.runOnce(
+        () -> {
+          runDevice(Device.RIGHT_SHOOTER, shooter);
+          runDevice(Device.RIGHT_FEEDER, feeder);
+        });
+  }
+
+  public Command runLeftModule(double feeder, double shooter) {
+    return Commands.runOnce(
+        () -> {
+    
+          runDevice(Device.RIGHT_SHOOTER, shooter);
+          runDevice(Device.RIGHT_FEEDER, feeder);
+        });
+  }
+
+  public Command runRightModuleVelocity(Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
+    return Commands.runOnce(
+        () -> {
+          runDeviceVelocity(Device.RIGHT_SHOOTER, shooter.get());
+          runDeviceVelocity(Device.RIGHT_FEEDER, feeder.get());
+        });
+  }
+
+  public Command runLeftModuleVelocity(Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
+    return Commands.runOnce(
+        () -> {
+          runDeviceVelocity(Device.LEFT_SHOOTER, shooter.get());
+          runDeviceVelocity(Device.LEFT_FEEDER, feeder.get());
+        });
+  }
+
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
   }
