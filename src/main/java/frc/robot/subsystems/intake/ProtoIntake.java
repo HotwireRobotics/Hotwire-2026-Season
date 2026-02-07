@@ -1,26 +1,29 @@
 package frc.robot.subsystems.intake;
 
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import frc.robot.subsystems.shooter.ProtoShooter.Device;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoIntake extends SubsystemBase implements Systerface {
+public class ProtoIntake extends ModularSubsystem implements Systerface {
 
-  public TalonFX rollers;
-  public TalonFX follower;
+  private final TalonFX rollers;
+  private final TalonFX lower;
+
+  public enum Device {
+    ROLLERS,
+    LOWER
+  }
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    follower = new TalonFX(Constants.MotorIDs.i_follower);
-
-    // Follower motor for rollers.
-    follower.setControl(new Follower(Constants.MotorIDs.i_rollers, MotorAlignmentValue.Aligned));
+    lower = new TalonFX(Constants.MotorIDs.i_follower);
+    defineDevice(Device.ROLLERS, rollers);
+    defineDevice(Device.LOWER, lower);
   }
 
   private enum State {
@@ -37,19 +40,43 @@ public class ProtoIntake extends SubsystemBase implements Systerface {
   @Override
   public void periodic() {
     Logger.recordOutput("Intake/State", state.toString());
-    Logger.recordOutput("Intake/RollersVelocity", rollers.getVelocity().getValue());
-    Logger.recordOutput("Intake/RollersCurrent", rollers.getSupplyCurrent().getValue());
+
+    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
+    Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
+    Logger.recordOutput(
+        "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput(
+        "Intake/Rollers/Voltage", rollers.getMotorVoltage().getValueAsDouble(), "V");
+    Logger.recordOutput(
+        "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
+
+    if (isActiveDevice(Device.ROLLERS)) {
+      state = State.INTAKING;
+    } else {
+      state = State.STOPPED;
+    }
   }
 
-  public Command runRollers(double speed) {
-    return Commands.runOnce(
+  // Device control methods
+  public void runDevice(Device device, double speed) {
+    for (TalonFX d : getDevices(device)) {
+      d.set(speed);
+    }
+
+    if (speed == 0) {
+      specifyInactiveDevice(device);
+    } else {
+      specifyActiveDevice(device);
+    }
+  }
+
+  public Command runMechanism(double speed) {
+    return Commands.run(
         () -> {
-          rollers.set(speed);
-          if (speed > 0) {
-            state = State.STOPPED;
-          } else {
-            state = State.INTAKING;
-          }
+          runDevice(Device.ROLLERS, speed);
+          runDevice(Device.LOWER, speed);
         });
   }
 }

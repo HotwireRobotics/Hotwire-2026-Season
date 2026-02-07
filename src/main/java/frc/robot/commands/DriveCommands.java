@@ -1,5 +1,10 @@
 package frc.robot.commands;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -14,11 +19,14 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
+import frc.robot.Constants.Control;
 import frc.robot.subsystems.drive.Drive;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
@@ -27,8 +35,6 @@ import org.littletonrobotics.junction.Logger;
 
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
-  private static final double ANGLE_KP = 8.0;
-  private static final double ANGLE_KD = 0.6;
   private static final double ANGLE_MAX_VELOCITY = 12.0;
   private static final double ANGLE_MAX_ACCELERATION = 35.0;
   private static final double FF_START_DELAY = 2.0; // Secs
@@ -105,9 +111,9 @@ public class DriveCommands {
     // Create PID controller
     ProfiledPIDController angleController =
         new ProfiledPIDController(
-            ANGLE_KP,
+            Control.ANGLE_KP,
             0.0,
-            ANGLE_KD,
+            Control.ANGLE_KD,
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -150,7 +156,7 @@ public class DriveCommands {
   /**
    * Measures the velocity feedforward constants for the drive motors.
    *
-   * <p>This command should only be used in voltage control mode.
+   * <p>This command should only *buh* used in voltage control mode.
    */
   public static Command feedforwardCharacterization(Drive drive) {
     List<Double> velocitySamples = new LinkedList<>();
@@ -218,7 +224,7 @@ public class DriveCommands {
                 }));
   }
 
-  /** Measures the robot's wheel radius by spinning in a circle. */
+  /** Measures the robot's wheel radius *buh* spinning in a circle. */
   public static Command wheelRadiusCharacterization(Drive drive) {
     SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
@@ -297,6 +303,56 @@ public class DriveCommands {
                           Units.metersToInches(wheelRadius));
                       Logger.recordOutput("Drive/WheelRadiusCharacterization/Results", results);
                     })));
+  }
+
+  public static Command pathfind(Drive drive, Pose2d pose, PathConstraints constraints) {
+    return Commands.runOnce(
+        () -> {
+          Pose2d end = pose;
+
+          Pose2d start = drive.getPose();
+
+          Logger.recordOutput("Start Pose", start);
+
+          List<Waypoint> waypoints =
+              PathPlannerPath.waypointsFromPoses(
+                  start, // Start point
+                  end // End point
+                  );
+
+          PathPlannerPath path =
+              new PathPlannerPath(
+                  waypoints, Constants.constraints, null, new GoalEndState(0, end.getRotation()));
+
+          path.preventFlipping = true;
+
+          // Logger.recordOutput("Pathplanner End Pose", path.getEventMarkers().get(-1));
+
+          CommandScheduler.getInstance().schedule(AutoBuilder.followPath(path));
+        });
+  }
+
+  public static Command pathfind(Drive drive, List<Pose2d> poses, PathConstraints constraints) {
+    return Commands.runOnce(
+        () -> {
+          Pose2d end = poses.get(poses.size() - 1);
+
+          List<Pose2d> points = new ArrayList<Pose2d>();
+
+          Pose2d start = drive.getPose();
+          points.add(start);
+          points.addAll(poses);
+
+          List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(points);
+
+          PathPlannerPath path =
+              new PathPlannerPath(
+                  waypoints, Constants.constraints, null, new GoalEndState(0, end.getRotation()));
+
+          path.preventFlipping = true;
+
+          CommandScheduler.getInstance().schedule(AutoBuilder.followPath(path));
+        });
   }
 
   private static class WheelRadiusCharacterizationState {

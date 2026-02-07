@@ -9,9 +9,9 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.LimelightHelpers.PoseEstimate;
@@ -69,6 +69,8 @@ public class Robot extends LoggedRobot {
     Logger.start();
 
     robotContainer = new RobotContainer();
+
+    SmartDashboard.putNumber("Shooter Power", robotContainer.shooterPower);
   }
 
   @Override
@@ -76,6 +78,37 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
     CommandScheduler.getInstance().run();
 
+    // Localization and orienttion feeding
+    processLimelightMeasurements();
+
+    // Tracking
+    Time time = Seconds.of(DriverStation.getMatchTime());
+    Boolean isAutonomous = DriverStation.isAutonomous();
+    Time length = (isAutonomous) ? Constants.autoLength : Constants.teleopLength;
+    time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(time);
+
+    // Controller haptic indicators
+    Logger.recordOutput("Time", time.in(Seconds));
+    Boolean rumble = false;
+
+    for (Time target : ((isAutonomous) ? Constants.autoTimes : Constants.teleopTimes)) {
+      double difference = target.minus(time).in(Seconds);
+      if ((Math.abs(difference) < 1) && (difference < 0)) {
+        rumble = true;
+      }
+    }
+
+    Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
+
+    robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
+    robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
+    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter Power", 0.0);
+
+    Logger.recordOutput("Hub Pose", Constants.Poses.hub);
+    Logger.recordOutput("Tower Pose", Constants.Poses.tower);
+  }
+
+  private void processLimelightMeasurements() {
     List<PoseEstimate> measurements = new ArrayList<>();
 
     for (String limelight : Constants.limelights) {
@@ -87,10 +120,7 @@ public class Robot extends LoggedRobot {
       LimelightHelpers.setPipelineIndex(limelight, 0);
 
       // Get pose estimate from limelight
-      PoseEstimate measurement =
-          DriverStation.getAlliance().get().equals(Alliance.Red)
-              ? LimelightHelpers.getBotPoseEstimate_wpiRed_MegaTag2(limelight)
-              : LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
 
       if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3)) {
         measurements.add(measurement);
@@ -109,30 +139,6 @@ public class Robot extends LoggedRobot {
 
       LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
     }
-
-    Time time = Seconds.of(DriverStation.getMatchTime());
-    Boolean isAutonomous = DriverStation.isAutonomous();
-    Time    length = 
-      (isAutonomous) ? 
-        Constants.autoLength  : 
-        Constants.teleopLength;
-    time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(time);
-
-    Logger.recordOutput("Time", time.in(Seconds));
-    Boolean rumble = false;
-
-    for (Time target : (
-      (isAutonomous) ? 
-        Constants.autoTimes : 
-        Constants.teleopTimes
-    )) {
-      double difference = target.minus(time).in(Seconds);
-      if ((Math.abs(difference) < 1) && (difference < 0)) {
-        rumble = true;
-      }
-    }
-
-    Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
   }
 
   @Override
@@ -144,7 +150,11 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    for (String limelight : Constants.limelights) {
+      LimelightHelpers.SetThrottle(limelight, 150);
+    }
+  }
 
   @Override
   public void autonomousInit() {
@@ -173,7 +183,11 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    for (String limelight : Constants.limelights) {
+      LimelightHelpers.SetThrottle(limelight, 0);
+    }
+  }
 
   @Override
   public void testInit() {

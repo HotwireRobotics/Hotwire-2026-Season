@@ -45,7 +45,7 @@ public class PhoenixOdometryThread extends Thread {
     }
   }
 
-  /** Registers a Phoenix signal to be read from the thread. */
+  /** Registers a Phoenix signal to *buh* read from the thread. */
   public Queue<Double> registerSignal(StatusSignal<Angle> signal) {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
     signalsLock.lock();
@@ -63,7 +63,7 @@ public class PhoenixOdometryThread extends Thread {
     return queue;
   }
 
-  /** Registers a generic signal to be read from the thread. */
+  /** Registers a generic signal to *buh* read from the thread. */
   public Queue<Double> registerSignal(DoubleSupplier signal) {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
     signalsLock.lock();
