@@ -2,8 +2,6 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.util.function.Supplier;
-
 import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -27,6 +25,7 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -129,22 +128,20 @@ public class RobotContainer {
         shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse));
 
     autoChooser.addOption(
-        "SysId Right Shooter Analysis", 
+        "SysId Right Shooter Analysis",
         new SequentialCommandGroup(
             shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kForward),
             shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kReverse),
             shooter.sysIdDynamicRight(SysIdRoutine.Direction.kForward),
-            shooter.sysIdDynamicRight(SysIdRoutine.Direction.kReverse) 
-    ));
+            shooter.sysIdDynamicRight(SysIdRoutine.Direction.kReverse)));
 
     autoChooser.addOption(
-        "SysId Left Shooter Analysis", 
+        "SysId Left Shooter Analysis",
         new SequentialCommandGroup(
             shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kForward),
             shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
-            shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse) 
-    ));
+            shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse)));
 
     configureButtonBindings();
   }
@@ -222,21 +219,21 @@ public class RobotContainer {
         .a()
         .whileTrue(intake.runMechanism(0.7))
         .whileFalse(intake.runMechanism(0.0));
-        
-    Supplier<AngularVelocity> velocity = () -> {
-        return Constants.regress(Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
-    };
+
+    Supplier<AngularVelocity> velocity =
+        () -> {
+          return Constants.regress(
+              Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
+        };
 
     Constants.Joysticks.operator
         .rightBumper()
-        .whileTrue(
-            shooter.runRightModuleVelocity(velocity, velocity))
+        .whileTrue(shooter.runRightModuleVelocity(velocity, velocity))
         .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator
         .leftBumper()
-        .whileTrue(
-            shooter.runLeftModuleVelocity(velocity, velocity))
+        .whileTrue(shooter.runLeftModuleVelocity(velocity, velocity))
         .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.driver

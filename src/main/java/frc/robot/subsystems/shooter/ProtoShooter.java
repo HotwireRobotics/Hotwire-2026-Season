@@ -272,13 +272,13 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   public Command runLeftModule(double feeder, double shooter) {
     return Commands.runOnce(
         () -> {
-    
           runDevice(Device.RIGHT_SHOOTER, shooter);
           runDevice(Device.RIGHT_FEEDER, feeder);
         });
   }
 
-  public Command runRightModuleVelocity(Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
+  public Command runRightModuleVelocity(
+      Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
     return Commands.runOnce(
         () -> {
           runDeviceVelocity(Device.RIGHT_SHOOTER, shooter.get());
@@ -286,7 +286,8 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command runLeftModuleVelocity(Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
+  public Command runLeftModuleVelocity(
+      Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
     return Commands.runOnce(
         () -> {
           runDeviceVelocity(Device.LEFT_SHOOTER, shooter.get());
