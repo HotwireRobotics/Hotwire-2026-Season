@@ -33,7 +33,7 @@ public final class Constants {
   }
 
   public static final double lerp = 1; // 1.7
-  public static final String[] limelights = {}; // "limelight-one", "limelight-two"
+  public static final String[] limelights = {"limelight-one"};
   public static final Time[] autoTimes = {Seconds.of(8)};
   public static final Time[] teleopTimes = {Seconds.of(12)};
   public static final Time autoLength = Seconds.of(20);
@@ -63,7 +63,7 @@ public final class Constants {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
-  } // 1:3 gear ratio for the top rollers
+  }
 
   public static class Poses {
     // X: 14.916m, Y: 3.875m

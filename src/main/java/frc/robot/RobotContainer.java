@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -174,7 +175,7 @@ public class RobotContainer {
                   Angle toHub = Radians.of(Math.IEEEremainder(hubDirection, 2 * Math.PI));
                   Logger.recordOutput("Angle to Hub", toHub.in(Degrees));
 
-                  return new Rotation2d(toHub);
+                  return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
                 }));
 
     // Lock to 0° when down POV button is helds
@@ -222,8 +223,10 @@ public class RobotContainer {
 
     Supplier<AngularVelocity> velocity =
         () -> {
-          return Constants.regress(
-              Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
+          //   return Constants.regress(
+          //
+          // Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
+          return RPM.of(shooterPower);
         };
 
     Constants.Joysticks.operator
@@ -233,8 +236,19 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .leftBumper()
-        .whileTrue(shooter.runLeftModuleVelocity(velocity, velocity))
+        .whileTrue(
+            shooter
+                .runLeftModuleVelocity(velocity, velocity)
+                .alongWith(
+                    Commands.runOnce(
+                        () -> Constants.Joysticks.operator.setRumble(RumbleType.kLeftRumble, 0.2))))
         .whileFalse(shooter.runMechanism(0, 0));
+
+    Constants.Joysticks.operator
+        .leftBumper()
+        .onFalse(
+            Commands.runOnce(
+                () -> Constants.Joysticks.operator.setRumble(RumbleType.kLeftRumble, 0.0)));
 
     Constants.Joysticks.driver
         .leftBumper()
