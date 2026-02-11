@@ -47,7 +47,7 @@ public final class Constants {
     public static final Integer s_feederL = 12;
     public static final Integer s_shooterL = 15;
     public static final Integer h_upperFeed = 14;
-    public static final Integer h_lowerFeed = 17;
+    public static final Integer h_lowerFeed = 16;
   }
 
   public static final PathConstraints constraints =

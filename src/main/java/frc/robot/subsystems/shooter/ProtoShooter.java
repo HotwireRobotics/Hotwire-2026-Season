@@ -26,7 +26,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final VelocityVoltage m_velVolt;
   private final ShooterModule rightModule;
   private final ShooterModule leftModule;
-  private final Slot0Configs shooterRPSControl;
+  private final Slot0Configs motorRPSControl;
 
   public enum Device {
     RIGHT_FEEDER,
@@ -65,20 +65,22 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     rightModule = new ShooterModule(Constants.MotorIDs.s_shooterR, Constants.MotorIDs.s_feederR);
     leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feederL);
 
-    shooterRPSControl = new Slot0Configs();
-    shooterRPSControl.kV = 0.11451;
-    shooterRPSControl.kS = 0.19361;
+    motorRPSControl =  new Slot0Configs();
+    motorRPSControl.withKV(0.11451);
+    motorRPSControl.withKS(0.19361);
     // shooterRPSControl.kA = 0.0072326;
 
     final TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
     final TalonFX[] feeders = {leftModule.feeder, rightModule.feeder};
 
-    defineDevice(Device.RIGHT_FEEDER, rightModule.feeder);
-    defineDevice(Device.LEFT_FEEDER, rightModule.feeder);
-    defineDevice(Device.RIGHT_SHOOTER, rightModule.shooter);
-    defineDevice(Device.LEFT_SHOOTER, leftModule.shooter);
-    defineDevice(Device.BOTH_FEEDER, feeders);
-    defineDevice(Device.BOTH_SHOOTER, shooters);
+    defineDevice(
+      new DevicePointer(Device.RIGHT_FEEDER, rightModule.feeder),
+      new DevicePointer(Device.LEFT_FEEDER, rightModule.feeder),
+      new DevicePointer(Device.RIGHT_SHOOTER, rightModule.shooter),
+      new DevicePointer(Device.LEFT_SHOOTER, leftModule.shooter),
+      new DevicePointer(Device.BOTH_FEEDER, feeders),
+      new DevicePointer(Device.BOTH_SHOOTER, shooters)
+    );
 
     m_voltReq = new VoltageOut(0.0);
     m_velVolt = new VelocityVoltage(0.0);
@@ -105,10 +107,10 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     // for (TalonFX motor : getDevices(shooters)) {
     //   motor.getConfigurator().apply(shooterRPSControl);
     // }
-    rightModule.shooter.getConfigurator().apply(shooterRPSControl);
-    leftModule.shooter.getConfigurator().apply(shooterRPSControl);
-    rightModule.feeder.getConfigurator().apply(shooterRPSControl);
-    leftModule.feeder.getConfigurator().apply(shooterRPSControl);
+    rightModule.shooter.getConfigurator().apply(motorRPSControl);
+    leftModule.shooter.getConfigurator().apply(motorRPSControl);
+    rightModule.feeder.getConfigurator().apply(motorRPSControl);
+    leftModule.feeder.getConfigurator().apply(motorRPSControl);
   }
 
   private enum State {

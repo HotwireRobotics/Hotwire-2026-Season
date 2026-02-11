@@ -38,6 +38,39 @@ public class ModularSubsystem extends SubsystemBase {
     devices.put(device, actual);
   }
 
+  public class DevicePointer {
+    private Object device;
+    private Object actual;
+
+    public DevicePointer(Object device, TalonFX actual) {
+      this.device = device;
+      this.actual = actual;
+    }
+
+    public DevicePointer(Object device, TalonFX[] actual) {
+      this.device = device;
+      this.actual = actual;
+    }
+
+    public Object getDevice() {
+      return device;
+    }
+
+    public Object getActual() {
+      return actual;
+    }
+  }
+
+  public void defineDevice(DevicePointer... pointers) {
+    for (DevicePointer pointer : pointers) {
+      devices.put(pointer.getDevice(), pointer.getActual());
+    }
+  }
+
+  public void defineDevice(DevicePointer pointer) {
+    devices.put(pointer.getDevice(), pointer.getActual());
+  }
+
   public TalonFX[] getDevices(Object device) {
     Object group = devices.get(device);
     if (group instanceof TalonFX[]) {
