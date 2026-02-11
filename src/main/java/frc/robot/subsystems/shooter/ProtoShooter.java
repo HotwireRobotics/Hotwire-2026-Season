@@ -68,7 +68,6 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     motorRPSControl =  new Slot0Configs();
     motorRPSControl.withKV(0.11451);
     motorRPSControl.withKS(0.19361);
-    // shooterRPSControl.kA = 0.0072326;
 
     final TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
     final TalonFX[] feeders = {leftModule.feeder, rightModule.feeder};
@@ -107,6 +106,15 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     // for (TalonFX motor : getDevices(shooters)) {
     //   motor.getConfigurator().apply(shooterRPSControl);
     // }
+    configureControl();
+  }
+
+  public void configureProportional(double Kp) {
+    motorRPSControl.withKP(Kp);
+    configureControl();
+  }
+
+  private void configureControl() {
     rightModule.shooter.getConfigurator().apply(motorRPSControl);
     leftModule.shooter.getConfigurator().apply(motorRPSControl);
     rightModule.feeder.getConfigurator().apply(motorRPSControl);

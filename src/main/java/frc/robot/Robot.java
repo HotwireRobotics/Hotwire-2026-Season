@@ -28,6 +28,7 @@ public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private RobotContainer robotContainer;
   public Pose2d poseEstimate = new Pose2d();
+  private double shooterKP = 0;
 
   Timer timer = new Timer();
 
@@ -71,6 +72,7 @@ public class Robot extends LoggedRobot {
     robotContainer = new RobotContainer();
 
     SmartDashboard.putNumber("Shooter Power", robotContainer.shooterPower);
+    SmartDashboard.putNumber("Shooter Proportional", shooterKP);
   }
 
   @Override
@@ -103,6 +105,8 @@ public class Robot extends LoggedRobot {
     robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
     robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
     robotContainer.shooterPower = SmartDashboard.getNumber("Shooter Power", 0.0);
+
+    robotContainer.shooter.configureProportional(shooterKP);
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
