@@ -19,6 +19,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+  
+  public static class Mathematics {
+    public static final double TAU = 6.283185307179586;
+  }
 
   public static class Joysticks {
     public static final CommandXboxController driver = new CommandXboxController(0);

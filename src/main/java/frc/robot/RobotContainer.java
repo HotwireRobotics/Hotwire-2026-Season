@@ -155,28 +155,6 @@ public class RobotContainer {
             () -> -Constants.Joysticks.driver.getLeftY(),
             () -> -Constants.Joysticks.driver.getLeftX(),
             () -> -Constants.Joysticks.driver.getRightX()));
-    Constants.Joysticks.operator
-        .rightTrigger()
-        .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> -Constants.Joysticks.driver.getLeftY(),
-                () -> -Constants.Joysticks.driver.getLeftX(),
-                () -> {
-                  Pose2d robotPose = drive.getPose();
-                  Pose2d hubPose = Constants.Poses.hub;
-
-                  // Calculate the angle from the robot to the hub
-                  double hubDirection =
-                      Math.atan(
-                          (hubPose.getY() - robotPose.getY())
-                              / (hubPose.getX() - robotPose.getX()));
-
-                  Angle toHub = Radians.of(Math.IEEEremainder(hubDirection, 2 * Math.PI));
-                  Logger.recordOutput("Angle to Hub", toHub.in(Degrees));
-
-                  return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
-                }));
 
     // Lock to 0° when down POV button is helds
     Constants.Joysticks.driver
@@ -218,46 +196,51 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .a()
-        .whileTrue(intake.runMechanism(0.7))
-        .whileFalse(intake.runMechanism(0.0));
+        .whileTrue(
+            intake.runMechanism(0.7))
+        .whileFalse(
+            intake.runMechanism(0.0));
 
+    // Shooter control and RPM supplier
     Supplier<AngularVelocity> velocity =
         () -> {
-          //   return Constants.regress(
-          //
-          // Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
+        //     return Constants.regress(
+          
+        //   Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
           return RPM.of(shooterPower);
         };
 
     Constants.Joysticks.operator
-        .rightBumper()
-        .whileTrue(shooter.runRightModuleVelocity(velocity, velocity))
-        .whileFalse(shooter.runMechanism(0, 0));
-
-    Constants.Joysticks.operator
-        .leftBumper()
+        .rightTrigger()
         .whileTrue(
-            shooter
-                .runLeftModuleVelocity(velocity, velocity)
-                .alongWith(
-                    Commands.runOnce(
-                        () -> Constants.Joysticks.operator.setRumble(RumbleType.kLeftRumble, 0.2))))
-        .whileFalse(shooter.runMechanism(0, 0));
+            shooter.runMechanismVelocity(velocity, velocity)
+        .alongWith(
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> -Constants.Joysticks.driver.getLeftY(),
+                () -> -Constants.Joysticks.driver.getLeftX(),
+                () -> {
+                    Pose2d robotPose =   drive.getPose();
+                    Pose2d hubPose = Constants.Poses.hub;
 
-    Constants.Joysticks.operator
-        .leftBumper()
-        .onFalse(
-            Commands.runOnce(
-                () -> Constants.Joysticks.operator.setRumble(RumbleType.kLeftRumble, 0.0)));
+                    Angle toHub = Radians.of(Math.IEEEremainder(
+                        Math.atan(
+                            (hubPose.getY() - robotPose.getY())
+                          / (hubPose.getX() - robotPose.getX())),
+                        Constants.Mathematics.TAU)
+                    );
+                    Logger.recordOutput("Hub Angular", toHub.in(Degrees));
+                    return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+                })))
+        .whileFalse(
+            shooter.runMechanism(0, 0));
 
     Constants.Joysticks.driver
-        .leftBumper()
-        .whileTrue(hopper.runHopper(0.9))
-        .whileFalse(hopper.runHopper(0));
-
-    // Constants.Joysticks.driver
-    //     .back()
-    //     .onTrue(Commands.runOnce(() -> ));
+        .leftTrigger()
+        .whileTrue(
+            hopper.runHopper(0.9))
+        .whileFalse(
+            hopper.runHopper(0));
   }
 
   public Command getAutonomousCommand() {

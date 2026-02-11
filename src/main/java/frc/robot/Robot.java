@@ -71,7 +71,7 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
-    SmartDashboard.putNumber("Shooter Power", robotContainer.shooterPower);
+    SmartDashboard.putNumber("Shooter RPM", robotContainer.shooterPower);
     SmartDashboard.putNumber("Shooter Proportional", shooterKP);
   }
 
@@ -104,7 +104,7 @@ public class Robot extends LoggedRobot {
 
     robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
     robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
-    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter Power", 0.0);
+    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter RPM", 0.0);
 
     robotContainer.shooter.configureProportional(shooterKP);
 
