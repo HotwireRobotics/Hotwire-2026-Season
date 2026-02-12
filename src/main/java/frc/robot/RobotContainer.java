@@ -9,7 +9,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -196,51 +195,47 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .a()
-        .whileTrue(
-            intake.runMechanism(0.7))
-        .whileFalse(
-            intake.runMechanism(0.0));
+        .whileTrue(intake.runMechanism(0.7))
+        .whileFalse(intake.runMechanism(0.0));
 
     // Shooter control and RPM supplier
     Supplier<AngularVelocity> velocity =
         () -> {
-        //     return Constants.regress(
-          
-        //   Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
-          return RPM.of(shooterPower);
+          return Constants.regress(
+              Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
+          //   return RPM.of(shooterPower);
         };
 
     Constants.Joysticks.operator
         .rightTrigger()
         .whileTrue(
-            shooter.runMechanismVelocity(velocity, velocity)
-        .alongWith(
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> -Constants.Joysticks.driver.getLeftY(),
-                () -> -Constants.Joysticks.driver.getLeftX(),
-                () -> {
-                    Pose2d robotPose =   drive.getPose();
-                    Pose2d hubPose = Constants.Poses.hub;
+            shooter
+                .runMechanismVelocity(velocity, velocity)
+                .alongWith(
+                    DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> -Constants.Joysticks.driver.getLeftY(),
+                        () -> -Constants.Joysticks.driver.getLeftX(),
+                        () -> {
+                          Pose2d robotPose = drive.getPose();
+                          Pose2d hubPose = Constants.Poses.hub;
 
-                    Angle toHub = Radians.of(Math.IEEEremainder(
-                        Math.atan(
-                            (hubPose.getY() - robotPose.getY())
-                          / (hubPose.getX() - robotPose.getX())),
-                        Constants.Mathematics.TAU)
-                    );
-                    Logger.recordOutput("Hub Angular", toHub.in(Degrees));
-                    return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
-                })))
-        .whileFalse(
-            shooter.runMechanism(0, 0));
+                          Angle toHub =
+                              Radians.of(
+                                  Math.IEEEremainder(
+                                      Math.atan(
+                                          (hubPose.getY() - robotPose.getY())
+                                              / (hubPose.getX() - robotPose.getX())),
+                                      Constants.Mathematics.TAU));
+                          Logger.recordOutput("Hub Angular", toHub.in(Degrees));
+                          return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+                        })))
+        .whileFalse(shooter.runMechanism(0, 0));
 
-    Constants.Joysticks.driver
+    Constants.Joysticks.operator
         .leftTrigger()
-        .whileTrue(
-            hopper.runHopper(0.9))
-        .whileFalse(
-            hopper.runHopper(0));
+        .whileTrue(hopper.runHopper(0.9))
+        .whileFalse(hopper.runHopper(0));
   }
 
   public Command getAutonomousCommand() {

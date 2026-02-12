@@ -19,7 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
-  
+
   public static class Mathematics {
     public static final double TAU = 6.283185307179586;
   }
@@ -48,10 +48,9 @@ public final class Constants {
     public static final Integer i_follower = 9;
     public static final Integer s_feederR = 11;
     public static final Integer s_shooterR = 8;
-    public static final Integer s_feederL = 12;
     public static final Integer s_shooterL = 15;
     public static final Integer h_upperFeed = 14;
-    public static final Integer h_lowerFeed = 16;
+    public static final Integer h_lowerFeed = 12;
   }
 
   public static final PathConstraints constraints =
@@ -78,7 +77,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (ft) and rotation (RPM).
-  public static double base = 405.35844;
+  public static double base = 355.3376;
   public static double exponential = 0.820738;
 
   public static AngularVelocity regress(Distance distance) {

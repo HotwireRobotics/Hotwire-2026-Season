@@ -105,8 +105,7 @@ public class Robot extends LoggedRobot {
     robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
     robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
     robotContainer.shooterPower = SmartDashboard.getNumber("Shooter RPM", 0.0);
-
-    robotContainer.shooter.configureProportional(shooterKP);
+    shooterKP = SmartDashboard.getNumber("Shooter Proportional", 0);
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
@@ -124,7 +123,7 @@ public class Robot extends LoggedRobot {
       LimelightHelpers.setPipelineIndex(limelight, 0);
 
       // Get pose estimate from limelight
-      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
 
       if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3)) {
         measurements.add(measurement);
