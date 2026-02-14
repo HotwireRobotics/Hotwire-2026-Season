@@ -320,6 +320,11 @@ public class Drive extends SubsystemBase {
     return getPose().getRotation();
   }
 
+  /** Returns current yaw angular velocity (rad/s), for vision rejection when spinning fast. */
+  public double getYawVelocityRadPerSec() {
+    return gyroInputs.yawVelocityRadPerSec;
+  }
+
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
     Logger.recordOutput("Odometry/PoseReset", pose);

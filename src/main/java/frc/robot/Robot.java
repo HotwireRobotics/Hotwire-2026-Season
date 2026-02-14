@@ -111,6 +111,18 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
   }
 
+  /** Threshold (m) for "near origin" - avoid feeding MegaTag2 when pose is uninitialized/default. */
+  private static final double NEAR_ORIGIN_THRESHOLD_M = 0.5;
+  /** Max vision measurement age (s) - reject stale estimates. */
+  private static final double MAX_VISION_AGE_S = 0.3;
+  /** Max gyro rate (rad/s) to accept vision - reject when spinning fast (blur/motion). */
+  private static final double MAX_GYRO_RATE_FOR_VISION_RAD_S = Math.toRadians(360.0);
+  /** Max distance (m) between vision pose and odometry - reject obvious outliers. */
+  private static final double MAX_VISION_ODOM_DIST_M = 1.0;
+  /** Base vision std devs (xy m, rotation rad) - scaled by tag count and distance. */
+  private static final double VISION_STD_DEV_XY = 0.05;
+  private static final double VISION_STD_DEV_THETA_RAD = Math.toRadians(2.0);
+
   private void processLimelightMeasurements() {
     List<PoseEstimate> measurements = new ArrayList<>();
 
@@ -120,27 +132,62 @@ public class Robot extends LoggedRobot {
       Pose2d robotPose = robotContainer.drive.getPose();
       double headingDeg = robotPose.getRotation().getDegrees();
 
+      // Don't feed MegaTag2 when robot pose is near (0,0) - this is often uninitialized
+      // odometry and corrupts MegaTag2 localization
+      boolean robotPoseNearOrigin =
+          Math.abs(robotPose.getX()) < NEAR_ORIGIN_THRESHOLD_M
+              && Math.abs(robotPose.getY()) < NEAR_ORIGIN_THRESHOLD_M;
+
       LimelightHelpers.setPipelineIndex(limelight, 0);
 
       // Get pose estimate from limelight
       PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
 
       if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3)) {
-        measurements.add(measurement);
-        // Log pose estimate and limelight status
-        Logger.recordOutput(limelight + " detecting", true);
-        poseEstimate = measurement.pose;
-        Logger.recordOutput("Pose Estimate", poseEstimate);
+        // Reject pose estimates near (0,0) - MegaTag can output bogus origin poses
+        boolean measurementNearOrigin =
+            Math.abs(measurement.pose.getX()) < NEAR_ORIGIN_THRESHOLD_M
+                && Math.abs(measurement.pose.getY()) < NEAR_ORIGIN_THRESHOLD_M;
 
-        // Define standard deviation
-        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.05, 0.05, Math.toRadians(2));
-        robotContainer.drive.addVisionMeasurement(
-            measurement.pose, measurement.timestampSeconds, stdDevs);
+        // Reject when spinning fast - vision is blurry and orientation is unreliable
+        double gyroRateRadS = robotContainer.drive.getYawVelocityRadPerSec();
+        boolean gyroTooFast = Math.abs(gyroRateRadS) > MAX_GYRO_RATE_FOR_VISION_RAD_S;
+
+        // Reject stale measurements
+        double visionAgeS = Timer.getFPGATimestamp() - measurement.timestampSeconds;
+        boolean tooStale = visionAgeS > MAX_VISION_AGE_S || visionAgeS < 0;
+
+        // Reject outliers - vision pose too far from current odometry
+        double visionOdomDist =
+            robotPose.getTranslation().getDistance(measurement.pose.getTranslation());
+        boolean outlier = visionOdomDist > MAX_VISION_ODOM_DIST_M;
+
+        if (!measurementNearOrigin && !gyroTooFast && !tooStale && !outlier) {
+          measurements.add(measurement);
+          Logger.recordOutput(limelight + " detecting", true);
+          poseEstimate = measurement.pose;
+          Logger.recordOutput("Pose Estimate", poseEstimate);
+
+          // Scale std devs: trust less with single tag or far tags
+          double scale = 1.0;
+          if (measurement.tagCount == 1) scale *= 1.5;
+          if (measurement.avgTagDist > 2.0) scale *= 1.3;
+          double stdXy = VISION_STD_DEV_XY * scale;
+          double stdTheta = VISION_STD_DEV_THETA_RAD * scale;
+          Matrix<N3, N1> stdDevs = VecBuilder.fill(stdXy, stdXy, stdTheta);
+          robotContainer.drive.addVisionMeasurement(
+              measurement.pose, measurement.timestampSeconds, stdDevs);
+        } else {
+          Logger.recordOutput(limelight + " detecting", false);
+        }
       } else {
         Logger.recordOutput(limelight + " detecting", false);
       }
 
-      LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
+      // Only send orientation to MegaTag2 when our odometry is valid (not at default origin)
+      if (!robotPoseNearOrigin) {
+        LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
+      }
     }
   }
 
