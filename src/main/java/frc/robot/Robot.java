@@ -113,21 +113,7 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
 
-    AngularVelocity speed =
-        RotationsPerSecond.of(robotContainer.drive.getFFCharacterizationVelocity());
-    Angle angle = robotContainer.drive.getRotation().getMeasure();
-    double multiplier = 6;
-    double magnitude = speed.times(multiplier).in(RotationsPerSecond);
-
-    // 71*
-
-    robotContainer.hubTarget = Constants.Poses.hub
-    // .transformBy(
-    //     new Transform2d(
-    //         Meters.of(-Math.sin(angle.in(Radians)) * magnitude),
-    //         Meters.of(-Math.cos(angle.in(Radians)) * magnitude),
-    //         Rotation2d.kZero))
-    ;
+    robotContainer.hubTarget = Constants.Poses.hub;
 
     Logger.recordOutput("Hub Target", robotContainer.hubTarget);
   }
