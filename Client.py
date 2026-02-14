@@ -15,9 +15,13 @@ NT.initialize(server=SERVER)
 
 table: NetworkTable  = NT.getTable("AdvantageKit")
 driverStation = table.getSubTable("DriverStation")
+dashboard    = table.getSubTable("SmartDashboard")
 outputs         = table.getSubTable("RealOutputs")
 
 pg.init()
+pg.mixer.init()
+
+sound: pg.Sound = pg.mixer.music.load(os.path.join(base, "assets", "rebuilt.mp3"))
 
 field: pg.Surface = pg.image.load(os.path.join(base, "assets", "field.png"))
 field_render = field.copy()
@@ -30,18 +34,12 @@ clock: pg.Clock = pg.Clock()
 
 screen: pg.Surface = pg.display.set_mode(size, pg.RESIZABLE|pg.SRCALPHA)
 
-# label = pgui.elements.UILabel(
-#     relative_rect=pg.Rect(5, 5, 50, 50),
-#     text="Hello",
-#     manager=manager
-# )
-
 class State(Enum):
     REAL: int = None
     SIM:  int = None
 state: State = State.REAL
 
-
+pg.mixer.music.play()
 while RUNNING:
     dtime: float = clock.tick(FPS)
 
@@ -61,8 +59,8 @@ while RUNNING:
 
     match state:
         case State.REAL:
-            # robotPose: list[int, int] = outputs.get
-            print("Hello")
+            robotPose: list[int, int] = dashboard.getNumberArray("robot-pose", [0, 0])
+            print(robotPose)
         case State.SIM:
             robotPose: list[int, int] = [0, 0]
 

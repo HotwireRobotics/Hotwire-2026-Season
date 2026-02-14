@@ -9,7 +9,6 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -100,6 +99,12 @@ public class Robot extends LoggedRobot {
     }
 
     Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
+
+    // Python uploads
+    double[] arrayPose = {
+      robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getY()
+    };
+    SmartDashboard.putNumberArray("robot-pose", arrayPose);
 
     robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
     robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
