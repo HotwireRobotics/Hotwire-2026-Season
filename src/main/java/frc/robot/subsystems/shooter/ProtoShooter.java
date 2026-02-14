@@ -198,12 +198,61 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 	}
 
 	@NotNull
+	public Command runMechanismVelocity(@NotNull AngularVelocity feeder, @NotNull AngularVelocity shooter) {
+		return Commands.runOnce(() -> {
+			runDeviceVelocity(Device.BOTH_SHOOTER, shooter);
+			runDeviceVelocity(Device.BOTH_FEEDER, feeder);
+		});
+	}
+
+	@NotNull
 	public Command runMechanismVelocity(
 			@NotNull Supplier<AngularVelocity> feeder, @NotNull Supplier<AngularVelocity> shooter) {
 		return Commands.runOnce(() -> {
 			runDeviceVelocity(Device.BOTH_SHOOTER, shooter.get());
 			runDeviceVelocity(Device.BOTH_FEEDER, feeder.get());
 		});
+	}
+
+	@NotNull
+	public Command runRightModule(double feeder, double shooter) {
+		return Commands.runOnce(() -> {
+			runDevice(Device.RIGHT_SHOOTER, shooter);
+			runDevice(Device.RIGHT_FEEDER, feeder);
+		});
+	}
+
+	@NotNull
+	public Command runLeftModule(double feeder, double shooter) {
+		return Commands.runOnce(() -> {
+			runDevice(Device.LEFT_SHOOTER, shooter);
+			runDevice(Device.LEFT_FEEDER, feeder);
+		});
+	}
+
+	@NotNull
+	public Command runRightModuleVelocity(
+			@NotNull Supplier<AngularVelocity> feeder, @NotNull Supplier<AngularVelocity> shooter) {
+		return Commands.runOnce(() -> {
+			runDeviceVelocity(Device.RIGHT_SHOOTER, shooter.get());
+			runDeviceVelocity(Device.RIGHT_FEEDER, feeder.get());
+		});
+	}
+
+	@NotNull
+	public Command runLeftModuleVelocity(
+			@NotNull Supplier<AngularVelocity> feeder, @NotNull Supplier<AngularVelocity> shooter) {
+		return Commands.runOnce(() -> {
+			runDeviceVelocity(Device.LEFT_SHOOTER, shooter.get());
+			runDeviceVelocity(Device.LEFT_FEEDER, feeder.get());
+		});
+	}
+
+	// ----- Config -----
+
+	public void configureProportional(double Kp) {
+		slot0Configs.withKP(Kp);
+		applySlot0Config();
 	}
 
 	private void applySlot0Config() {
