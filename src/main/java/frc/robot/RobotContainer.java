@@ -196,8 +196,8 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .a()
-        .whileTrue(intake.runMechanism(0.7))
-        .whileFalse(intake.runMechanism(0.0));
+        .whileTrue(intake.runIntake(0.7))
+        .whileFalse(intake.runIntake(0.0));
 
     // Shooter control and RPM supplier
     Supplier<AngularVelocity> velocity =

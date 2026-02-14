@@ -1,23 +1,34 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Volts;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
-import frc.robot.subsystems.shooter.ProtoShooter.Device;
+import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private final TalonFX rollers;
   private final TalonFX lower;
+  private final TalonFX arm;
 
   public enum Device {
     ROLLERS,
-    LOWER
+    LOWER,
+    ARM
   }
+
+  private final SysIdRoutine m_sysIdRoutineRight;
+  private final SysIdRoutine m_sysIdRoutineLeft;
+  private final SysIdRoutine m_sysIdRoutineARM;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
@@ -41,7 +52,15 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Intake/State", state.toString());
 
-    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
+    /**
+     * Logs position of (rot)
+     *
+     * <p>Logs velocity in (rpm)
+     *
+     * <p>Logs voltage current
+     *
+     * <p>Logs temp with unit metadata
+     */
     Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
         "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
@@ -60,7 +79,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   }
 
   // Device control methods
-  public void runDevice(Device device, double speed) {
+
+  public void runDevice(@NotNull Device device, @NotNull double speed) {
     for (TalonFX d : getDevices(device)) {
       d.set(speed);
     }
@@ -71,12 +91,70 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
+  /**
+   * Allows you to limit the voltage of the intake rollers
+   *
+   * @param device
+   * @param volts
+   */
+  public void runDeviceVoltage(@NotNull Device device, @NotNull double volts) {
+    for (TalonFX d : getDevices(device)) {
+      d.setVoltage(volts);
+    }
 
-  public Command runMechanism(double speed) {
+    if (volts == 0) {
+      specifyInactiveDevice(device);
+    } else {
+      specifyActiveDevice(device);
+    }
+  }
+  /**
+   * Allows you to limit the speed of the intake rollers
+   *
+   * @param speed
+   * @return
+   */
+  public Command runIntake(@NotNull double speed) {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
           runDevice(Device.LOWER, speed);
         });
+  }
+
+  public Command moveIntake(@NotNull double speed) {
+    return Commands.run(
+        () -> {
+          runDevice(Device.ARM, speed);
+        });
+  }
+  /**
+   * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
+   *
+   * @param direction
+   * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
+   */
+  public Command sysIdQuasistaticRight(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineRight.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicRight(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineRight.dynamic(direction);
+  }
+
+  public Command sysIdQuasistaticLeft(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicLeft(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.dynamic(direction);
+  }
+
+  public Command sysIdQuasistaticARM(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineARM.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicARM(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineARM.dynamic(direction);
   }
 }
