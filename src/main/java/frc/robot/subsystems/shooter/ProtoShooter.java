@@ -3,8 +3,6 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -19,8 +17,6 @@ import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import java.util.function.Supplier;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoShooter extends ModularSubsystem implements Systerface {
@@ -49,17 +45,17 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     TalonFX shooter;
     TalonFX feeder;
 
-    public ShooterModule(@NotNull int deviceID, @NotNull int followerID) {
+    public ShooterModule(int deviceID, int followerID) {
       shooter = new TalonFX(deviceID);
       feeder = new TalonFX(followerID);
     }
 
-    public void runModule(@Nullable double speed) {
+    public void runModule(double speed) {
       shooter.set(speed);
       feeder.set(speed);
     }
 
-    public void setControl(@Nullable ControlRequest control) {
+    public void setControl(ControlRequest control) {
       shooter.setControl(control);
     }
   }
@@ -201,7 +197,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   }
 
   // Device control methods
-  public void runDevice(@NotNull Device device, @NotNull double speed) {
+  public void runDevice(Device device, double speed) {
     for (TalonFX d : getDevices(device)) {
       d.set(speed);
     }
@@ -213,7 +209,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     }
   }
   // Velocity control
-  public void runDeviceVelocity(@NotNull Device device, @NotNull AngularVelocity velocity) {
+  public void runDeviceVelocity(Device device, AngularVelocity velocity) {
     for (TalonFX d : getDevices(device)) {
       d.setControl(m_velVolt.withVelocity(velocity));
     }
@@ -225,7 +221,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     }
   }
   // Voltage control
-  public void runDeviceVoltage(@NotNull Device device, @NotNull Voltage voltage) {
+  public void runDeviceVoltage(Device device, Voltage voltage) {
     for (TalonFX d : getDevices(device)) {
       d.setControl(m_voltReq.withOutput(voltage.in(Volts)));
     }
@@ -238,7 +234,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   }
 
   // Mechanism control commands
-  public Command runMechanism(@NotNull double feeder, @NotNull double shooter) {
+  public Command runMechanism(double feeder, double shooter) {
     return Commands.runOnce(
         () -> {
           runDevice(Device.BOTH_SHOOTER, shooter);
@@ -246,8 +242,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command runMechanismVelocity(
-      @NotNull AngularVelocity feeder, @NotNull AngularVelocity shooter) {
+  public Command runMechanismVelocity(AngularVelocity feeder, AngularVelocity shooter) {
     return Commands.runOnce(
         () -> {
           runDeviceVelocity(Device.BOTH_SHOOTER, shooter);
@@ -264,7 +259,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command runRightModule(@NotNull double feeder, @NotNull double shooter) {
+  public Command runRightModule(double feeder, double shooter) {
     return Commands.runOnce(
         () -> {
           runDevice(Device.RIGHT_SHOOTER, shooter);
@@ -272,7 +267,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command runLeftModule(@NotNull double feeder, @NotNull double shooter) {
+  public Command runLeftModule(double feeder, double shooter) {
     return Commands.runOnce(
         () -> {
           runDevice(Device.RIGHT_SHOOTER, shooter);
@@ -298,7 +293,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         });
   }
 
-  public void configureProportional(@Nullable double Kp) {
+  public void configureProportional(double Kp) {
     motorRPSControl.withKP(Kp);
     configureControl();
   }
@@ -310,19 +305,19 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     leftModule.feeder.getConfigurator().apply(motorRPSControl);
   }
   // Mechanism commands
-  public Command sysIdQuasistaticRight(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
   }
 
-  public Command sysIdDynamicRight(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.dynamic(direction);
   }
 
-  public Command sysIdQuasistaticLeft(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.quasistatic(direction);
   }
 
-  public Command sysIdDynamicLeft(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.dynamic(direction);
   }
 }

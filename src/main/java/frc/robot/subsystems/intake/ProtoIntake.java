@@ -2,8 +2,6 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Volts;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -11,7 +9,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
-import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
@@ -115,7 +112,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   // Device control methods
 
-  public void runDevice(@NotNull Device device, @NotNull double speed) {
+  public void runDevice(Device device, double speed) {
     for (TalonFX d : getDevices(device)) {
       d.set(speed);
     }
@@ -132,7 +129,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
    * @param device
    * @param volts
    */
-  public void runDeviceVoltage(@NotNull Device device, @NotNull double volts) {
+  public void runDeviceVoltage(Device device, double volts) {
     for (TalonFX d : getDevices(device)) {
       d.setVoltage(volts);
     }
@@ -149,7 +146,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
    * @param speed
    * @return
    */
-  public Command runIntake(@NotNull double speed) {
+  public Command runIntake(double speed) {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
@@ -157,7 +154,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command moveIntake(@NotNull double speed) {
+  public Command moveIntake(double speed) {
     return Commands.run(
         () -> {
           runDevice(Device.ARM, speed);
@@ -169,27 +166,27 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
    * @param direction
    * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
    */
-  public Command sysIdQuasistaticRight(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
   }
 
-  public Command sysIdDynamicRight(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.dynamic(direction);
   }
 
-  public Command sysIdQuasistaticLeft(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.quasistatic(direction);
   }
 
-  public Command sysIdDynamicLeft(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.dynamic(direction);
   }
 
-  public Command sysIdQuasistaticARM(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdQuasistaticARM(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineARM.quasistatic(direction);
   }
 
-  public Command sysIdDynamicARM(@NotNull SysIdRoutine.Direction direction) {
+  public Command sysIdDynamicARM(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineARM.dynamic(direction);
   }
 }

@@ -233,7 +233,7 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .leftTrigger()
-        .whileTrue(hopper.runHopper(0.9))
+        .whileTrue(hopper.runHopper(0.75))
         .whileFalse(hopper.runHopper(0));
   }
 
