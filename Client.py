@@ -13,10 +13,10 @@ FPS: int = 60
 RUNNING: bool = True
 NT.initialize(server=SERVER)
 
-table: NetworkTable  = NT.getTable("AdvantageKit")
-driverStation = table.getSubTable("DriverStation")
-dashboard    = table.getSubTable("SmartDashboard")
-outputs         = table.getSubTable("RealOutputs")
+table: NetworkTable =       NT.getTable("AdvantageKit")
+driverStation =      table.getSubTable("DriverStation")
+dashboard: NetworkTable = NT.getTable("SmartDashboard")
+outputs =              table.getSubTable("RealOutputs")
 
 pg.init()
 pg.mixer.init()

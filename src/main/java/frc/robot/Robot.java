@@ -126,7 +126,7 @@ public class Robot extends LoggedRobot {
       LimelightHelpers.setPipelineIndex(limelight, 0);
 
       // Get pose estimate from limelight
-      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
 
       if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3)) {
         measurements.add(measurement);
