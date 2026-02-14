@@ -80,6 +80,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         new DevicePointer(Device.LEFT_SHOOTER, leftModule.shooter),
         new DevicePointer(Device.BOTH_FEEDER, feeders),
         new DevicePointer(Device.BOTH_SHOOTER, shooters));
+    );
 
     m_voltReq = new VoltageOut(0.0);
     m_velVolt = new VelocityVoltage(0.0);
@@ -220,7 +221,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
-  //Voltage control
+  // Voltage control
   public void runDeviceVoltage(Device device, Voltage voltage) {
     for (TalonFX d : getDevices(device)) {
       d.setControl(m_voltReq.withOutput(voltage.in(Volts)));
@@ -304,7 +305,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     rightModule.feeder.getConfigurator().apply(motorRPSControl);
     leftModule.feeder.getConfigurator().apply(motorRPSControl);
   }
-  //Mechanism commands
+  // Mechanism commands
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
   }
