@@ -85,7 +85,6 @@ public class RobotContainer {
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
-    SmartDashboard.putNumber("Feeder Velocity", feederVelocity);
     SmartDashboard.putNumber("Shooter Velocity", shooterVelocity);
 
     // autoChooser.addOption(
@@ -203,7 +202,7 @@ public class RobotContainer {
         () -> {
           return Constants.regress(
               Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
-          //   return RPM.of(shooterPower);
+          //   return RPM.of(shooterVelocity);
         };
 
     Constants.Joysticks.operator

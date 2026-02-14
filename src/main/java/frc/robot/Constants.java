@@ -76,12 +76,12 @@ public final class Constants {
         flipAlliance(new Pose2d(Meters.of(4.611), Meters.of(4.021), new Rotation2d()));
   }
 
-  // Derived from relationship between distance (ft) and rotation (RPM).
-  public static double base = 355.3376;
-  public static double exponential = 0.820738;
+  // Derived from relationship between distance (m) and rotation (RPM).
+  public static double base = 1400.9197;
+  public static double exponential = 0.450548;
 
   public static AngularVelocity regress(Distance distance) {
-    return RPM.of(base * Math.pow(distance.in(Feet), exponential));
+    return RPM.of(base * Math.pow(distance.in(Meters), exponential));
   }
 
   public static enum Mode {
