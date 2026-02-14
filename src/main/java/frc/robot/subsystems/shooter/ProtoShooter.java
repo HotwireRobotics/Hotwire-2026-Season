@@ -80,6 +80,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         new DevicePointer(Device.LEFT_SHOOTER, leftModule.shooter),
         new DevicePointer(Device.BOTH_FEEDER, feeders),
         new DevicePointer(Device.BOTH_SHOOTER, shooters));
+    );
 
     m_voltReq = new VoltageOut(0.0);
     m_velVolt = new VelocityVoltage(0.0);
