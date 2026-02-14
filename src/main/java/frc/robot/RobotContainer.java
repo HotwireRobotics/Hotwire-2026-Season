@@ -19,6 +19,14 @@ import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class RobotContainer {
   // Subsystems
@@ -175,5 +183,107 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
     return autoChooser.get();
+  }
+}
+
+
+/**
+ * Visualization for the elevator subsystem in simulation.
+ */
+public class ElevatorSubsystemSim extends SubsystemBase {
+
+  private final ElevatorSubsystem elevator;
+
+  // Simulation display
+  private final Mechanism2d mech;
+  private final MechanismRoot2d root;
+  private final MechanismLigament2d elevatorMech;
+
+  // Visualization constants
+  private final double VISUAL_WIDTH = 10.0; // Width of visualization in pixels
+  private final double BASE_HEIGHT = 20.0; // Height of base in pixels
+  private final double CARRIAGE_WIDTH = 30.0; // Width of elevator carriage in pixels
+  private final double CARRIAGE_HEIGHT = 40.0; // Height of elevator carriage in pixels
+
+  // Elevator parameters
+  private final double minHeight;
+  private final double maxHeight;
+  private final double visualScaleFactor;
+
+  /**
+   * Creates a new visualization for the elevator.
+   *
+   * @param elevatorSubsystem The elevator subsystem to visualize
+   */
+  public ElevatorSubsystemSim(ElevatorSubsystem elevatorSubsystem) {
+    this.elevator = elevatorSubsystem;
+
+    // Get elevator parameters from simulation
+    minHeight = elevator.getMinHeightMeters();
+    maxHeight = elevator.getMaxHeightMeters();
+
+    // Calculate scale factor to keep visualization in reasonable bounds
+    double elevatorTravel = maxHeight - minHeight;
+    visualScaleFactor = 300.0 / elevatorTravel; // Scale to ~300 pixels max
+
+    // Create the simulation display
+    mech = new Mechanism2d(400, 400);
+    root = mech.getRoot("ElevatorRoot", 200, 50);
+
+    // Add elevator base
+    MechanismLigament2d elevatorBase = root.append(
+      new MechanismLigament2d(
+        "Base",
+        BASE_HEIGHT,
+        90,
+        6,
+        new Color8Bit(Color.kDarkGray)
+      )
+    );
+
+    // Add elevator tower
+    MechanismLigament2d elevatorTower = elevatorBase.append(
+      new MechanismLigament2d(
+        "Tower",
+        (maxHeight - minHeight) * visualScaleFactor,
+        90,
+        VISUAL_WIDTH,
+        new Color8Bit(Color.kGray)
+      )
+    );
+
+    // Add elevator carriage
+    elevatorMech = root.append(
+      new MechanismLigament2d(
+        "Elevator",
+        BASE_HEIGHT,
+        90,
+        CARRIAGE_WIDTH,
+        new Color8Bit(Color.kBlue)
+      )
+    );
+
+    // Initialize visualization
+    SmartDashboard.putData("Elevator Sim", mech);
+  }
+
+  @Override
+  public void periodic() {
+    // Update elevator height
+    double currentHeight = elevator.getSimulation().getPositionMeters();
+    double displayHeight =
+      BASE_HEIGHT + (currentHeight - minHeight) * visualScaleFactor;
+    elevatorMech.setLength(displayHeight);
+
+    // Add telemetry data
+    SmartDashboard.putNumber("Elevator Height (m)", currentHeight);
+    SmartDashboard.putNumber(
+      "Elevator Velocity (m/s)",
+      elevator.getSimulation().getVelocityMetersPerSecond()
+    );
+    SmartDashboard.putNumber(
+      "Elevator Current (A)",
+      elevator.getSimulation().getCurrentDrawAmps()
+    );
   }
 }
