@@ -21,7 +21,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     LOWER
   }
 
-  private final SysIdRoutine m_sysIdRoutineIntake;
+  private final SysIdRoutine m_sysIdRoutineRight;
+  private final SysIdRoutine m_sysIdRoutineLeft;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
@@ -29,14 +30,23 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
     defineDevice(Device.ROLLERS, rollers);
     defineDevice(Device.LOWER, lower);
-
-    m_sysIdRoutineIntake =
+    //Configuring SysId for intake
+    m_sysIdRoutineRight =
         new SysIdRoutine(
             new SysIdRoutine.Config(
                 null,
                 null,
                 null, // Use default config
-                (state) -> Logger.recordOutput("Intake/SysIdState", state.toString())),
+                (state) -> Logger.recordOutput("Intake/SysIdState/Right", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
+    m_sysIdRoutineLeft =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("Intake/SysIdState/Left", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
   }
@@ -106,8 +116,18 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
           runDevice(Device.LOWER, speed);
         });
   }
-
+  //Exposes SysId for intake as a command
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineIntake.quasistatic(direction);
+    return m_sysIdRoutineRight.quasistatic(direction);
+  }  
+  public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineRight.dynamic(direction);
+  }
+  public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.dynamic(direction);
   }
 }
