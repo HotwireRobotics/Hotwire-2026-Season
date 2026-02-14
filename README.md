@@ -46,7 +46,7 @@ This repository is **Hotwire Robotics (2990)**'s robot code for the 2026 game, *
 - **WPILib 2026** · **Java 17**
 - **CTRE Phoenix 6** — drive and mechanism motors
 - **PathPlanner** — autonomous paths and AutoBuilder
-- **AdvantageKit** — logging, replay, NT4
+- **AdvantageKit** — logging, replay, NT4. Subsystem hardware is isolated behind **IO interfaces** so all inputs are logged and replayable; see [AdvantageKit IO Interfaces](https://docs.advantagekit.org/data-flow/recording-inputs/io-interfaces).
 - **Limelights** — vision (PoseEstimate, etc.)
 - **SysId** — characterization support
 - **Networktables** — advantage kit, easier logging (autolog, shorter syntax)
@@ -131,11 +131,11 @@ src/main/java/frc/robot/
 ├── LimelightHelpers.java   # Limelight utilities
 ├── commands/               # e.g. DriveCommands
 ├── subsystems/
-│   ├── drive/              # Swerve (Drive, Module, Gyro/Module IO)
-│   ├── intake/             # ProtoIntake
-│   ├── shooter/            # ProtoShooter
-│   ├── hopper/             # HopperSubsystem
-│   └── climber/            # ProtoClimber (stub)
+│   ├── drive/              # Swerve (Drive, Module, GyroIO/ModuleIO + real/sim/no-op impls)
+│   ├── intake/             # ProtoIntake (IntakeIO + IntakeIOTalonFX, IntakeIOSim)
+│   ├── shooter/            # ProtoShooter (ShooterIO + ShooterIOTalonFX, ShooterIOSim)
+│   ├── hopper/             # HopperSubsystem (HopperIO + HopperIOTalonFX, HopperIOSim)
+│   └── climber/            # ProtoClimber (ClimberIO stub for future hardware)
 ├── util/                   # e.g. PhoenixUtil, LocalADStarAK
 └── generated/              # e.g. TunerConstants (SysId/characterization)
 ```

@@ -64,5 +64,9 @@
   ],
   "java.dependency.enableDependencyCheckup": false,
   "editor.formatOnSave": false,
-  "java.format.enabled": false
+  "java.format.enabled": false,
+  "vscode-pets.petSize": "small",
+  "vscode-pets.petType": "fox",
+  "vscode-pets.theme": "forest",
+  "vscode-pets.throwBallWithMouse": true
 }

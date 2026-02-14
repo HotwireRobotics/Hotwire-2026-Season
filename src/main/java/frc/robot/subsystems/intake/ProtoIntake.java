@@ -1,75 +1,82 @@
 package frc.robot.subsystems.intake;
 
-import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants;
-import frc.robot.ModularSubsystem;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Systerface;
-import frc.robot.subsystems.shooter.ProtoShooter.Device;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoIntake extends ModularSubsystem implements Systerface {
+/**
+ * Intake subsystem. All hardware interaction is via IntakeIO so inputs are loggable and replayable.
+ */
+public class ProtoIntake extends SubsystemBase implements Systerface {
 
-  private final TalonFX rollers;
-  private final TalonFX lower;
+  private final IntakeIO io;
+  private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
+
+  /** Commanded outputs for state derivation (no hardware in subsystem). */
+  private double lastRollersOutput = 0.0;
+
+  private double lastLowerOutput = 0.0;
 
   public enum Device {
     ROLLERS,
     LOWER
   }
 
-  public ProtoIntake() {
-    rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    lower = new TalonFX(Constants.MotorIDs.i_follower);
-    defineDevice(
-        new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.LOWER, lower));
+  public ProtoIntake(IntakeIO io) {
+    this.io = io;
   }
 
   private enum State {
     STOPPED,
-    INTAKING // Running rollers
+    INTAKING
   }
 
   State state = State.STOPPED;
 
+  @Override
   public Object getState() {
     return state;
   }
 
   @Override
   public void periodic() {
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake", inputs);
+
     Logger.recordOutput("Intake/State", state.toString());
 
-    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
-    Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Intake/Rollers/Voltage", rollers.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
-
-    if (isActiveDevice(Device.ROLLERS)) {
+    if (lastRollersOutput != 0.0 || lastLowerOutput != 0.0) {
       state = State.INTAKING;
     } else {
       state = State.STOPPED;
     }
   }
 
-  // Device control methods
+  /** Run a device by enum at the given output (-1 to 1). */
   public void runDevice(Device device, double speed) {
-    for (TalonFX d : getDevices(device)) {
-      d.set(speed);
+    switch (device) {
+      case ROLLERS -> {
+        io.setRollersOutput(speed);
+        lastRollersOutput = speed;
+      }
+      case LOWER -> {
+        io.setLowerOutput(speed);
+        lastLowerOutput = speed;
+      }
     }
+  }
 
-    if (speed == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
-    }
+  /**
+   * For ModularSubsystem compatibility: no TalonFX in subsystem, so always false for "active" by
+   * device.
+   */
+  public boolean isActiveDevice(Device device) {
+    return switch (device) {
+      case ROLLERS -> lastRollersOutput != 0.0;
+      case LOWER -> lastLowerOutput != 0.0;
+    };
   }
 
   public Command runMechanism(double speed) {

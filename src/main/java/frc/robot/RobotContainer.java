@@ -16,15 +16,26 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.climber.ClimberIO;
+import frc.robot.subsystems.climber.ProtoClimber;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.hopper.HopperIO;
+import frc.robot.subsystems.hopper.HopperIOSim;
+import frc.robot.subsystems.hopper.HopperIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
+import frc.robot.subsystems.shooter.ShooterIO;
+import frc.robot.subsystems.shooter.ShooterIOSim;
+import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -35,6 +46,7 @@ public class RobotContainer {
   public final ProtoIntake intake;
   public final ProtoShooter shooter;
   public final HopperSubsystem hopper;
+  public final ProtoClimber climber;
   public double feederVelocity = 0;
   public double shooterVelocity = 0;
   public double shooterPower = 0;
@@ -79,9 +91,28 @@ public class RobotContainer {
         break;
     }
 
-    intake = new ProtoIntake();
-    shooter = new ProtoShooter();
-    hopper = new HopperSubsystem();
+    // Intake, Shooter, Hopper, Climber: REAL = hardware IO, SIM = sim IO, default = no-op for
+    // replay
+    switch (Constants.currentMode) {
+      case REAL:
+        intake = new ProtoIntake(new IntakeIOTalonFX());
+        shooter = new ProtoShooter(new ShooterIOTalonFX());
+        hopper = new HopperSubsystem(new HopperIOTalonFX());
+        climber = new ProtoClimber(new ClimberIO() {});
+        break;
+      case SIM:
+        intake = new ProtoIntake(new IntakeIOSim());
+        shooter = new ProtoShooter(new ShooterIOSim());
+        hopper = new HopperSubsystem(new HopperIOSim());
+        climber = new ProtoClimber(new ClimberIO() {});
+        break;
+      default:
+        intake = new ProtoIntake(new IntakeIO() {});
+        shooter = new ProtoShooter(new ShooterIO() {});
+        hopper = new HopperSubsystem(new HopperIO() {});
+        climber = new ProtoClimber(new ClimberIO() {});
+        break;
+    }
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
