@@ -1,23 +1,35 @@
 # 2026 Hotwire
 
-This repository is **Hotwire Robotics (2990)**'s robot code for the 2026 game, **Rebuilt!** 🟡🟡🟡
+This repository is **Hotwire Robotics (2990)**'s robot code for the 2026 game, **Rebuilt!** 🟡
 
-![Hotwire Robotics Logo](assets/hotwire.svg)
+[![Hotwire Robotics Logo](assets/hotwire.svg)](https://hotwirerobotics.com)
 
 ---
 
 ## Overview
 
-**Ro-bert's Role:**
-The physical role of this robot is L3 climbing, fixed & fast dual barrel shooting (no hood, with flywheel), and to be able to fit under the trench with as much fuel capacity as possible. We are using swerve drive modules, and mainly going under the trench although we do have the capability to go over the bump.
-Programming-wise, the role is on the move shooting, multiple autos for each situation, multi-limelight robot positioning, and RPM control that scales based upon distance from hub.
+**Ro-bert** is Hotwire’s 2026 competition bot: trench runner, dual-barrel shooter, and L3 climber.
+
+### Physical
+
+- **Drive** — Swerve; under the trench (with option to go over the bump)
+- **Shooter** — Fixed, fast dual-barrel flywheel (no hood)
+- **Climb** — L3 capable
+- **Capacity** — As much fuel as possible while still fitting under the trench
+
+### Programming
+
+- **On-the-move shooting** with distance-scaled RPM
+- **Multi-auto** — different autos for each situation
+- **Multi-Limelight** robot positioning (AprilTags)
+- **Feeder station** intake in addition to ground / over-bumper
 
 ---
 
 ## Robot Architecture
 
 | Subsystem | Description |
-| ------------ | ------------- |
+| --------- | ----------- |
 | **Drive** | Swerve drive (4× Talon FX, Pigeon 2), PathPlanner autos, odometry |
 | **Intake** | Over the bumper intake, and also able to grab from feeder station |
 | **Shooter** | Flywheel shooter + feeder. Dual barrel. |
@@ -25,12 +37,13 @@ Programming-wise, the role is on the move shooting, multiple autos for each situ
 | **Climber** | Proto/stub (not yet wired nor fully built) |
 
 - **Controllers:** Xbox controllers, split between driver (0) and operator (1)
-- **Vision:** Two limelights, both for only april tags (currently), with one parralel with the climber, and the other parralel with the intake.
+- **Vision:** Two Limelights (AprilTags only for now): one parallel with the climber, one parallel with the intake.
 
 ---
 
 ## Tech Stack
 
+- **WPILib 2026** · **Java 17**
 - **CTRE Phoenix 6** — drive and mechanism motors
 - **PathPlanner** — autonomous paths and AutoBuilder
 - **AdvantageKit** — logging, replay, NT4
@@ -61,7 +74,7 @@ Programming-wise, the role is on the move shooting, multiple autos for each situ
 ./gradlew test
 ```
 
-- **Simulation:** Not fully implimented.
+- **Simulation:** Not implemented.
 - **PathPlanner paths** live in `src/main/deploy/pathplanner/paths/` and are deployed with the project.
 
 ### Key Paths/autos
@@ -104,7 +117,7 @@ Drive module and Pigeon 2 IDs come from PathPlanner / SysId config (see `TunerCo
 
 ## Competition / Event Checklist
 
-- **Branch:** Use `event/<event-name>` (e.g. `event/bordie`) for competition. (grab from main or current updated branch)
+- **Branch:** Use `event/<event-name>` (e.g. `event/bordie`) for competition. Branch from `main` or your current updated branch.
 
 ---
 
@@ -132,7 +145,7 @@ src/main/java/frc/robot/
 ## Contributing
 
 - Use the github project plan to mark out changes and issues.
-- Make a new branch with yourname/change for general areas of changes. (ex. Zane/swerve-setup)
+- Make a new branch with yourname/change for general areas of changes. (ex. hotwire-programmer/swerve-setup)
 - Never directly commit to main.
 - Make all commit messages concise (max 3 words)
 - Use pull requests whenever merging into main, and make sure to request review from a mentor or lead programmer.
