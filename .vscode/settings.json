@@ -67,6 +67,6 @@
   "java.format.enabled": false,
   "vscode-pets.petSize": "small",
   "vscode-pets.petType": "fox",
-  "vscode-pets.theme": "forest",
+  "vscode-pets.theme": "none",
   "vscode-pets.throwBallWithMouse": true
 }
