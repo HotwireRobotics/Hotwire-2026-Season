@@ -2,6 +2,8 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -23,6 +25,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;
+  private final SysIdRoutine m_sysIdRoutineUp;
+  private final SysIdRoutine m_sysIdRoutineDown;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
@@ -30,7 +34,11 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
     defineDevice(Device.ROLLERS, rollers);
     defineDevice(Device.LOWER, lower);
-    // Configuring SysId for intake
+    /**
+     * Configures SysId for inake, left and right
+     *
+     * <p>Commands of which are at the bottom, both Quasistatic and Dynamic for both
+     */
     m_sysIdRoutineRight =
         new SysIdRoutine(
             new SysIdRoutine.Config(
@@ -47,6 +55,24 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
                 null,
                 null, // Use default config
                 (state) -> Logger.recordOutput("Intake/SysIdState/Left", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
+    m_sysIdRoutineUp =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("Intake/SysIdState/Up", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
+    m_sysIdRoutineDown =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("Intake/SysIdState/Down", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
   }
@@ -66,7 +92,15 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Intake/State", state.toString());
 
-    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
+    /**
+     * Logs position of (rot)
+     *
+     * <p>Logs velocity in (rpm)
+     *
+     * <p>Logs voltage current
+     *
+     * <p>Logs temp with unit metadata
+     */
     Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
         "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
@@ -85,7 +119,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   }
 
   // Device control methods
-  public void runDevice(Device device, double speed) {
+
+  public void runDevice(@NotNull Device device, @NotNull double speed) {
     for (TalonFX d : getDevices(device)) {
       d.set(speed);
     }
@@ -96,8 +131,14 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
+  /**
+   * Allows you to limit the voltage of the intake rollers
+   *
+   * @param device
+   * @param volts
+   */
 
-  public void runDeviceVoltage(Device device, double volts) {
+  public void runDeviceVoltage(@NotNull Device device, @NotNull double volts) {
     for (TalonFX d : getDevices(device)) {
       d.setVoltage(volts);
     }
@@ -108,26 +149,55 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
-
-  public Command runMechanism(double speed) {
+  /**
+   * Allows you to limit the speed of the intake rollers
+   *
+   * @param speed
+   * @return
+   */
+  
+  public Command runMechanism(@NotNull double speed) {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
           runDevice(Device.LOWER, speed);
         });
   }
-  // Exposes SysId for intake as a command
-  public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
+  /**
+   * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
+   *
+   * @param direction
+   * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
+   */
+
+  public Command sysIdQuasistaticRight(@NotNull SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
-  }  
-  public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineRight.dynamic(direction);
-  }
-  public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineLeft.quasistatic(direction);
   }
 
-  public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
+  public Command sysIdDynamicRight(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineRight.dynamic(direction);
+  }
+
+  public Command sysIdQuasistaticLeft(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.quasistatic(direction);
+  }
+  
+  public Command sysIdDynamicLeft(@NotNull SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.dynamic(direction);
+  }
+  public Command sysIdQuasistaticUp(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineUp.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicUp(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineUp.dynamic(direction);
+  }
+
+  public Command sysIdQuasistaticDown(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineDown.quasistatic(direction);
+  }
+  
+  public Command sysIdDynamiDown(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineDown.dynamic(direction);
   }
 }
