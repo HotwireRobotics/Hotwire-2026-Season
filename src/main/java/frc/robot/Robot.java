@@ -112,20 +112,13 @@ public class Robot extends LoggedRobot {
 
     Time time = Seconds.of(DriverStation.getMatchTime());
     Boolean isAutonomous = DriverStation.isAutonomous();
-    Time    length = 
-      (isAutonomous) ? 
-        Constants.autoLength  : 
-        Constants.teleopLength;
+    Time length = (isAutonomous) ? Constants.autoLength : Constants.teleopLength;
     time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(time);
 
     Logger.recordOutput("Time", time.in(Seconds));
     Boolean rumble = false;
 
-    for (Time target : (
-      (isAutonomous) ? 
-        Constants.autoTimes : 
-        Constants.teleopTimes
-    )) {
+    for (Time target : ((isAutonomous) ? Constants.autoTimes : Constants.teleopTimes)) {
       double difference = target.minus(time).in(Seconds);
       if ((Math.abs(difference) < 1) && (difference < 0)) {
         rumble = true;
