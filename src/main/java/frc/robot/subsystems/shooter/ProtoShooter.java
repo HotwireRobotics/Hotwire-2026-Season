@@ -19,6 +19,8 @@ import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import java.util.function.Supplier;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoShooter extends ModularSubsystem implements Systerface {
@@ -244,7 +246,8 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command runMechanismVelocity(@NotNull AngularVelocity feeder, @NotNull AngularVelocity shooter) {
+  public Command runMechanismVelocity(
+      @NotNull AngularVelocity feeder, @NotNull AngularVelocity shooter) {
     return Commands.runOnce(
         () -> {
           runDeviceVelocity(Device.BOTH_SHOOTER, shooter);
