@@ -109,6 +109,10 @@ public class Robot extends LoggedRobot {
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
+
+    robotContainer.hubTarget = Constants.Poses.hub;
+
+    Logger.recordOutput("Hub Target", robotContainer.hubTarget);
   }
 
   private void processLimelightMeasurements() {

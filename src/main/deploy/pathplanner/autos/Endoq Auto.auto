@@ -7,7 +7,19 @@
         {
           "type": "path",
           "data": {
+            "pathName": "En-route Initial Firing"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "Exolateral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Endolateral"
           }
         }
       ]
