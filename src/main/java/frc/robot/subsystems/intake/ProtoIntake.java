@@ -30,7 +30,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
     defineDevice(Device.ROLLERS, rollers);
     defineDevice(Device.LOWER, lower);
-    //Configuring SysId for intake
+    // Configuring SysId for intake
     m_sysIdRoutineRight =
         new SysIdRoutine(
             new SysIdRoutine.Config(
@@ -116,7 +116,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
           runDevice(Device.LOWER, speed);
         });
   }
-  //Exposes SysId for intake as a command
+  // Exposes SysId for intake as a command
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
   }  
