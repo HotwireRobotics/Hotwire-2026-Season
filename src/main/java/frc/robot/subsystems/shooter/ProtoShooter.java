@@ -6,7 +6,6 @@ import static edu.wpi.first.units.Units.Volts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -23,6 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.littletonrobotics.junction.Logger;
 
+/**
+ * Shooter subsystem with left/right modules (shooter + feeder per side). Supports percent output,
+ * velocity (RPS), and voltage control, plus SysId routines per side.
+ */
 public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;

@@ -33,43 +33,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     lower = new TalonFX(Constants.MotorIDs.i_follower);
-    arm = new TalonFX(99);
-
-    defineDevice(Device.ROLLERS, rollers);
-    defineDevice(Device.LOWER, lower);
-    defineDevice(Device.ARM, arm);
-    /**
-     * Configures SysId for inake, left and right
-     *
-     * <p>Commands of which are at the bottom, both Quasistatic and Dynamic for both
-     */
-    m_sysIdRoutineRight =
-        new SysIdRoutine(
-            new SysIdRoutine.Config(
-                null,
-                null,
-                null, // Use default config
-                (state) -> Logger.recordOutput("Intake/SysIdState/Right", state.toString())),
-            new SysIdRoutine.Mechanism(
-                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
-    m_sysIdRoutineLeft =
-        new SysIdRoutine(
-            new SysIdRoutine.Config(
-                null,
-                null,
-                null, // Use default config
-                (state) -> Logger.recordOutput("Intake/SysIdState/Left", state.toString())),
-            new SysIdRoutine.Mechanism(
-                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
-    m_sysIdRoutineARM =
-        new SysIdRoutine(
-            new SysIdRoutine.Config(
-                null,
-                null,
-                null, // Use default config
-                (state) -> Logger.recordOutput("Intake/SysIdState/Down", state.toString())),
-            new SysIdRoutine.Mechanism(
-                (voltage) -> runDeviceVoltage(Device.ARM, voltage.in(Volts)), null, this));
+    defineDevice(
+        new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.LOWER, lower));
   }
 
   private enum State {

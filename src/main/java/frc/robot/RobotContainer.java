@@ -39,6 +39,8 @@ public class RobotContainer {
   public double shooterVelocity = 0;
   public double shooterPower = 0;
 
+  public Pose2d hubTarget = Constants.Poses.hub;
+
   // Constants.Joysticks
 
   // Dashboard inputs
@@ -201,7 +203,7 @@ public class RobotContainer {
     Supplier<AngularVelocity> velocity =
         () -> {
           return Constants.regress(
-              Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
+              Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
           //   return RPM.of(shooterVelocity);
         };
 
@@ -217,14 +219,13 @@ public class RobotContainer {
                         () -> -Constants.Joysticks.driver.getLeftX(),
                         () -> {
                           Pose2d robotPose = drive.getPose();
-                          Pose2d hubPose = Constants.Poses.hub;
 
                           Angle toHub =
                               Radians.of(
                                   Math.IEEEremainder(
                                       Math.atan(
-                                          (hubPose.getY() - robotPose.getY())
-                                              / (hubPose.getX() - robotPose.getX())),
+                                          (hubTarget.getY() - robotPose.getY())
+                                              / (hubTarget.getX() - robotPose.getX())),
                                       Constants.Mathematics.TAU));
                           Logger.recordOutput("Hub Angular", toHub.in(Degrees));
                           return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);

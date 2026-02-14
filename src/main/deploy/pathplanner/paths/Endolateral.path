@@ -3,32 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.042781740370898,
-        "y": 6.0
+        "x": 7.713637660485022,
+        "y": 4.707366666666667
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.671283880171183,
-        "y": 7.496091298145506
+        "x": 7.700699001426534,
+        "y": 5.4647218259629105
       },
       "isLocked": false,
-      "linkedName": "Upper Firing Location"
-    },
-    {
-      "anchor": {
-        "x": 5.565820256776034,
-        "y": 7.276134094151213
-      },
-      "prevControl": {
-        "x": 3.545688296006144,
-        "y": 7.554123367658819
-      },
-      "nextControl": {
-        "x": 6.377175345718,
-        "y": 7.164483956382135
-      },
-      "isLocked": false,
-      "linkedName": null
+      "linkedName": "Centre"
     },
     {
       "anchor": {
@@ -36,37 +20,53 @@
         "y": 7.405520684736091
       },
       "prevControl": {
-        "x": 7.71913402563855,
-        "y": 7.655460257373357
+        "x": 7.703645650897804,
+        "y": 7.655320924416537
       },
       "nextControl": {
-        "x": 7.702538952745113,
-        "y": 6.900822362871854
+        "x": 7.7265763195435095,
+        "y": 7.0820542082738935
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 7.713637660485022,
-        "y": 4.707366666666667
+        "x": 2.874579172610556,
+        "y": 7.405520684736091
       },
       "prevControl": {
-        "x": 7.713637660485022,
-        "y": 5.548379505468379
+        "x": 3.459476651283502,
+        "y": 7.585489139712381
+      },
+      "nextControl": {
+        "x": 2.369971469329528,
+        "y": 7.250256776034237
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 3.042781740370898,
+        "y": 6.0
+      },
+      "prevControl": {
+        "x": 2.9004564907275308,
+        "y": 6.284650499286734
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Upper Firing Location"
     }
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.8530534351144947,
+      "waypointRelativePos": 0.45,
       "rotationDegrees": 0.0
     },
     {
-      "waypointRelativePos": 2.1125954198473216,
+      "waypointRelativePos": 1.5927505330490284,
       "rotationDegrees": -90.0
     }
   ],
@@ -83,13 +83,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -90.0
+    "rotation": -51.177084062266466
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -51.177084062266466
+    "rotation": -90.0
   },
   "useDefaultConstraints": true
 }
