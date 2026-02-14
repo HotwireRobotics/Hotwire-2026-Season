@@ -25,6 +25,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;
+  private final SysIdRoutine m_sysIdRoutineUp;
+  private final SysIdRoutine m_sysIdRoutineDown;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
@@ -53,6 +55,24 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
                 null,
                 null, // Use default config
                 (state) -> Logger.recordOutput("Intake/SysIdState/Left", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
+    m_sysIdRoutineUp =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("Intake/SysIdState/Up", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
+    m_sysIdRoutineDown =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("Intake/SysIdState/Down", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
   }
@@ -164,5 +184,20 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   
   public Command sysIdDynamicLeft(@NotNull SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.dynamic(direction);
+  }
+  public Command sysIdQuasistaticUp(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineUp.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicUp(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineUp.dynamic(direction);
+  }
+
+  public Command sysIdQuasistaticDown(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineDown.quasistatic(direction);
+  }
+  
+  public Command sysIdDynamiDown(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineDown.dynamic(direction);
   }
 }
