@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Systerface;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * Hopper subsystem. All hardware interaction is via HopperIO so inputs are loggable and replayable.
@@ -14,6 +15,11 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
 
   private final HopperIO io;
   private final HopperIOInputsAutoLogged inputs = new HopperIOInputsAutoLogged();
+
+  /** Logged dashboard inputs for runHoppertest so values are replayed. */
+  private final LoggedNetworkNumber upperSpeedInput = new LoggedNetworkNumber("upperSpeed", 0.0);
+
+  private final LoggedNetworkNumber lowerSpeedInput = new LoggedNetworkNumber("lowerSpeed", 0.0);
 
   public HopperSubsystem(HopperIO io) {
     this.io = io;
@@ -33,8 +39,20 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
 
   @Override
   public void periodic() {
+    upperSpeedInput.periodic();
+    lowerSpeedInput.periodic();
     io.updateInputs(inputs);
     Logger.processInputs("Hopper", inputs);
+  }
+
+  /** Logged upper speed for runHoppertest (replay-safe). */
+  public double getUpperSpeed() {
+    return upperSpeedInput.get();
+  }
+
+  /** Logged lower speed for runHoppertest (replay-safe). */
+  public double getLowerSpeed() {
+    return lowerSpeedInput.get();
   }
 
   public Command runHopper(double speed) {
@@ -48,8 +66,8 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
   public Command runHoppertest() {
     return Commands.run(
         () -> {
-          io.setUpperOutput(SmartDashboard.getNumber("upperSpeed", 0));
-          io.setLowerOutput(SmartDashboard.getNumber("lowerSpeed", 0));
+          io.setUpperOutput(getUpperSpeed());
+          io.setLowerOutput(getLowerSpeed());
         });
   }
 

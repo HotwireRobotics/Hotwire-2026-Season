@@ -2,11 +2,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Seconds;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -14,12 +10,10 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.LimelightHelpers.PoseEstimate;
-import java.util.ArrayList;
-import java.util.List;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -28,7 +22,16 @@ public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private RobotContainer robotContainer;
   public Pose2d poseEstimate = new Pose2d();
-  private double shooterKP = 0;
+
+  /** Logged dashboard inputs so tuning values are replayed; see AdvantageKit dashboard inputs. */
+  private final LoggedNetworkNumber feederVelocityInput =
+      new LoggedNetworkNumber("Feeder Velocity", 0.0);
+
+  private final LoggedNetworkNumber shooterVelocityInput =
+      new LoggedNetworkNumber("Shooter Velocity", 0.0);
+  private final LoggedNetworkNumber shooterRpmInput = new LoggedNetworkNumber("Shooter RPM", 0.0);
+  private final LoggedNetworkNumber shooterProportionalInput =
+      new LoggedNetworkNumber("Shooter Proportional", 0.0);
 
   Timer timer = new Timer();
 
@@ -71,8 +74,8 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
-    SmartDashboard.putNumber("Shooter RPM", robotContainer.shooterPower);
-    SmartDashboard.putNumber("Shooter Proportional", shooterKP);
+    SmartDashboard.putNumber("Shooter RPM", 0.0);
+    SmartDashboard.putNumber("Shooter Proportional", 0.0);
   }
 
   @Override
@@ -102,46 +105,23 @@ public class Robot extends LoggedRobot {
 
     Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
 
-    robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
-    robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
-    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter RPM", 0.0);
-    shooterKP = SmartDashboard.getNumber("Shooter Proportional", 0);
+    // Update logged dashboard inputs (logged and replayed; SmartDashboard.getNumber is not)
+    feederVelocityInput.periodic();
+    shooterVelocityInput.periodic();
+    shooterRpmInput.periodic();
+    shooterProportionalInput.periodic();
+    robotContainer.feederVelocity = feederVelocityInput.get();
+    robotContainer.shooterVelocity = shooterVelocityInput.get();
+    robotContainer.shooterPower = shooterRpmInput.get();
+    robotContainer.shooterKP = shooterProportionalInput.get();
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
   }
 
   private void processLimelightMeasurements() {
-    List<PoseEstimate> measurements = new ArrayList<>();
-
-    for (String limelight : Constants.limelights) {
-      LimelightHelpers.SetIMUMode(limelight, 2);
-      // Get current pose
-      Pose2d robotPose = robotContainer.drive.getPose();
-      double headingDeg = robotPose.getRotation().getDegrees();
-
-      LimelightHelpers.setPipelineIndex(limelight, 0);
-
-      // Get pose estimate from limelight
-      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
-
-      if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3)) {
-        measurements.add(measurement);
-        // Log pose estimate and limelight status
-        Logger.recordOutput(limelight + " detecting", true);
-        poseEstimate = measurement.pose;
-        Logger.recordOutput("Pose Estimate", poseEstimate);
-
-        // Define standard deviation
-        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.05, 0.05, Math.toRadians(2));
-        robotContainer.drive.addVisionMeasurement(
-            measurement.pose, measurement.timestampSeconds, stdDevs);
-      } else {
-        Logger.recordOutput(limelight + " detecting", false);
-      }
-
-      LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
-    }
+    robotContainer.applyVisionMeasurements();
+    poseEstimate = robotContainer.getLastValidVisionPose();
   }
 
   @Override

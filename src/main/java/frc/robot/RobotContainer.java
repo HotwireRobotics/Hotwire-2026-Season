@@ -4,8 +4,12 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -36,6 +40,10 @@ import frc.robot.subsystems.shooter.ProtoShooter;
 import frc.robot.subsystems.shooter.ShooterIO;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
+import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOInputsAutoLogged;
+import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.subsystems.vision.VisionIONoop;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -50,11 +58,19 @@ public class RobotContainer {
   public double feederVelocity = 0;
   public double shooterVelocity = 0;
   public double shooterPower = 0;
+  /** Shooter Slot0 KP from dashboard; set from logged input in Robot.robotPeriodic(). */
+  public double shooterKP = 0;
 
   // Constants.Joysticks
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+
+  /** Vision IO and inputs (one per limelight); logged and replayed. */
+  private final VisionIO[] visionIOs;
+
+  private final VisionIOInputsAutoLogged[] visionInputs;
+  private Pose2d lastValidVisionPose = new Pose2d();
 
   Orchestra music = new Orchestra(Filesystem.getDeployDirectory() + "/orchestra/output.chirp");
 
@@ -112,6 +128,17 @@ public class RobotContainer {
         hopper = new HopperSubsystem(new HopperIO() {});
         climber = new ProtoClimber(new ClimberIO() {});
         break;
+    }
+
+    // Vision: REAL = Limelight, SIM/replay = no-op (inputs from log when replaying)
+    visionIOs = new VisionIO[Constants.limelights.length];
+    visionInputs = new VisionIOInputsAutoLogged[Constants.limelights.length];
+    for (int i = 0; i < Constants.limelights.length; i++) {
+      visionInputs[i] = new VisionIOInputsAutoLogged();
+      visionIOs[i] =
+          (Constants.currentMode == Constants.Mode.REAL)
+              ? new VisionIOLimelight(Constants.limelights[i])
+              : new VisionIONoop();
     }
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -266,6 +293,35 @@ public class RobotContainer {
         .leftTrigger()
         .whileTrue(hopper.runHopper(0.9))
         .whileFalse(hopper.runHopper(0));
+  }
+
+  /**
+   * Updates vision inputs from IO, logs them for replay, and applies valid pose estimates to drive
+   * odometry. Call once per cycle from Robot.robotPeriodic().
+   */
+  public void applyVisionMeasurements() {
+    Pose2d robotPose = drive.getPose();
+    Matrix<N3, N1> stdDevs = VecBuilder.fill(0.05, 0.05, Math.toRadians(2));
+    for (int i = 0; i < visionIOs.length; i++) {
+      visionIOs[i].updateInputs(visionInputs[i], robotPose);
+      Logger.processInputs("Vision/" + Constants.limelights[i], visionInputs[i]);
+      if (visionInputs[i].valid) {
+        drive.addVisionMeasurement(visionInputs[i].pose, visionInputs[i].timestampSeconds, stdDevs);
+        lastValidVisionPose = visionInputs[i].pose;
+        Logger.recordOutput(Constants.limelights[i] + " detecting", true);
+        Logger.recordOutput("Pose Estimate", visionInputs[i].pose);
+      } else {
+        Logger.recordOutput(Constants.limelights[i] + " detecting", false);
+      }
+    }
+  }
+
+  /**
+   * Last pose from vision (for code that reads pose estimate); updated in
+   * applyVisionMeasurements().
+   */
+  public Pose2d getLastValidVisionPose() {
+    return lastValidVisionPose;
   }
 
   public Command getAutonomousCommand() {
