@@ -1,12 +1,14 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
-import frc.robot.subsystems.shooter.ProtoShooter.Device;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
@@ -19,13 +21,34 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     LOWER
   }
 
+  private final SysIdRoutine m_sysIdRoutineRight;
+  private final SysIdRoutine m_sysIdRoutineLeft;
+
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     lower = new TalonFX(Constants.MotorIDs.i_follower);
-    defineDevice(
-      new DevicePointer(Device.ROLLERS, rollers),
-      new DevicePointer(Device.LOWER, lower)
-    );
+
+    defineDevice(Device.ROLLERS, rollers);
+    defineDevice(Device.LOWER, lower);
+    // Configuring SysId for intake
+    m_sysIdRoutineRight =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("Intake/SysIdState/Right", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
+    m_sysIdRoutineLeft =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("Intake/SysIdState/Left", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
   }
 
   private enum State {
@@ -74,11 +97,37 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     }
   }
 
+  public void runDeviceVoltage(Device device, double volts) {
+    for (TalonFX d : getDevices(device)) {
+      d.setVoltage(volts);
+    }
+
+    if (volts == 0) {
+      specifyInactiveDevice(device);
+    } else {
+      specifyActiveDevice(device);
+    }
+  }
+
   public Command runMechanism(double speed) {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
           runDevice(Device.LOWER, speed);
         });
+  }
+  // Exposes SysId for intake as a command
+  public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineRight.quasistatic(direction);
+  }  
+  public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineRight.dynamic(direction);
+  }
+  public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.quasistatic(direction);
+  }
+
+  public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.dynamic(direction);
   }
 }

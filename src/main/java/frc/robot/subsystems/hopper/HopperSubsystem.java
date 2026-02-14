@@ -83,7 +83,7 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
           lowerFeed.set(speed);
         });
   }
-
+  // Hopper tests
   public Command runHoppertest() {
     return Commands.run(
         () -> {

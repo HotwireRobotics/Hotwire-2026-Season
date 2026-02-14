@@ -20,6 +20,10 @@ public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
+  public static class Mathematics {
+    public static final double TAU = 6.283185307179586;
+  }
+
   public static class Joysticks {
     public static final CommandXboxController driver = new CommandXboxController(0);
     public static final CommandXboxController operator = new CommandXboxController(1);
@@ -44,10 +48,9 @@ public final class Constants {
     public static final Integer i_follower = 9;
     public static final Integer s_feederR = 11;
     public static final Integer s_shooterR = 8;
-    public static final Integer s_feederL = 12;
     public static final Integer s_shooterL = 15;
     public static final Integer h_upperFeed = 14;
-    public static final Integer h_lowerFeed = 16;
+    public static final Integer h_lowerFeed = 12;
   }
 
   public static final PathConstraints constraints =
@@ -73,12 +76,12 @@ public final class Constants {
         flipAlliance(new Pose2d(Meters.of(4.611), Meters.of(4.021), new Rotation2d()));
   }
 
-  // Derived from relationship between distance (ft) and rotation (RPM).
-  public static double base = 405.35844;
-  public static double exponential = 0.820738;
+  // Derived from relationship between distance (m) and rotation (RPM).
+  public static double base = 1400.9197;
+  public static double exponential = 0.450548;
 
   public static AngularVelocity regress(Distance distance) {
-    return RPM.of(base * Math.pow(distance.in(Feet), exponential));
+    return RPM.of(base * Math.pow(distance.in(Meters), exponential));
   }
 
   public static enum Mode {

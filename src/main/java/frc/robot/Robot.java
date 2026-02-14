@@ -28,6 +28,7 @@ public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private RobotContainer robotContainer;
   public Pose2d poseEstimate = new Pose2d();
+  private double shooterKP = 0;
 
   Timer timer = new Timer();
 
@@ -70,7 +71,8 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
-    SmartDashboard.putNumber("Shooter Power", robotContainer.shooterPower);
+    SmartDashboard.putNumber("Shooter RPM", robotContainer.shooterPower);
+    SmartDashboard.putNumber("Shooter Proportional", shooterKP);
   }
 
   @Override
@@ -102,7 +104,8 @@ public class Robot extends LoggedRobot {
 
     robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
     robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
-    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter Power", 0.0);
+    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter RPM", 0.0);
+    shooterKP = SmartDashboard.getNumber("Shooter Proportional", 0);
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
@@ -120,7 +123,7 @@ public class Robot extends LoggedRobot {
       LimelightHelpers.setPipelineIndex(limelight, 0);
 
       // Get pose estimate from limelight
-      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
 
       if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3)) {
         measurements.add(measurement);

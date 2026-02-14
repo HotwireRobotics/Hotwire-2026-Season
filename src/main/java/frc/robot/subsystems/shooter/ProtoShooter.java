@@ -63,23 +63,23 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   public ProtoShooter() {
 
     rightModule = new ShooterModule(Constants.MotorIDs.s_shooterR, Constants.MotorIDs.s_feederR);
-    leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feederL);
+    leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feederR);
 
-    motorRPSControl =  new Slot0Configs();
+    motorRPSControl = new Slot0Configs();
     motorRPSControl.withKV(0.11451);
     motorRPSControl.withKS(0.19361);
-    // shooterRPSControl.kA = 0.0072326;
+    motorRPSControl.withKP(0.8);
 
     final TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
     final TalonFX[] feeders = {leftModule.feeder, rightModule.feeder};
 
     defineDevice(
-      new DevicePointer(Device.RIGHT_FEEDER, rightModule.feeder),
-      new DevicePointer(Device.LEFT_FEEDER, rightModule.feeder),
-      new DevicePointer(Device.RIGHT_SHOOTER, rightModule.shooter),
-      new DevicePointer(Device.LEFT_SHOOTER, leftModule.shooter),
-      new DevicePointer(Device.BOTH_FEEDER, feeders),
-      new DevicePointer(Device.BOTH_SHOOTER, shooters)
+        new DevicePointer(Device.RIGHT_FEEDER, rightModule.feeder),
+        new DevicePointer(Device.LEFT_FEEDER, rightModule.feeder),
+        new DevicePointer(Device.RIGHT_SHOOTER, rightModule.shooter),
+        new DevicePointer(Device.LEFT_SHOOTER, leftModule.shooter),
+        new DevicePointer(Device.BOTH_FEEDER, feeders),
+        new DevicePointer(Device.BOTH_SHOOTER, shooters));
     );
 
     m_voltReq = new VoltageOut(0.0);
@@ -107,10 +107,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     // for (TalonFX motor : getDevices(shooters)) {
     //   motor.getConfigurator().apply(shooterRPSControl);
     // }
-    rightModule.shooter.getConfigurator().apply(motorRPSControl);
-    leftModule.shooter.getConfigurator().apply(motorRPSControl);
-    rightModule.feeder.getConfigurator().apply(motorRPSControl);
-    leftModule.feeder.getConfigurator().apply(motorRPSControl);
+    configureControl();
   }
 
   private enum State {
@@ -212,7 +209,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
-
+  //Velocity control
   public void runDeviceVelocity(Device device, AngularVelocity velocity) {
     for (TalonFX d : getDevices(device)) {
       d.setControl(m_velVolt.withVelocity(velocity));
@@ -224,7 +221,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
-
+  // Voltage control
   public void runDeviceVoltage(Device device, Voltage voltage) {
     for (TalonFX d : getDevices(device)) {
       d.setControl(m_voltReq.withOutput(voltage.in(Volts)));
@@ -297,6 +294,18 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         });
   }
 
+  public void configureProportional(double Kp) {
+    motorRPSControl.withKP(Kp);
+    configureControl();
+  }
+
+  private void configureControl() {
+    rightModule.shooter.getConfigurator().apply(motorRPSControl);
+    leftModule.shooter.getConfigurator().apply(motorRPSControl);
+    rightModule.feeder.getConfigurator().apply(motorRPSControl);
+    leftModule.feeder.getConfigurator().apply(motorRPSControl);
+  }
+  // Mechanism commands
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
   }
