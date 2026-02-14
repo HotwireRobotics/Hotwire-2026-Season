@@ -30,7 +30,13 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
     defineDevice(Device.ROLLERS, rollers);
     defineDevice(Device.LOWER, lower);
-    //Configuring SysId for intake
+    /**
+     * 
+     * Configures SysId for inake, left and right
+     * 
+     * Commands of which are at the bottom, both Quasistatic and Dynamic for both
+     * 
+     */
     m_sysIdRoutineRight =
         new SysIdRoutine(
             new SysIdRoutine.Config(
@@ -66,7 +72,17 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Intake/State", state.toString());
 
-    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
+    /**
+     * 
+     * Logs position of (rot)
+     * 
+     * Logs velocity in (rpm)
+     * 
+     * Logs voltage current
+     * 
+     * Logs temp with unit metadata
+     * 
+     */
     Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
         "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
@@ -96,7 +112,15 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
-
+  /**
+   * 
+   * Allows you to limit the voltage of the intake rollers
+   * 
+   * @param device
+   * 
+   * @param volts
+   * 
+   */
   public void runDeviceVoltage(Device device, double volts) {
     for (TalonFX d : getDevices(device)) {
       d.setVoltage(volts);
@@ -108,7 +132,15 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
-
+  /**
+   * 
+   * Allows you to limit the speed of the intake rollers
+   * 
+   * @param speed
+   * 
+   * @return
+   * 
+   */
   public Command runMechanism(double speed) {
     return Commands.run(
         () -> {
@@ -116,7 +148,14 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
           runDevice(Device.LOWER, speed);
         });
   }
-  //Exposes SysId for intake as a command
+  /**
+   * 
+   * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
+   * 
+   * @param direction
+   * 
+   * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
+   */
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
   }  
