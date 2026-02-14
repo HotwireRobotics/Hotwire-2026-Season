@@ -3,10 +3,11 @@ package frc.robot.subsystems.intake;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import static edu.wpi.first.units.Units.Volts;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
-import frc.robot.subsystems.shooter.ProtoShooter.Device;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
@@ -15,15 +16,29 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   private final TalonFX lower;
 
   public enum Device {
-    ROLLERS,
-    LOWER
+    ROLLERS, LOWER
   }
+
+  private final SysIdRoutine m_sysIdRoutineIntake;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     lower = new TalonFX(Constants.MotorIDs.i_follower);
-    defineDevice(
-        new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.LOWER, lower));
+
+    defineDevice(Device.ROLLERS, rollers);
+    defineDevice(Device.LOWER, lower);
+
+    m_sysIdRoutineIntake =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null, // Use default config
+                (state) -> Logger.recordOutput("Intake/SysIdState", state.toString())),
+            new SysIdRoutine.Mechanism(
+                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)),
+                null,
+                this));
   }
 
   private enum State {
@@ -42,15 +57,26 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     Logger.recordOutput("Intake/State", state.toString());
 
     // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
-    Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
+        "Intake/Rollers/Position",
+        rollers.getPosition().getValueAsDouble(),
+        "rot");
     Logger.recordOutput(
-        "Intake/Rollers/Voltage", rollers.getMotorVoltage().getValueAsDouble(), "V");
+        "Intake/Rollers/Velocity",
+        rollers.getVelocity().getValueAsDouble() * 60,
+        "rpm");
     Logger.recordOutput(
-        "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
+        "Intake/Rollers/Voltage",
+        rollers.getMotorVoltage().getValueAsDouble(),
+        "V");
     Logger.recordOutput(
-        "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
+        "Intake/Rollers/Current",
+        rollers.getSupplyCurrent().getValueAsDouble(),
+        "A");
+    Logger.recordOutput(
+        "Intake/Rollers/Temperature",
+        rollers.getDeviceTemp().getValueAsDouble(),
+        "°C");
 
     if (isActiveDevice(Device.ROLLERS)) {
       state = State.INTAKING;
@@ -72,11 +98,27 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     }
   }
 
+  public void runDeviceVoltage(Device device, double volts) {
+    for (TalonFX d : getDevices(device)) {
+      d.setVoltage(volts);
+    }
+
+    if (volts == 0) {
+      specifyInactiveDevice(device);
+    } else {
+      specifyActiveDevice(device);
+    }
+  }
+
   public Command runMechanism(double speed) {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
           runDevice(Device.LOWER, speed);
         });
+  }
+
+  public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineIntake.quasistatic(direction);
   }
 }
