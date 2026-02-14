@@ -1,7 +1,5 @@
 package frc.robot.subsystems.hopper;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -9,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Systerface;
+import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
 public class HopperSubsystem extends SubsystemBase implements Systerface {

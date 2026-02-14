@@ -2,8 +2,6 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Volts;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -11,29 +9,33 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private final TalonFX rollers;
   private final TalonFX lower;
+  private final TalonFX arm;
 
   public enum Device {
     ROLLERS,
-    LOWER
+    LOWER,
+    ARM
   }
 
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;
-  private final SysIdRoutine m_sysIdRoutineUp;
-  private final SysIdRoutine m_sysIdRoutineDown;
+  private final SysIdRoutine m_sysIdRoutineARM;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     lower = new TalonFX(Constants.MotorIDs.i_follower);
+    arm = new TalonFX(99);
 
     defineDevice(Device.ROLLERS, rollers);
     defineDevice(Device.LOWER, lower);
+    defineDevice(Device.ARM, arm);
     /**
      * Configures SysId for inake, left and right
      *
@@ -57,16 +59,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
                 (state) -> Logger.recordOutput("Intake/SysIdState/Left", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
-    m_sysIdRoutineUp =
-        new SysIdRoutine(
-            new SysIdRoutine.Config(
-                null,
-                null,
-                null, // Use default config
-                (state) -> Logger.recordOutput("Intake/SysIdState/Up", state.toString())),
-            new SysIdRoutine.Mechanism(
-                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
-    m_sysIdRoutineDown =
+    m_sysIdRoutineARM =
         new SysIdRoutine(
             new SysIdRoutine.Config(
                 null,
@@ -74,7 +67,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
                 null, // Use default config
                 (state) -> Logger.recordOutput("Intake/SysIdState/Down", state.toString())),
             new SysIdRoutine.Mechanism(
-                (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
+                (voltage) -> runDeviceVoltage(Device.ARM, voltage.in(Volts)), null, this));
   }
 
   private enum State {
@@ -137,7 +130,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
    * @param device
    * @param volts
    */
-
   public void runDeviceVoltage(@NotNull Device device, @NotNull double volts) {
     for (TalonFX d : getDevices(device)) {
       d.setVoltage(volts);
@@ -155,12 +147,18 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
    * @param speed
    * @return
    */
-  
-  public Command runMechanism(@NotNull double speed) {
+  public Command runIntake(@NotNull double speed) {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
           runDevice(Device.LOWER, speed);
+        });
+  }
+
+  public Command moveIntake(@NotNull double speed) {
+    return Commands.run(
+        () -> {
+          runDevice(Device.ARM, speed);
         });
   }
   /**
@@ -169,7 +167,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
    * @param direction
    * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
    */
-
   public Command sysIdQuasistaticRight(@NotNull SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
   }
@@ -181,23 +178,16 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public Command sysIdQuasistaticLeft(@NotNull SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.quasistatic(direction);
   }
-  
+
   public Command sysIdDynamicLeft(@NotNull SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.dynamic(direction);
   }
-  public Command sysIdQuasistaticUp(@NotNull SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineUp.quasistatic(direction);
+
+  public Command sysIdQuasistaticARM(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineARM.quasistatic(direction);
   }
 
-  public Command sysIdDynamicUp(@NotNull SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineUp.dynamic(direction);
-  }
-
-  public Command sysIdQuasistaticDown(@NotNull SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineDown.quasistatic(direction);
-  }
-  
-  public Command sysIdDynamiDown(@NotNull SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineDown.dynamic(direction);
+  public Command sysIdDynamicARM(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineARM.dynamic(direction);
   }
 }
