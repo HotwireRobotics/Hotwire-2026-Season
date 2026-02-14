@@ -2,6 +2,8 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -31,11 +33,9 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     defineDevice(Device.ROLLERS, rollers);
     defineDevice(Device.LOWER, lower);
     /**
-     * 
      * Configures SysId for inake, left and right
-     * 
-     * Commands of which are at the bottom, both Quasistatic and Dynamic for both
-     * 
+     *
+     * <p>Commands of which are at the bottom, both Quasistatic and Dynamic for both
      */
     m_sysIdRoutineRight =
         new SysIdRoutine(
@@ -73,15 +73,13 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     Logger.recordOutput("Intake/State", state.toString());
 
     /**
-     * 
      * Logs position of (rot)
-     * 
-     * Logs velocity in (rpm)
-     * 
-     * Logs voltage current
-     * 
-     * Logs temp with unit metadata
-     * 
+     *
+     * <p>Logs velocity in (rpm)
+     *
+     * <p>Logs voltage current
+     *
+     * <p>Logs temp with unit metadata
      */
     Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
@@ -101,7 +99,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   }
 
   // Device control methods
-  public void runDevice(Device device, double speed) {
+
+  public void runDevice(@NotNull Device device, @NotNull double speed) {
     for (TalonFX d : getDevices(device)) {
       d.set(speed);
     }
@@ -113,15 +112,13 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     }
   }
   /**
-   * 
    * Allows you to limit the voltage of the intake rollers
-   * 
+   *
    * @param device
-   * 
    * @param volts
-   * 
    */
-  public void runDeviceVoltage(Device device, double volts) {
+
+  public void runDeviceVoltage(@NotNull Device device, @NotNull double volts) {
     for (TalonFX d : getDevices(device)) {
       d.setVoltage(volts);
     }
@@ -133,15 +130,13 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     }
   }
   /**
-   * 
    * Allows you to limit the speed of the intake rollers
-   * 
+   *
    * @param speed
-   * 
    * @return
-   * 
    */
-  public Command runMechanism(double speed) {
+  
+  public Command runMechanism(@NotNull double speed) {
     return Commands.run(
         () -> {
           runDevice(Device.ROLLERS, speed);
@@ -149,24 +144,25 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
   /**
-   * 
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
-   * 
+   *
    * @param direction
-   * 
    * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
    */
-  public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
+
+  public Command sysIdQuasistaticRight(@NotNull SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
-  }  
-  public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineRight.dynamic(direction);
-  }
-  public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineLeft.quasistatic(direction);
   }
 
-  public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
+  public Command sysIdDynamicRight(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineRight.dynamic(direction);
+  }
+
+  public Command sysIdQuasistaticLeft(@NotNull SysIdRoutine.Direction direction) {
+    return m_sysIdRoutineLeft.quasistatic(direction);
+  }
+  
+  public Command sysIdDynamicLeft(@NotNull SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.dynamic(direction);
   }
 }
