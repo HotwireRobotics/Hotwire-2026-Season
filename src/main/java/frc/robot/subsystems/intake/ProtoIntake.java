@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
-
+  // Defining motors
   private final TalonFX rollers;
   private final TalonFX lower;
   private final TalonFX arm;
@@ -25,7 +25,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     LOWER,
     ARM
   }
-
+  //SysId routines for rollers and arm
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;
   private final SysIdRoutine m_sysIdRoutineARM;
@@ -61,6 +61,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
                 (state) -> Logger.recordOutput("Intake/SysIdState/Left", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.ROLLERS, voltage.in(Volts)), null, this));
+    // For when we add a 2nd motor to lift up the intake
     m_sysIdRoutineARM =
         new SysIdRoutine(
             new SysIdRoutine.Config(
@@ -114,7 +115,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   }
 
   // Device control methods
-
   public void runDevice(@NotNull Device device, @NotNull double speed) {
     for (TalonFX d : getDevices(device)) {
       d.set(speed);
