@@ -1,8 +1,8 @@
 from enum import Enum
 import time, pygame as pg
 import pygame_gui as pgui
-import networktables as nt
-import os, sys, math
+import networktables as nt, io
+import os, sys, math, requests
 from math import prod
 from networktables import NetworkTables as NT, NetworkTable
 
@@ -18,6 +18,8 @@ table: NetworkTable =       NT.getTable("AdvantageKit")
 driverStation =      table.getSubTable("DriverStation")
 dashboard: NetworkTable = NT.getTable("SmartDashboard")
 outputs =              table.getSubTable("RealOutputs")
+camera: NetworkTable =   NT.getTable("CameraPublisher")
+limelight =         camera.getSubTable("limelight-one")
 
 pg.init()
 pg.mixer.init()
@@ -49,7 +51,7 @@ screen: pg.Surface = pg.display.set_mode(size, pg.RESIZABLE|pg.SRCALPHA)
 class State(Enum):
     REAL: int = None
     SIM:  int = None
-state: State = State.SIM
+state: State = State.REAL
 
 origin = [0.5537142857142857] * 2
 
@@ -62,7 +64,8 @@ def marr(*arrays: list, integer: bool = False) -> list:
 def px(real: list[int, int], integer: bool = False) -> list:
     n: float = marr(real, [scale * f] * 2)
     return list((round(i) for i in n) if integer else n)
-        
+bytes_data = b""
+
 f: float = 1
 pg.mixer.music.play()
 while RUNNING:
@@ -85,17 +88,15 @@ while RUNNING:
     manager.update(dtime)
     screen.blit(field_render, (0, 0))
 
-    match state:
-        case State.REAL:
-            robotPose: list[int, int] = dashboard.getNumberArray("robot-pose", [0, 0])
-        case State.SIM:
-            robotPose: list[int, int] = [0, 0]
-    
+    if (state == State.REAL):
+        robotPose: list[int, int] = dashboard.getNumberArray("robot-pose", [0, 0])
+        source: str = "http://limelight-one.local:5800/"
+        stream = requests.get(source, stream=True)
+    elif (state == State.SIM):
+        robotPose: list[int, int] = [0, 0]
     
     est = sarr(robotPose, [-width / 2] * 2, origin)
     # print("Scale: ", scale, "F: ", f, "Pose: ", est, "Target: ", px(est, integer=True))
     screen.blit(robot, px(est, integer=True))
     manager.draw_ui(screen)
     pg.display.flip()
-
-    
