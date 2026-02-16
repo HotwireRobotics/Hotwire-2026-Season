@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -21,55 +20,33 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * Shooter subsystem with left/right modules (shooter + feeder per side). Supports percent output,
- * velocity (RPS), and voltage control, plus SysId routines per side.
+ * Shooter subsystem with one feeder and left/right shooters. Supports percent output, velocity
+ * (RPS), and voltage control. runShooter runs both wheels; runLeftShooter/runRightShooter run one
+ * side for tuning or backup.
  */
 public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;
   private final VoltageOut m_voltReq;
   private final VelocityVoltage m_velVolt;
-  private final ShooterModule rightModule;
-  private final ShooterModule leftModule;
+  private final TalonFX m_feeder;
+  private final TalonFX m_leftShooter;
+  private final TalonFX m_rightShooter;
   private final Slot0Configs motorRPSControl;
   private final BangBangController instantRPSControl;
 
+  /** Logical devices for percent/velocity/voltage control and active-state tracking. */
   public enum Device {
-    RIGHT_FEEDER,
     RIGHT_SHOOTER,
-    LEFT_FEEDER,
     LEFT_SHOOTER,
-    BOTH_FEEDER,
-    BOTH_SHOOTER
-  }
-
-  // private final HashMap<Device, Object> devices = new HashMap<Device, Object>();
-  // private List<Device> active = new ArrayList<Device>();
-
-  private class ShooterModule {
-
-    TalonFX shooter;
-    TalonFX feeder;
-
-    public ShooterModule(int deviceID, int followerID) {
-      shooter = new TalonFX(deviceID);
-      feeder = new TalonFX(followerID);
-    }
-
-    public void runModule(double speed) {
-      shooter.set(speed);
-      feeder.set(speed);
-    }
-
-    public void setControl(ControlRequest control) {
-      shooter.setControl(control);
-    }
+    BOTH_SHOOTER,
+    FEEDER
   }
 
   public ProtoShooter() {
-
-    rightModule = new ShooterModule(Constants.MotorIDs.s_shooterR, Constants.MotorIDs.s_feederR);
-    leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feederR);
+    m_feeder = new TalonFX(Constants.MotorIDs.s_feederR);
+    m_leftShooter = new TalonFX(Constants.MotorIDs.s_shooterL);
+    m_rightShooter = new TalonFX(Constants.MotorIDs.s_shooterR);
 
     motorRPSControl = new Slot0Configs();
     motorRPSControl.withKV(0.11451);
@@ -78,16 +55,13 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 
     instantRPSControl = new BangBangController();
 
-    final TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
-    final TalonFX[] feeders = {leftModule.feeder, rightModule.feeder};
+    final TalonFX[] bothShooters = {m_leftShooter, m_rightShooter};
 
     defineDevice(
-        new DevicePointer(Device.RIGHT_FEEDER, rightModule.feeder),
-        new DevicePointer(Device.LEFT_FEEDER, rightModule.feeder),
-        new DevicePointer(Device.RIGHT_SHOOTER, rightModule.shooter),
-        new DevicePointer(Device.LEFT_SHOOTER, leftModule.shooter),
-        new DevicePointer(Device.BOTH_FEEDER, feeders),
-        new DevicePointer(Device.BOTH_SHOOTER, shooters));
+        new DevicePointer(Device.RIGHT_SHOOTER, m_rightShooter),
+        new DevicePointer(Device.LEFT_SHOOTER, m_leftShooter),
+        new DevicePointer(Device.BOTH_SHOOTER, bothShooters),
+        new DevicePointer(Device.FEEDER, m_feeder));
 
     m_voltReq = new VoltageOut(0.0);
     m_velVolt = new VelocityVoltage(0.0);
@@ -111,9 +85,6 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.LEFT_SHOOTER, voltage), null, this));
 
-    // for (TalonFX motor : getDevices(shooters)) {
-    //   motor.getConfigurator().apply(shooterRPSControl);
-    // }
     configureControl();
   }
 
@@ -129,72 +100,62 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
 
-    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
+    // Active device flags (what is currently being driven)
+    Logger.recordOutput("Shooter/Active/BothShooter", isActiveDevice(Device.BOTH_SHOOTER));
+    Logger.recordOutput("Shooter/Active/LeftShooter", isActiveDevice(Device.LEFT_SHOOTER));
+    Logger.recordOutput("Shooter/Active/RightShooter", isActiveDevice(Device.RIGHT_SHOOTER));
+    Logger.recordOutput("Shooter/Active/Feeder", isActiveDevice(Device.FEEDER));
+
+    // Left shooter: position, velocity (rpm + rps), voltage, supply/stator current, temp
     Logger.recordOutput(
-        "Shooter/Left/Position", leftModule.shooter.getPosition().getValueAsDouble(), "rot");
+        "Shooter/Left/Position", m_leftShooter.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Shooter/Left/Velocity", leftModule.shooter.getVelocity().getValueAsDouble() * 60, "rpm");
+        "Shooter/Left/VelocityRPM", m_leftShooter.getVelocity().getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
-        "Shooter/Left/Voltage", leftModule.shooter.getMotorVoltage().getValueAsDouble(), "V");
+        "Shooter/Left/VelocityRPS", m_leftShooter.getVelocity().getValueAsDouble(), "rps");
     Logger.recordOutput(
-        "Shooter/Left/Current", leftModule.shooter.getSupplyCurrent().getValueAsDouble(), "A");
+        "Shooter/Left/Voltage", m_leftShooter.getMotorVoltage().getValueAsDouble(), "V");
     Logger.recordOutput(
-        "Shooter/Left/Temperature", leftModule.shooter.getDeviceTemp().getValueAsDouble(), "°C");
+        "Shooter/Left/SupplyCurrent", m_leftShooter.getSupplyCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
-        "Shooter/Right/Position", rightModule.shooter.getPosition().getValueAsDouble(), "rot");
+        "Shooter/Left/StatorCurrent", m_leftShooter.getStatorCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
-        "Shooter/Right/Velocity", rightModule.shooter.getVelocity().getValueAsDouble() * 60, "rpm");
+        "Shooter/Left/Temperature", m_leftShooter.getDeviceTemp().getValueAsDouble(), "°C");
+
+    // Right shooter
     Logger.recordOutput(
-        "Shooter/Right/Voltage", rightModule.shooter.getMotorVoltage().getValueAsDouble(), "V");
+        "Shooter/Right/Position", m_rightShooter.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Shooter/Right/Current", rightModule.shooter.getSupplyCurrent().getValueAsDouble(), "A");
+        "Shooter/Right/VelocityRPM", m_rightShooter.getVelocity().getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
-        "Shooter/Right/Temperature", rightModule.shooter.getDeviceTemp().getValueAsDouble(), "°C");
+        "Shooter/Right/VelocityRPS", m_rightShooter.getVelocity().getValueAsDouble(), "rps");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Position", leftModule.feeder.getPosition().getValueAsDouble(), "rot");
+        "Shooter/Right/Voltage", m_rightShooter.getMotorVoltage().getValueAsDouble(), "V");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Velocity",
-        leftModule.feeder.getVelocity().getValueAsDouble() * 60,
-        "rpm");
+        "Shooter/Right/SupplyCurrent", m_rightShooter.getSupplyCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Voltage",
-        leftModule.feeder.getMotorVoltage().getValueAsDouble(),
-        "V");
+        "Shooter/Right/StatorCurrent", m_rightShooter.getStatorCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
-        "Shooter/LeftFollower/Current",
-        leftModule.feeder.getSupplyCurrent().getValueAsDouble(),
-        "A");
+        "Shooter/Right/Temperature", m_rightShooter.getDeviceTemp().getValueAsDouble(), "°C");
+
+    // Feeder
     Logger.recordOutput(
-        "Shooter/LeftFollower/Temperature",
-        leftModule.feeder.getDeviceTemp().getValueAsDouble(),
-        "°C");
+        "Shooter/Feeder/Position", m_feeder.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Shooter/RightFollower/Position",
-        rightModule.feeder.getPosition().getValueAsDouble(),
-        "rot");
+        "Shooter/Feeder/VelocityRPM", m_feeder.getVelocity().getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
-        "Shooter/RightFollower/Velocity",
-        rightModule.feeder.getVelocity().getValueAsDouble() * 60,
-        "rpm");
+        "Shooter/Feeder/VelocityRPS", m_feeder.getVelocity().getValueAsDouble(), "rps");
     Logger.recordOutput(
-        "Shooter/RightFollower/Voltage",
-        rightModule.feeder.getMotorVoltage().getValueAsDouble(),
-        "V");
+        "Shooter/Feeder/Voltage", m_feeder.getMotorVoltage().getValueAsDouble(), "V");
     Logger.recordOutput(
-        "Shooter/RightFollower/Current",
-        rightModule.feeder.getSupplyCurrent().getValueAsDouble(),
-        "A");
+        "Shooter/Feeder/SupplyCurrent", m_feeder.getSupplyCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
-        "Shooter/RightFollower/Temperature",
-        rightModule.feeder.getDeviceTemp().getValueAsDouble(),
-        "°C");
+        "Shooter/Feeder/StatorCurrent", m_feeder.getStatorCurrent().getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Shooter/Feeder/Temperature", m_feeder.getDeviceTemp().getValueAsDouble(), "°C");
 
     if (isActiveDevice(Device.BOTH_SHOOTER)) {
-      if (isActiveDevice(Device.BOTH_FEEDER)) {
-        state = State.FIRING;
-      } else {
-        state = State.SPINNING;
-      }
+      state = isActiveDevice(Device.FEEDER) ? State.FIRING : State.SPINNING;
     } else {
       state = State.STOPPED;
     }
@@ -241,63 +202,53 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     }
   }
 
-  // Mechanism control commands
-  public Command runMechanism(double feeder, double shooter) {
+  // --- Main control: both shooters + feeder ---
+
+  /** Runs both shooter wheels at the given percent output. */
+  public void runShooter(double speed) {
+    runDevice(Device.BOTH_SHOOTER, speed);
+  }
+
+  /** Runs the left shooter only (e.g. for tuning or single-side). */
+  public void runLeftShooter(double speed) {
+    runDevice(Device.LEFT_SHOOTER, speed);
+  }
+
+  /** Runs the right shooter only (e.g. for tuning or single-side). */
+  public void runRightShooter(double speed) {
+    runDevice(Device.RIGHT_SHOOTER, speed);
+  }
+
+  /** Runs the single feeder at the given percent output. */
+  public void runFeeder(double speed) {
+    runDevice(Device.FEEDER, speed);
+  }
+
+  /** Command: run both shooters and feeder at given percent. Main mechanism control. */
+  public Command runMechanism(double feederSpeed, double shooterSpeed) {
     return Commands.runOnce(
         () -> {
-          runDevice(Device.BOTH_SHOOTER, shooter);
-          runDevice(Device.BOTH_FEEDER, feeder);
+          runShooter(shooterSpeed);
+          runFeeder(feederSpeed);
         });
   }
 
-  public Command runMechanismVelocity(AngularVelocity feeder, AngularVelocity shooter) {
+  /** Command: run both shooters and feeder at given velocities. */
+  public Command runMechanismVelocity(AngularVelocity feederVel, AngularVelocity shooterVel) {
     return Commands.runOnce(
         () -> {
-          runDeviceVelocity(Device.BOTH_SHOOTER, shooter);
-          runDeviceVelocity(Device.BOTH_FEEDER, feeder);
+          runDeviceVelocity(Device.BOTH_SHOOTER, shooterVel);
+          runDeviceVelocity(Device.FEEDER, feederVel);
         });
   }
 
+  /** Command: run both shooters and feeder at supplier-derived velocities. */
   public Command runMechanismVelocity(
-      Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
+      Supplier<AngularVelocity> feederVel, Supplier<AngularVelocity> shooterVel) {
     return Commands.runOnce(
         () -> {
-          runDeviceVelocity(Device.BOTH_SHOOTER, shooter.get());
-          runDeviceVelocity(Device.BOTH_FEEDER, feeder.get());
-        });
-  }
-
-  public Command runRightModule(double feeder, double shooter) {
-    return Commands.runOnce(
-        () -> {
-          runDevice(Device.RIGHT_SHOOTER, shooter);
-          runDevice(Device.RIGHT_FEEDER, feeder);
-        });
-  }
-
-  public Command runLeftModule(double feeder, double shooter) {
-    return Commands.runOnce(
-        () -> {
-          runDevice(Device.RIGHT_SHOOTER, shooter);
-          runDevice(Device.RIGHT_FEEDER, feeder);
-        });
-  }
-
-  public Command runRightModuleVelocity(
-      Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
-    return Commands.runOnce(
-        () -> {
-          runDeviceVelocity(Device.RIGHT_SHOOTER, shooter.get());
-          runDeviceVelocity(Device.RIGHT_FEEDER, feeder.get());
-        });
-  }
-
-  public Command runLeftModuleVelocity(
-      Supplier<AngularVelocity> feeder, Supplier<AngularVelocity> shooter) {
-    return Commands.runOnce(
-        () -> {
-          runDeviceVelocity(Device.LEFT_SHOOTER, shooter.get());
-          runDeviceVelocity(Device.LEFT_FEEDER, feeder.get());
+          runDeviceVelocity(Device.BOTH_SHOOTER, shooterVel.get());
+          runDeviceVelocity(Device.FEEDER, feederVel.get());
         });
   }
 
@@ -307,10 +258,9 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   }
 
   private void configureControl() {
-    rightModule.shooter.getConfigurator().apply(motorRPSControl);
-    leftModule.shooter.getConfigurator().apply(motorRPSControl);
-    rightModule.feeder.getConfigurator().apply(motorRPSControl);
-    leftModule.feeder.getConfigurator().apply(motorRPSControl);
+    m_rightShooter.getConfigurator().apply(motorRPSControl);
+    m_leftShooter.getConfigurator().apply(motorRPSControl);
+    m_feeder.getConfigurator().apply(motorRPSControl);
   }
   // Mechanism commands
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
