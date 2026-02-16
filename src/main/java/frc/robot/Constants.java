@@ -29,6 +29,10 @@ public final class Constants {
     public static final CommandXboxController operator = new CommandXboxController(1);
   }
 
+  public static class Shooter {
+    public static final Time kChargeUpTime = Seconds.of(2);
+  }
+
   public static class Control {
     public static final PIDConstants translationPID = new PIDConstants(15.0, 0.0, 0.0);
     public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.6);
@@ -77,8 +81,8 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static double base = 1400.9197;
-  public static double exponential = 0.450548;
+  public static final double base = 1400.9197;
+  public static final double exponential = 0.450548;
 
   public static AngularVelocity regress(Distance distance) {
     return RPM.of(base * Math.pow(distance.in(Meters), exponential));

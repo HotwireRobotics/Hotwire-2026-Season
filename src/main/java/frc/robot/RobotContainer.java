@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
@@ -26,7 +28,6 @@ import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
@@ -144,7 +145,28 @@ public class RobotContainer {
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse)));
 
+    NamedCommands.registerCommand("ReadySequence", pointToHub());
+
     configureButtonBindings();
+  }
+
+  private Command pointToHub() {
+    return DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> 0,
+        () -> 0,
+        () -> {
+          Pose2d robotPose = drive.getPose();
+
+          Angle toHub =
+              Radians.of(
+                  Math.IEEEremainder(
+                      Math.atan(
+                          (hubTarget.getY() - robotPose.getY())
+                              / (hubTarget.getX() - robotPose.getX())),
+                      Constants.Mathematics.TAU));
+          return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+        });
   }
 
   private void configureButtonBindings() {
@@ -209,27 +231,7 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .rightTrigger()
-        .whileTrue(
-            shooter
-                .runMechanismVelocity(velocity, velocity)
-                .alongWith(
-                    DriveCommands.joystickDriveAtAngle(
-                        drive,
-                        () -> -Constants.Joysticks.driver.getLeftY(),
-                        () -> -Constants.Joysticks.driver.getLeftX(),
-                        () -> {
-                          Pose2d robotPose = drive.getPose();
-
-                          Angle toHub =
-                              Radians.of(
-                                  Math.IEEEremainder(
-                                      Math.atan(
-                                          (hubTarget.getY() - robotPose.getY())
-                                              / (hubTarget.getX() - robotPose.getX())),
-                                      Constants.Mathematics.TAU));
-                          Logger.recordOutput("Hub Angular", toHub.in(Degrees));
-                          return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
-                        })))
+        .whileTrue(shooter.runMechanismVelocity(velocity, velocity).alongWith(pointToHub()))
         .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator

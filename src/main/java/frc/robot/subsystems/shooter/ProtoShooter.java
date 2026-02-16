@@ -4,9 +4,11 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.math.controller.BangBangController;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -30,6 +32,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final ShooterModule rightModule;
   private final ShooterModule leftModule;
   private final Slot0Configs motorRPSControl;
+  private final BangBangController instantRPSControl;
 
   public enum Device {
     RIGHT_FEEDER,
@@ -72,6 +75,8 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     motorRPSControl.withKV(0.11451);
     motorRPSControl.withKS(0.19361);
     motorRPSControl.withKP(0.8);
+
+    instantRPSControl = new BangBangController();
 
     final TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
     final TalonFX[] feeders = {leftModule.feeder, rightModule.feeder};
