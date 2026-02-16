@@ -109,7 +109,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
    * @return
    */
   public Command runIntake(double speed) {
-    return Commands.run(
+    return Commands.runOnce(
         () -> {
           runDevice(Device.ROLLERS, speed);
           runDevice(Device.LOWER, speed);

@@ -158,18 +158,22 @@ public class RobotContainer {
     configureButtonBindings();
   }
 
+  private Command turretFire(Supplier<AngularVelocity> velocity) {
+    return Commands.runOnce(
+        () ->
+            shooter
+                .runMechanismVelocity(velocity.get(), velocity.get())
+                .alongWith(
+                    DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> -Constants.Joysticks.driver.getLeftY(),
+                        () -> -Constants.Joysticks.driver.getLeftX(),
+                        () -> hubPointer.getRotation())));
+  }
+
   private Command runFiringRoutine(Supplier<AngularVelocity> velocity) {
     return Commands.parallel(
-        Commands.run(
-            () ->
-                shooter
-                    .runMechanismVelocity(velocity.get(), velocity.get())
-                    .alongWith(
-                        DriveCommands.joystickDriveAtAngle(
-                            drive,
-                            () -> -Constants.Joysticks.driver.getLeftY(),
-                            () -> -Constants.Joysticks.driver.getLeftX(),
-                            () -> hubPointer.getRotation()))),
+        turretFire(velocity),
         Commands.waitTime(Constants.Shooter.kChargeUpTime).andThen(runHopper()));
   }
 
@@ -224,14 +228,14 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    Constants.Joysticks.operator
-        .a()
+    Constants.Joysticks.driver
+        .b()
         .whileTrue(intake.runIntake(0.7))
         .whileFalse(intake.runIntake(0.0));
 
     Constants.Joysticks.operator
         .rightTrigger()
-        .whileTrue(runFiringRoutine(velocity))
+        .whileTrue(turretFire(velocity))
         .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator

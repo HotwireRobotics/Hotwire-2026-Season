@@ -81,7 +81,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base =       1400.9197;
+  public static final double base = 1400.9197;
   public static final double exponential = 0.450548;
 
   public static AngularVelocity regress(Distance distance) {
