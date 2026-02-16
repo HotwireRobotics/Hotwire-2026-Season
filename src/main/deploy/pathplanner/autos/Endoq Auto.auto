@@ -11,6 +11,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "Firing Routine"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "Exolateral"
@@ -20,6 +26,12 @@
           "type": "path",
           "data": {
             "pathName": "Endolateral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Firing Routine"
           }
         }
       ]

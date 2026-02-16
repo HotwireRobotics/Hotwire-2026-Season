@@ -29,6 +29,10 @@ public final class Constants {
     public static final CommandXboxController operator = new CommandXboxController(1);
   }
 
+  public static class Shooter {
+    public static final Time kChargeUpTime = Seconds.of(2);
+  }
+
   public static class Control {
     public static final PIDConstants translationPID = new PIDConstants(15.0, 0.0, 0.0);
     public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.6);

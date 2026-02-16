@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import static edu.wpi.first.units.Units.Radians;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
@@ -15,6 +17,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
@@ -359,5 +362,28 @@ public class DriveCommands {
     double[] positions = new double[4];
     Rotation2d lastAngle = Rotation2d.kZero;
     double gyroDelta = 0.0;
+  }
+
+  public static class TargetPointer {
+
+    private Drive drive;
+    private Pose2d target;
+
+    public TargetPointer(Drive drive, Pose2d target) {
+      this.drive = drive;
+      this.target = target;
+    }
+
+    public Rotation2d getRotation() {
+      Pose2d robotPose = drive.getPose();
+
+      Angle toTarget =
+          Radians.of(
+              Math.IEEEremainder(
+                  Math.atan(
+                      (target.getY() - robotPose.getY()) / (target.getX() - robotPose.getX())),
+                  Constants.Mathematics.TAU));
+      return new Rotation2d(toTarget).rotateBy(Rotation2d.k180deg);
+    }
   }
 }

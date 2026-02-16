@@ -1,11 +1,8 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.units.Units.Volts;
-
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
@@ -15,7 +12,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private final TalonFX rollers;
   private final TalonFX lower;
-  private final TalonFX arm;
+  // private final TalonFX arm;
 
   public enum Device {
     ROLLERS,
@@ -23,9 +20,9 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     ARM
   }
 
-  private final SysIdRoutine m_sysIdRoutineRight;
-  private final SysIdRoutine m_sysIdRoutineLeft;
-  private final SysIdRoutine m_sysIdRoutineARM;
+  // private final SysIdRoutine m_sysIdRoutineRight;
+  // private final SysIdRoutine m_sysIdRoutineLeft;
+  // private final SysIdRoutine m_sysIdRoutineARM;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
@@ -131,27 +128,27 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
    * @param direction
    * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
    */
-  public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineRight.quasistatic(direction);
-  }
+  // public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
+  //   return m_sysIdRoutineRight.quasistatic(direction);
+  // }
 
-  public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineRight.dynamic(direction);
-  }
+  // public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
+  //   return m_sysIdRoutineRight.dynamic(direction);
+  // }
 
-  public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineLeft.quasistatic(direction);
-  }
+  // public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
+  //   return m_sysIdRoutineLeft.quasistatic(direction);
+  // }
 
-  public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineLeft.dynamic(direction);
-  }
+  // public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
+  //   return m_sysIdRoutineLeft.dynamic(direction);
+  // }
 
-  public Command sysIdQuasistaticARM(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineARM.quasistatic(direction);
-  }
+  // public Command sysIdQuasistaticARM(SysIdRoutine.Direction direction) {
+  //   return m_sysIdRoutineARM.quasistatic(direction);
+  // }
 
-  public Command sysIdDynamicARM(SysIdRoutine.Direction direction) {
-    return m_sysIdRoutineARM.dynamic(direction);
-  }
+  // public Command sysIdDynamicARM(SysIdRoutine.Direction direction) {
+  //   return m_sysIdRoutineARM.dynamic(direction);
+  // }
 }
