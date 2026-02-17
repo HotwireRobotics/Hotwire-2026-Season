@@ -119,17 +119,17 @@ public class Robot extends LoggedRobot {
     List<PoseEstimate> measurements = new ArrayList<>();
 
     for (String limelight : Constants.limelights) {
-      LimelightHelpers.SetIMUMode(limelight, 2);
-      // Get current pose
+      LimelightHelpers.SetIMUMode(limelight, 3);
+      LimelightHelpers.setPipelineIndex(limelight, 0);
       Pose2d robotPose = robotContainer.drive.getPose();
       double headingDeg = robotPose.getRotation().getDegrees();
 
-      LimelightHelpers.setPipelineIndex(limelight, 0);
+      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.01);
 
       // Get pose estimate from limelight
-      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
+      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
 
-      if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3)) {
+      if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3.5)) {
         measurements.add(measurement);
         // Log pose estimate and limelight status
         Logger.recordOutput(limelight + " detecting", true);
@@ -137,13 +137,13 @@ public class Robot extends LoggedRobot {
         Logger.recordOutput("Pose Estimate", poseEstimate);
 
         // Define standard deviation
-        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.05, 0.05, Math.toRadians(2));
+        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.001, 0.001, Math.toRadians(0.01));
+        Logger.recordOutput("limelight estimated pose", measurement.pose);
         robotContainer.drive.addVisionMeasurement(
             measurement.pose, measurement.timestampSeconds, stdDevs);
       } else {
         Logger.recordOutput(limelight + " detecting", false);
       }
-
       LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
     }
   }
@@ -158,9 +158,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void disabledPeriodic() {
-    for (String limelight : Constants.limelights) {
-      LimelightHelpers.SetThrottle(limelight, 150);
-    }
+    processLimelightMeasurements();
   }
 
   @Override
@@ -179,7 +177,9 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+    processLimelightMeasurements();
+  }
 
   @Override
   public void teleopInit() {

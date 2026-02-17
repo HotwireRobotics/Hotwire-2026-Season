@@ -77,7 +77,7 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
   }
 
   public Command runHopper(double speed) {
-    return Commands.run(
+    return Commands.runOnce(
         () -> {
           upperFeed.set(speed);
           lowerFeed.set(speed);

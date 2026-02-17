@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
@@ -39,6 +38,7 @@ public class RobotContainer {
   public double feederVelocity = 0;
   public double shooterVelocity = 0;
   public double shooterPower = 0;
+  private final Supplier<AngularVelocity> velocity;
 
   public Pose2d hubTarget = Constants.Poses.hub;
 
@@ -86,24 +86,45 @@ public class RobotContainer {
     shooter = new ProtoShooter();
     hopper = new HopperSubsystem();
 
+    velocity =
+        () -> {
+          return Constants.regress(
+              Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+        };
+
+    configureButtonBindings();
+
+    final Command startHopper = hopper.runHopper(Constants.Hopper.kSpeed);
+    final Command startShooter = regressionShooting();
+    //// NamedCommands.registerCommand("StartShooter", regressionShooting().repeatedly());
+    final Command killHopper = hopper.runHopper(0);
+    final Command killShooter = shooter.runMechanism(0, 0);
+    //// NamedCommands.registerCommand("KillShooter", killShooter);
+    final Command runFiringSequence =
+        new SequentialCommandGroup(
+            startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
+            startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
+            killShooter, killHopper);
+    NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
+
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
     SmartDashboard.putNumber("Shooter Velocity", shooterVelocity);
 
-    // autoChooser.addOption(
-    //     "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-    // autoChooser.addOption(
-    //     "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    // autoChooser.addOption(
-    //     "Drive SysId (Quasistatic Forward)",
-    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    // autoChooser.addOption(
-    //     "Drive SysId (Quasistatic Reverse)",
-    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    // autoChooser.addOption(
-    //     "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    // autoChooser.addOption(
-    //     "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+    autoChooser.addOption(
+        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    autoChooser.addOption(
+        "Drive SysId (Quasistatic Forward)",
+        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Drive SysId (Quasistatic Reverse)",
+        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    autoChooser.addOption(
+        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    autoChooser.addOption(
+        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
         "Right Shooter SysId (Quasistatic Forward)",
         shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kForward));
@@ -144,10 +165,6 @@ public class RobotContainer {
             shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse)));
-
-    NamedCommands.registerCommand("ReadySequence", pointToHub());
-
-    configureButtonBindings();
   }
 
   private Command pointToHub() {
@@ -157,16 +174,22 @@ public class RobotContainer {
         () -> 0,
         () -> {
           Pose2d robotPose = drive.getPose();
-
-          Angle toHub =
-              Radians.of(
-                  Math.IEEEremainder(
-                      Math.atan(
-                          (hubTarget.getY() - robotPose.getY())
-                              / (hubTarget.getX() - robotPose.getX())),
-                      Constants.Mathematics.TAU));
-          return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+          if (robotPose != null) {
+            Angle toHub =
+                Radians.of(
+                    Math.IEEEremainder(
+                        Math.atan(
+                            (hubTarget.getY() - robotPose.getY())
+                                / (hubTarget.getX() - robotPose.getX())),
+                        Constants.Mathematics.TAU));
+            return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+          }
+          return Rotation2d.kZero;
         });
+  }
+
+  private Command regressionShooting() {
+    return shooter.runMechanismVelocity(velocity, velocity);
   }
 
   private void configureButtonBindings() {
@@ -191,16 +214,6 @@ public class RobotContainer {
     // Hold wheel position.
     Constants.Joysticks.driver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    // Reset gyro to 0° when A button is pressed.
-    // Constants.Joysticks.driver
-    //     .a()
-    //     .onTrue(
-    //         Commands.runOnce(
-    //                 () ->
-    //                     drive.setPose(
-    //                         new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-    //                 drive).ignoringDisable(true));
-
     Constants.Joysticks.driver
         .a()
         .onTrue(
@@ -220,14 +233,6 @@ public class RobotContainer {
         .a()
         .whileTrue(intake.runIntake(0.7))
         .whileFalse(intake.runIntake(0.0));
-
-    // Shooter control and RPM supplier
-    Supplier<AngularVelocity> velocity =
-        () -> {
-          return Constants.regress(
-              Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
-          //   return RPM.of(shooterVelocity);
-        };
 
     Constants.Joysticks.operator
         .rightTrigger()

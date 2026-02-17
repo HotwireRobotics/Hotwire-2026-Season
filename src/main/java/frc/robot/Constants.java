@@ -30,7 +30,18 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(2);
+    public static final Time kChargeUpTime = Seconds.of(1.2);
+    public static final Time kFiringTime = Seconds.of(2);
+  }
+
+  /*
+   * Megatag2 provides a yaw offset by several tens of degrees.
+   * Megatag2 produces a pose that is the inverse of Megatag1.
+   * Megatag2 uses a yaw perpendicular to the real rotation.
+   */
+
+  public static class Hopper {
+    public static final double kSpeed = 0.75;
   }
 
   public static class Control {

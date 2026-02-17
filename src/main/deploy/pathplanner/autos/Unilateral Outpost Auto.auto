@@ -9,24 +9,12 @@
           "data": {
             "commands": [
               {
-                "type": "named",
-                "data": {
-                  "name": "Intake On"
-                }
-              },
-              {
                 "type": "path",
                 "data": {
                   "pathName": "Collect from Outpost"
                 }
               }
             ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Wait Collect"
           }
         },
         {
@@ -38,7 +26,7 @@
         {
           "type": "named",
           "data": {
-            "name": "Shoot All"
+            "name": "Firing Sequence"
           }
         },
         {

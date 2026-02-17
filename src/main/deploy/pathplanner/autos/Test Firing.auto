@@ -5,9 +5,15 @@
     "data": {
       "commands": [
         {
+          "type": "path",
+          "data": {
+            "pathName": "Test Firing"
+          }
+        },
+        {
           "type": "named",
           "data": {
-            "name": "ReadySequence"
+            "name": "Firing Sequence"
           }
         }
       ]
