@@ -18,6 +18,12 @@
           }
         },
         {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.5
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "Shoot from Outpost"
@@ -27,12 +33,6 @@
           "type": "named",
           "data": {
             "name": "Firing Sequence"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Prepare for Climb from Outpost"
           }
         }
       ]
