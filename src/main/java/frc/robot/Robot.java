@@ -124,12 +124,12 @@ public class Robot extends LoggedRobot {
       Pose2d robotPose = robotContainer.drive.getPose();
       double headingDeg = robotPose.getRotation().getDegrees();
 
-      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.01);
+      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.001);
 
       // Get pose estimate from limelight
       PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
 
-      if ((measurement != null) && (measurement.tagCount > 0) && (measurement.avgTagDist < 3.5)) {
+      if ((measurement != null) && (measurement.tagCount > 0)) {
         measurements.add(measurement);
         // Log pose estimate and limelight status
         Logger.recordOutput(limelight + " detecting", true);

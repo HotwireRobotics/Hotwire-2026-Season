@@ -170,8 +170,8 @@ public class RobotContainer {
   private Command pointToHub() {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        () -> 0,
-        () -> 0,
+        () -> -Constants.Joysticks.driver.getLeftY(),
+        () -> -Constants.Joysticks.driver.getLeftX(),
         () -> {
           Pose2d robotPose = drive.getPose();
           if (robotPose != null) {
@@ -182,7 +182,9 @@ public class RobotContainer {
                             (hubTarget.getY() - robotPose.getY())
                                 / (hubTarget.getX() - robotPose.getX())),
                         Constants.Mathematics.TAU));
-            return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+            return new Rotation2d(toHub)
+                .rotateBy(Rotation2d.k180deg)
+                .rotateBy(new Rotation2d(Degrees.of(-5)));
           }
           return Rotation2d.kZero;
         });
@@ -243,6 +245,11 @@ public class RobotContainer {
         .leftTrigger()
         .whileTrue(hopper.runHopper(0.75))
         .whileFalse(hopper.runHopper(0));
+
+    Constants.Joysticks.driver
+        .povLeft()
+        .whileTrue(
+            DriveCommands.pathfind(drive, Constants.Poses.lowerStart, Constants.constraints));
   }
 
   public Command getAutonomousCommand() {

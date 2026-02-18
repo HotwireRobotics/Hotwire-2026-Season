@@ -30,8 +30,8 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(1.2);
-    public static final Time kFiringTime = Seconds.of(2);
+    public static final Time kChargeUpTime = Seconds.of(1);
+    public static final Time kFiringTime = Seconds.of(5.25);
   }
 
   /*
@@ -46,7 +46,7 @@ public final class Constants {
 
   public static class Control {
     public static final PIDConstants translationPID = new PIDConstants(15.0, 0.0, 0.0);
-    public static final PIDConstants rotationPID = new PIDConstants(10.0, 0.0, 0.6);
+    public static final PIDConstants rotationPID = new PIDConstants(15.0, 0.0, 0.0);
     public static final double ANGLE_KP = rotationPID.kP;
     public static final double ANGLE_KD = rotationPID.kD;
   }
@@ -88,11 +88,13 @@ public final class Constants {
     public static final Pose2d tower =
         flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.146), new Rotation2d()));
     public static final Pose2d hub =
-        flipAlliance(new Pose2d(Meters.of(4.611), Meters.of(4.021), new Rotation2d()));
+        flipAlliance(new Pose2d(Meters.of(4.625594), Meters.of(3.965), new Rotation2d()));
+    public static final Pose2d lowerStart =
+        flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(2.008), Rotation2d.k180deg));
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1400.9197;
+  public static final double base = 1625.9197;
   public static final double exponential = 0.450548;
 
   public static AngularVelocity regress(Distance distance) {
