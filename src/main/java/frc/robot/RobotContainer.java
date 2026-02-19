@@ -182,9 +182,7 @@ public class RobotContainer {
                             (hubTarget.getY() - robotPose.getY())
                                 / (hubTarget.getX() - robotPose.getX())),
                         Constants.Mathematics.TAU));
-            return new Rotation2d(toHub)
-                .rotateBy(Rotation2d.k180deg)
-                .rotateBy(new Rotation2d(Degrees.of(-5)));
+            return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
           }
           return Rotation2d.kZero;
         });
