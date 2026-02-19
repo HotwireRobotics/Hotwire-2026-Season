@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.Volts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.ctre.phoenix6.hardware.TalonFX;
+
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -172,7 +174,12 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
           runDevice(Device.ARM, speed);
         });
   }
-
+  // Detects BrownOut
+  double voltage = RobotController.getBatteryVoltage();{
+    if (voltage < 9.0) {
+      System.out.println("Low voltage warning: " + voltage + "V"); 
+    }
+  }
 
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
