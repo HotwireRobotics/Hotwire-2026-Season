@@ -53,8 +53,16 @@ public final class Constants {
 
   public static final double lerp = 1; // 1.7
   public static final String[] limelights = {"limelight-one"};
-  public static final Time[] autoTimes = {Seconds.of(8)};
-  public static final Time[] teleopTimes = {Seconds.of(12)};
+
+  public static final Time[] autoTimes = {};
+  public static final Time[] teleopTimes = {
+    Seconds.of(5),
+    Seconds.of(30),
+    Seconds.of(55),
+    Seconds.of(80),
+    Seconds.of(105),
+    Seconds.of(133),
+  };
   public static final Time autoLength = Seconds.of(20);
   public static final Time teleopLength = Seconds.of(140);
 
@@ -86,9 +94,9 @@ public final class Constants {
   public static class Poses {
     // X: 14.916m, Y: 3.875m
     public static final Pose2d tower =
-        flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.146), new Rotation2d()));
+        flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.146), Rotation2d.k180deg));
     public static final Pose2d hub =
-        flipAlliance(new Pose2d(Meters.of(4.625594), Meters.of(3.965), new Rotation2d()));
+        flipAlliance(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
     public static final Pose2d lowerStart =
         flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(2.008), Rotation2d.k180deg));
   }
