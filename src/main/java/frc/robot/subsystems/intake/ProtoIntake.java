@@ -70,7 +70,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
                 null,
                 null,
                 null, // Use default config
-                (state) -> Logger.recordOutput("Intake/SysIdState/Down", state.toString())),
+                (state) -> Logger.recordOutput("Intake/SysIdState/Arm", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.ARM, voltage.in(Volts)), null, this));
   }
@@ -108,15 +108,15 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
         "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
-    Logger.recordOutput("Intake/RollersArm/Position", arm.getPosition().getValueAsDouble(), "rot");
+    Logger.recordOutput("Intake/Arm/Position", arm.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Intake/RollersArm/Velocity", arm.getVelocity().getValueAsDouble() * 60, "rpm");
+        "Intake/Arm/Velocity", arm.getVelocity().getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
-        "Intake/RollersArm/Voltage", arm.getMotorVoltage().getValueAsDouble(), "V");
+        "Intake/Arm/Voltage", arm.getMotorVoltage().getValueAsDouble(), "V");
     Logger.recordOutput(
-        "Intake/RollersArm/Current", arm.getSupplyCurrent().getValueAsDouble(), "A");
+        "Intake/Arm/Current", arm.getSupplyCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
-        "Intake/RollersArm/Temperature", arm.getDeviceTemp().getValueAsDouble(), "°C");
+        "Intake/Arm/Temperature", arm.getDeviceTemp().getValueAsDouble(), "°C");
 
     if (isActiveDevice(Device.ROLLERS)) {
       state = State.INTAKING;
