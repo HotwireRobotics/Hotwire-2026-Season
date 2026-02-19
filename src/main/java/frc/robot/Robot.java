@@ -117,6 +117,7 @@ public class Robot extends LoggedRobot {
 
   private void processLimelightMeasurements() {
     List<PoseEstimate> measurements = new ArrayList<>();
+    final double fpgaTime = Timer.getFPGATimestamp();
 
     for (String limelight : Constants.limelights) {
       LimelightHelpers.SetIMUMode(limelight, 3);
@@ -125,6 +126,12 @@ public class Robot extends LoggedRobot {
       double headingDeg = robotPose.getRotation().getDegrees();
 
       LimelightHelpers.SetIMUAssistAlpha(limelight, 0.001);
+
+      // Vision latency: capture (exposure) and pipeline (processing) in ms
+      double captureMs = LimelightHelpers.getLatency_Capture(limelight);
+      double pipelineMs = LimelightHelpers.getLatency_Pipeline(limelight);
+      Logger.recordOutput("Latency/Vision/" + limelight + "/CaptureMs", captureMs);
+      Logger.recordOutput("Latency/Vision/" + limelight + "/PipelineMs", pipelineMs);
 
       // Get pose estimate from limelight
       PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
@@ -135,6 +142,12 @@ public class Robot extends LoggedRobot {
         Logger.recordOutput(limelight + " detecting", true);
         poseEstimate = measurement.pose;
         Logger.recordOutput("Pose Estimate", poseEstimate);
+
+        // Total vision latency from LL (capture + pipeline); pose.latency is in ms
+        Logger.recordOutput("Latency/Vision/" + limelight + "/PoseLatencyMs", measurement.latency);
+        // RIO-side delay: time from frame capture to us applying correction (for analysis)
+        double ageAtApplySec = fpgaTime - measurement.timestampSeconds;
+        Logger.recordOutput("Latency/Vision/" + limelight + "/AgeAtApplySec", ageAtApplySec);
 
         // Define standard deviation
         Matrix<N3, N1> stdDevs = VecBuilder.fill(0.001, 0.001, Math.toRadians(0.01));

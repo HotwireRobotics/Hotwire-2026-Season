@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import frc.robot.util.LatencyRecorder;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -125,6 +126,10 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 
   State state = State.STOPPED;
 
+  /** RPM above which we consider the shooter "in motion" for latency recording. */
+  private static final double MOTION_START_RPM_THRESHOLD = 50.0;
+  private boolean motionStartRecorded = false;
+
   @Override
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
@@ -195,8 +200,17 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
       } else {
         state = State.SPINNING;
       }
+      // Latency: record time when shooter first reaches measurable motion (once per spin-up)
+      double leftRpm = leftModule.shooter.getVelocity().getValueAsDouble() * 60;
+      double rightRpm = rightModule.shooter.getVelocity().getValueAsDouble() * 60;
+      if (!motionStartRecorded
+          && (leftRpm >= MOTION_START_RPM_THRESHOLD || rightRpm >= MOTION_START_RPM_THRESHOLD)) {
+        LatencyRecorder.recordMotionStart("Shooter");
+        motionStartRecorded = true;
+      }
     } else {
       state = State.STOPPED;
+      motionStartRecorded = false;
     }
   }
 
@@ -226,6 +240,10 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
       specifyInactiveDevice(device);
     } else {
       specifyActiveDevice(device);
+      // Latency: record time when motor command is applied (once per trigger)
+      if (device == Device.BOTH_SHOOTER) {
+        LatencyRecorder.recordActuation("Shooter");
+      }
     }
   }
   // Voltage control

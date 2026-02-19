@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.LatencyRecorder;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
@@ -236,9 +237,16 @@ public class RobotContainer {
         .whileTrue(intake.runIntake(0.7))
         .whileFalse(intake.runIntake(0.0));
 
+    // Latency: record trigger time when shooter is requested, then run shooter + pointToHub
+    Command shooterWithPoint =
+        Commands.runOnce(() -> LatencyRecorder.recordTrigger("Shooter"))
+            .andThen(
+                shooter
+                    .runMechanismVelocity(velocity, velocity)
+                    .alongWith(pointToHub()));
     Constants.Joysticks.operator
         .rightTrigger()
-        .whileTrue(shooter.runMechanismVelocity(velocity, velocity).alongWith(pointToHub()))
+        .whileTrue(shooterWithPoint)
         .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator
