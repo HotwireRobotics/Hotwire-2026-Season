@@ -106,6 +106,15 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
         "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
+    Logger.recordOutput("Intake/RollersArm/Position", arm.getPosition().getValueAsDouble(), "rot");
+    Logger.recordOutput(
+        "Intake/RollersArm/Velocity", arm.getVelocity().getValueAsDouble() * 60, "rpm");
+    Logger.recordOutput(
+        "Intake/RollersArm/Voltage", arm.getMotorVoltage().getValueAsDouble(), "V");
+    Logger.recordOutput(
+        "Intake/RollersArm/Current", arm.getSupplyCurrent().getValueAsDouble(), "A");
+    Logger.recordOutput(
+        "Intake/RollersArm/Temperature", arm.getDeviceTemp().getValueAsDouble(), "°C");
 
     if (isActiveDevice(Device.ROLLERS)) {
       state = State.INTAKING;
@@ -163,6 +172,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
           runDevice(Device.ARM, speed);
         });
   }
+
+
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
    *
