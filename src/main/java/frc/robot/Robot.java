@@ -73,6 +73,8 @@ public class Robot extends LoggedRobot {
 
     SmartDashboard.putNumber("Shooter RPM", robotContainer.shooterPower);
     SmartDashboard.putNumber("Shooter Proportional", shooterKP);
+    SmartDashboard.putNumber("Exponential", Constants.exponential);
+    SmartDashboard.putNumber("Base", Constants.base);
   }
 
   @Override
@@ -106,6 +108,9 @@ public class Robot extends LoggedRobot {
     robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
     robotContainer.shooterPower = SmartDashboard.getNumber("Shooter RPM", 0.0);
     shooterKP = SmartDashboard.getNumber("Shooter Proportional", 0);
+
+    Constants.exponential = SmartDashboard.getNumber("Exponential", Constants.exponential);
+    Constants.base = SmartDashboard.getNumber("Base", Constants.base);
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
