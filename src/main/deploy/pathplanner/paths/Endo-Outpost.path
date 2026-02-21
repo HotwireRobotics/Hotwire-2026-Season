@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.5991440798858774,
+        "x": 3.042781740370898,
         "y": 6.0
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.3144935805991436,
-        "y": 5.982268188302426
+        "x": 3.2874069450581676,
+        "y": 5.948439266571242
       },
       "isLocked": false,
-      "linkedName": "Upper Start"
+      "linkedName": "Upper Firing Location"
     },
     {
       "anchor": {
-        "x": 3.042781740370898,
-        "y": 6.0
+        "x": 0.745,
+        "y": 0.7938659058487882
       },
       "prevControl": {
-        "x": 2.4087874465049923,
-        "y": 5.982268188302426
+        "x": 0.3958486311156287,
+        "y": 0.1138654436135933
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "Upper Firing Location"
+      "linkedName": "Outpost"
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -51.177084062266466
+    "rotation": 180.0
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": -51.177084062266466
   },
   "useDefaultConstraints": true
 }

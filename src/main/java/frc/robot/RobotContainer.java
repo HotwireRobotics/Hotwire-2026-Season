@@ -210,6 +210,16 @@ public class RobotContainer {
         });
   }
 
+  private Command pointToAngle(Supplier<Angle> angle) {
+    return DriveCommands.joystickDriveAtAngle(
+        drive,
+        () -> -Constants.Joysticks.driver.getLeftY(),
+        () -> -Constants.Joysticks.driver.getLeftX(),
+        () -> {
+          return new Rotation2d(angle.get());
+        });
+  }
+
   private Command regressionShooting() {
     return shooter.runMechanismVelocity(velocity, velocity);
   }

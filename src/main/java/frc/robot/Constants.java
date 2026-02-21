@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
@@ -30,7 +31,7 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(1);
+    public static final Time kChargeUpTime = Seconds.of(1.00);
     public static final Time kFiringTime = Seconds.of(4.00);
     public static final AngularVelocity kStaticVel = RPM.of(2000);
   }
@@ -90,6 +91,13 @@ public final class Constants {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
+  }
+
+  public static Angle flipAlliance(Angle angle) {
+    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+      return angle.plus(Degrees.of(180));
+    }
+    return angle;
   }
 
   public static class Poses {

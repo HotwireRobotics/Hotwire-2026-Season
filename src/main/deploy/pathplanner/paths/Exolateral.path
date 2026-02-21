@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.042781740370898,
+        "x": 3.5991440798858774,
         "y": 6.0
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.671283880171183,
+        "x": 2.227646219686162,
         "y": 7.496091298145506
       },
       "isLocked": false,
-      "linkedName": "Upper Firing Location"
+      "linkedName": "Upper Start"
     },
     {
       "anchor": {
@@ -89,7 +89,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -51.177084062266466
+    "rotation": 180.0
   },
   "useDefaultConstraints": true
 }
