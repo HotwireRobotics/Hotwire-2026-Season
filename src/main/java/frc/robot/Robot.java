@@ -140,10 +140,6 @@ public class Robot extends LoggedRobot {
     robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
     robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
     robotContainer.shooterPower = SmartDashboard.getNumber("Shooter RPM", 0.0);
-    shooterKP = SmartDashboard.getNumber("Shooter Proportional", 0);
-
-    Constants.exponential = SmartDashboard.getNumber("Exponential", Constants.exponential);
-    Constants.base = SmartDashboard.getNumber("Base", Constants.base);
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
