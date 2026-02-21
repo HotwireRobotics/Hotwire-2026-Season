@@ -5,27 +5,46 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "race",
           "data": {
-            "pathName": "Exolateral"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Lower Exolateral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Period"
+                }
+              }
+            ]
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Endolateral"
+            "pathName": "Lower Endolateral"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Firing Routine"
+            "name": "Firing Sequence"
           }
         },
         {
           "type": "path",
           "data": {
             "pathName": "Endo-Outpost"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.5
           }
         },
         {
@@ -37,7 +56,7 @@
         {
           "type": "named",
           "data": {
-            "name": "Firing Routine"
+            "name": "Firing Sequence"
           }
         }
       ]

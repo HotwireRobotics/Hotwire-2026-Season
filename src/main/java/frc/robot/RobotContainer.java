@@ -105,7 +105,7 @@ public class RobotContainer {
         () -> {
           switch (velocityType) {
             case STATIC:
-              return Constants.Shooter.kStaticVel;
+              return Constants.Shooter.kSpeed;
             case REGRESSION:
               return Constants.regress(
                   Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
@@ -118,16 +118,23 @@ public class RobotContainer {
 
     final Command startHopper = hopper.runHopper(Constants.Hopper.kSpeed);
     final Command startShooter = regressionShooting();
+    final Command startIntake = intake.runIntake(Constants.Intake.kSpeed);
     //// NamedCommands.registerCommand("StartShooter", regressionShooting().repeatedly());
     final Command killHopper = hopper.runHopper(0);
     final Command killShooter = shooter.runMechanism(0, 0);
+    final Command killIntake = intake.runIntake(0);
     //// NamedCommands.registerCommand("KillShooter", killShooter);
+    final Command periodIntake =
+        intake.runIntake(Constants.Intake.kSpeed).repeatedly().finallyDo(() -> intake.runIntake(0));
     final Command runFiringSequence =
         new SequentialCommandGroup(
             startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
             startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
             killShooter, killHopper);
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
+    NamedCommands.registerCommand("Start Intaking", startIntake);
+    NamedCommands.registerCommand("Stop Intaking", killIntake);
+    NamedCommands.registerCommand("Intake Period", periodIntake);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
@@ -263,7 +270,7 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .a()
-        .whileTrue(intake.runIntake(0.7))
+        .whileTrue(intake.runIntake(Constants.Intake.kSpeed))
         .whileFalse(intake.runIntake(0.0));
 
     Constants.Joysticks.operator
@@ -278,7 +285,7 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .leftTrigger()
-        .whileTrue(hopper.runHopper(0.5))
+        .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
         .whileFalse(hopper.runHopper(0));
 
     Constants.Joysticks.driver

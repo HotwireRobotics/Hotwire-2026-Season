@@ -1,0 +1,95 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 7.713637660485022,
+        "y": 3.362
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 7.6065251207812805,
+        "y": 1.0124452881203108
+      },
+      "isLocked": false,
+      "linkedName": "Lower Neutral"
+    },
+    {
+      "anchor": {
+        "x": 7.713637660485022,
+        "y": 1.4407988587731824
+      },
+      "prevControl": {
+        "x": 7.712160113389253,
+        "y": 2.832417368291332
+      },
+      "nextControl": {
+        "x": 7.713903097142561,
+        "y": 1.1907989996864603
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 5.307047075606277,
+        "y": 0.6127246790299581
+      },
+      "prevControl": {
+        "x": 5.556973242332582,
+        "y": 0.6066492213932718
+      },
+      "nextControl": {
+        "x": 5.057120908879972,
+        "y": 0.6188001366666442
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 2.318216833095578,
+        "y": 2.502
+      },
+      "prevControl": {
+        "x": 2.1111982881597715,
+        "y": 0.31513552068473727
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "Lower Firing Location"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 1.4840085287846385,
+      "rotationDegrees": 180.0
+    },
+    {
+      "waypointRelativePos": 2.347547974413639,
+      "rotationDegrees": 180.0
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 34.725068658165235
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 90.0
+  },
+  "useDefaultConstraints": true
+}
