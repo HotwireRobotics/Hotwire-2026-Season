@@ -30,7 +30,8 @@ public class Robot extends LoggedRobot {
   public Pose2d poseEstimate = new Pose2d();
   private double shooterKP = 0;
 
-  Timer timer = new Timer();
+  private final Timer bitimer = new Timer();
+  private final Timer unitimer = new Timer();
 
   public Robot() {
     // Record metadata
@@ -78,6 +79,35 @@ public class Robot extends LoggedRobot {
 
     SmartDashboard.setPersistent("Base");
     SmartDashboard.setPersistent("Exponential");
+
+    unitimer.start();
+  }
+
+  private enum Indicate {
+    DISABLED,
+    ENABLED,
+    AUTO
+  }
+
+  public void indicateLimelight(Indicate mode) {
+    Boolean b = (Math.floor(unitimer.get() * 10) % 2) == 1;
+    switch (mode) {
+      case DISABLED:
+        for (String limelight : Constants.LimelightGroups.limelights) {
+          LimelightHelpers.setLEDMode_ForceOff(limelight);
+        }
+        break;
+      case ENABLED:
+        for (String limelight : Constants.LimelightGroups.limelights) {
+          LimelightHelpers.setLEDMode_ForceOn(limelight);
+        }
+        break;
+      case AUTO:
+        for (String limelight : Constants.LimelightGroups.limelights) {
+          LimelightHelpers.setLEDMode_ForceBlink(limelight);
+        }
+        break;
+    }
   }
 
   @Override
@@ -92,7 +122,7 @@ public class Robot extends LoggedRobot {
     Time time = Seconds.of(DriverStation.getMatchTime());
     Boolean isAutonomous = DriverStation.isAutonomous();
     Time length = (isAutonomous) ? Constants.autoLength : Constants.teleopLength;
-    time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(time);
+    time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(bitimer.get()) : length.minus(time);
 
     // Controller haptic indicators
     Logger.recordOutput("Time", time.in(Seconds));
@@ -126,7 +156,7 @@ public class Robot extends LoggedRobot {
   private void processLimelightMeasurements() {
     List<PoseEstimate> measurements = new ArrayList<>();
 
-    for (String limelight : Constants.limelights) {
+    for (String limelight : Constants.LimelightGroups.localization) {
       LimelightHelpers.SetIMUMode(limelight, 3);
       LimelightHelpers.setPipelineIndex(limelight, 0);
       Pose2d robotPose = robotContainer.drive.getPose();
@@ -160,13 +190,14 @@ public class Robot extends LoggedRobot {
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
 
-    timer.restart();
-    timer.stop();
+    bitimer.restart();
+    bitimer.stop();
   }
 
   @Override
   public void disabledPeriodic() {
     processLimelightMeasurements();
+    indicateLimelight(Indicate.DISABLED);
   }
 
   @Override
@@ -181,12 +212,13 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("Robot/AutonomousCommand", "None");
     }
 
-    timer.start();
+    bitimer.start();
   }
 
   @Override
   public void autonomousPeriodic() {
     processLimelightMeasurements();
+    indicateLimelight(Indicate.AUTO);
   }
 
   @Override
@@ -199,9 +231,10 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopPeriodic() {
-    for (String limelight : Constants.limelights) {
+    for (String limelight : Constants.LimelightGroups.localization) {
       LimelightHelpers.SetThrottle(limelight, 0);
     }
+    indicateLimelight(Indicate.ENABLED);
   }
 
   @Override
@@ -211,12 +244,13 @@ public class Robot extends LoggedRobot {
 
     teleopInit();
 
-    timer.start();
+    bitimer.start();
   }
 
   @Override
   public void testPeriodic() {
     teleopPeriodic();
+    indicateLimelight(Indicate.ENABLED);
   }
 
   @Override

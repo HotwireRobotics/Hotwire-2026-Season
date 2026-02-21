@@ -259,7 +259,7 @@ public class RobotContainer {
             Commands.runOnce(
                     () -> {
                       drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero));
-                      for (String limelight : Constants.limelights) {
+                      for (String limelight : Constants.LimelightGroups.localization) {
                         LimelightHelpers.SetIMUMode(limelight, 1);
                         LimelightHelpers.SetRobotOrientation(limelight, 0, 0, 0, 0, 0, 0);
                         LimelightHelpers.SetIMUMode(limelight, 2);

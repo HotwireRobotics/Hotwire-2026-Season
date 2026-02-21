@@ -31,20 +31,14 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(1.00);
-    public static final Time kFiringTime = Seconds.of(4.00);
+    public static final Time kChargeUpTime = Seconds.of(0.2);
+    public static final Time kFiringTime = Seconds.of(2.3);
     public static final AngularVelocity kSpeed = RPM.of(2000);
   }
 
   public static class Intake {
     public static final double kSpeed = 0.7;
   }
-
-  /*
-   * Megatag2 provides a yaw offset by several tens of degrees.
-   * Megatag2 produces a pose that is the inverse of Megatag1.
-   * Megatag2 uses a yaw perpendicular to the real rotation.
-   */
 
   public static class Hopper {
     public static final double kSpeed = 0.5;
@@ -58,7 +52,11 @@ public final class Constants {
   }
 
   public static final double lerp = 1; // 1.7
-  public static final String[] limelights = {"limelight-one"};
+
+  public static class LimelightGroups {
+    public static final String[] localization = {"limelight-one"};
+    public static final String[] limelights = {"limelight-one", "limelight-two"};
+  }
 
   public static final Time[] autoTimes = {};
   public static final Time[] teleopTimes = {
@@ -111,7 +109,7 @@ public final class Constants {
     public static final Pose2d hub =
         flipAlliance(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
     public static final Pose2d lowerStart =
-        flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(2.008), Rotation2d.k180deg));
+        flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
