@@ -5,33 +5,58 @@
     "data": {
       "commands": [
         {
+          "type": "race",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Lower Exolateral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Period"
+                }
+              }
+            ]
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "En-route Initial Firing"
+            "pathName": "Lower Endolateral"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Firing Routine"
+            "name": "Firing Sequence"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Exolateral"
+            "pathName": "Endo-Outpost"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.5
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Endolateral"
+            "pathName": "Shoot from Outpost"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Firing Routine"
+            "name": "Firing Sequence"
           }
         }
       ]

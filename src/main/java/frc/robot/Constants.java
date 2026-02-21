@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
@@ -30,19 +31,17 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(1);
-    public static final Time kFiringTime = Seconds.of(5.25);
-    public static final AngularVelocity kStaticVel = RPM.of(2500);
+    public static final Time kChargeUpTime = Seconds.of(0.2);
+    public static final Time kFiringTime = Seconds.of(2.3);
+    public static final AngularVelocity kSpeed = RPM.of(2000);
   }
 
-  /*
-   * Megatag2 provides a yaw offset by several tens of degrees.
-   * Megatag2 produces a pose that is the inverse of Megatag1.
-   * Megatag2 uses a yaw perpendicular to the real rotation.
-   */
+  public static class Intake {
+    public static final double kSpeed = 0.7;
+  }
 
   public static class Hopper {
-    public static final double kSpeed = 0.75;
+    public static final double kSpeed = 0.5;
   }
 
   public static class Control {
@@ -53,7 +52,11 @@ public final class Constants {
   }
 
   public static final double lerp = 1; // 1.7
-  public static final String[] limelights = {"limelight-one"};
+
+  public static class LimelightGroups {
+    public static final String[] localization = {"limelight-one"};
+    public static final String[] limelights = {"limelight-one", "limelight-two"};
+  }
 
   public static final Time[] autoTimes = {};
   public static final Time[] teleopTimes = {
@@ -92,6 +95,13 @@ public final class Constants {
     return pose;
   }
 
+  public static Angle flipAlliance(Angle angle) {
+    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+      return angle.plus(Degrees.of(180));
+    }
+    return angle;
+  }
+
   public static class Poses {
     // X: 14.916m, Y: 3.875m
     public static final Pose2d tower =
@@ -99,12 +109,12 @@ public final class Constants {
     public static final Pose2d hub =
         flipAlliance(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
     public static final Pose2d lowerStart =
-        flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(2.008), Rotation2d.k180deg));
+        flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static double base = 1550;
-  public static double exponential = 0.5;
+  public static final double base = 1550;
+  public static final double exponential = 0.5;
 
   public static AngularVelocity regress(Distance distance) {
     return RPM.of(base * Math.pow(distance.in(Meters), exponential));
