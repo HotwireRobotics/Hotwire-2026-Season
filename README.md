@@ -159,5 +159,6 @@ src/main/java/frc/robot/
 - **Game:** [FIRST Rebuilt (2026)](https://www.firstinspires.org/robotics/frc)
 - **WPILib / FIRST** — [WPILib License](WPILib-License.md)
 - **AdvantageKit** — [AdvantageKit License](AdvantageKit-License.md)
+- **Randy Rothweiler** (cool guy)
 
 ---

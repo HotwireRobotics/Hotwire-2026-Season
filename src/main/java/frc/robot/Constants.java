@@ -33,6 +33,7 @@ public final class Constants {
     public static final Time kChargeUpTime = Seconds.of(1);
     public static final Time kFiringTime = Seconds.of(5.25);
     public static final AngularVelocity kStaticVel = RPM.of(2500);
+    public static final double kVelocityKp = 0.8;
   }
 
   /*
@@ -43,6 +44,11 @@ public final class Constants {
 
   public static class Hopper {
     public static final double kSpeed = 0.75;
+    public static final double kSlowSpeed = 0.5;
+  }
+
+  public static class Intake {
+    public static final double kInSpeed = 0.7;
   }
 
   public static class Control {
@@ -85,8 +91,14 @@ public final class Constants {
    */
   public static final Translation2d middle = new Translation2d(Meters.of(8.27), Meters.of(4.01));
 
+  /** Returns true when the current alliance is red, false otherwise. */
+  public static boolean isRedAlliance() {
+    return DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+  }
+
+  /** Mirrors a field pose for red alliance to keep blue-origin coordinates reusable. */
   public static Pose2d flipAlliance(Pose2d pose) {
-    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+    if (isRedAlliance()) {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
@@ -102,12 +114,35 @@ public final class Constants {
         flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(2.008), Rotation2d.k180deg));
   }
 
-  // Derived from relationship between distance (m) and rotation (RPM).
-  public static double base = 1550;
-  public static double exponential = 0.5;
+  /** Runtime-tunable regression settings for shooter velocity estimation. */
+  public static final class ShooterRegression {
+    private static double baseRpm = 1550.0;
+    private static double distanceExponent = 0.5;
 
+    private ShooterRegression() {}
+
+    public static double getBaseRpm() {
+      return baseRpm;
+    }
+
+    public static double getDistanceExponent() {
+      return distanceExponent;
+    }
+
+    /** Updates regression coefficients when dashboard-provided values are valid. */
+    public static void update(double nextBaseRpm, double nextDistanceExponent) {
+      if (nextBaseRpm > 0.0 && nextDistanceExponent > 0.0) {
+        baseRpm = nextBaseRpm;
+        distanceExponent = nextDistanceExponent;
+      }
+    }
+  }
+
+  /** Converts distance to target shooter RPM via the configured power-law regression. */
   public static AngularVelocity regress(Distance distance) {
-    return RPM.of(base * Math.pow(distance.in(Meters), exponential));
+    double meters = Math.max(distance.in(Meters), 0.0);
+    return RPM.of(
+        ShooterRegression.getBaseRpm() * Math.pow(meters, ShooterRegression.getDistanceExponent()));
   }
 
   public static enum Mode {

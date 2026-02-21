@@ -26,13 +26,13 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.generated.TunerConstants;
+import frc.robot.util.OdometryUtil;
 // import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -116,7 +116,7 @@ public class Drive extends SubsystemBase {
         new PPHolonomicDriveController(
             Constants.Control.translationPID, Constants.Control.translationPID),
         PP_CONFIG,
-        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+        Constants::isRedAlliance,
         this);
     // Pathfinding.setPathfinder(new LocalADStarAK());
     PathPlannerLogging.setLogActivePathCallback(
@@ -164,9 +164,20 @@ public class Drive extends SubsystemBase {
     }
 
     // Update odometry
-    double[] sampleTimestamps =
-        modules[0].getOdometryTimestamps(); // All signals are sampled together
-    int sampleCount = sampleTimestamps.length;
+    double[] sampleTimestamps = modules[0].getOdometryTimestamps();
+    int[] moduleSampleCounts = new int[modules.length];
+    for (int i = 0; i < modules.length; i++) {
+      moduleSampleCounts[i] = modules[i].getOdometryPositions().length;
+    }
+    int sampleCount =
+        OdometryUtil.boundedSampleCount(
+            sampleTimestamps.length,
+            moduleSampleCounts,
+            gyroInputs.connected ? gyroInputs.odometryYawPositions.length : Integer.MAX_VALUE);
+    if (sampleCount != sampleTimestamps.length) {
+      Logger.recordOutput("Drive/OdometryLengthMismatch", true);
+    }
+
     for (int i = 0; i < sampleCount; i++) {
       // Read wheel positions and deltas from each module
       SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
@@ -192,8 +203,7 @@ public class Drive extends SubsystemBase {
       }
 
       // Flip for red alliance to match vision coordinate system
-      if (DriverStation.getAlliance().isPresent()
-          && DriverStation.getAlliance().get() == Alliance.Red) {
+      if (Constants.isRedAlliance()) {
         rawGyroRotation = rawGyroRotation.plus(Rotation2d.kPi);
       }
 

@@ -7,13 +7,13 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Systerface;
-import org.littletonrobotics.junction.Logger;
+import frc.robot.util.MotorTelemetry;
 
 public class HopperSubsystem extends SubsystemBase implements Systerface {
   private final TalonFX upperFeed;
-  private final TalonFX lowerFeed;
   private double upperSpeedtest;
   private double lowerSpeedtest;
+  private final TalonFX lowerFeed;
 
   // private final SysIdRoutine m_sysIdRoutine;
   // private final VoltageOut m_voltReq;
@@ -22,10 +22,8 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
   public HopperSubsystem() {
     upperFeed = new TalonFX(Constants.MotorIDs.h_upperFeed);
     lowerFeed = new TalonFX(Constants.MotorIDs.h_lowerFeed);
-    upperSpeedtest = SmartDashboard.getNumber("upperSpeed", 0);
-    lowerSpeedtest = SmartDashboard.getNumber("lowerSpeed", 0);
-    SmartDashboard.putNumber("upperSpeed", upperSpeedtest);
-    SmartDashboard.putNumber("lowerSpeed", lowerSpeedtest);
+    SmartDashboard.putNumber("upperSpeed", 0.0);
+    SmartDashboard.putNumber("lowerSpeed", 0.0);
 
     // m_sysIdRoutine =
     //     new SysIdRoutine(
@@ -54,41 +52,30 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
   public void periodic() {
     // Logger.recordOutput("Hopper/State", state.toString());
     // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
-    Logger.recordOutput(
-        "Hopper/upperFeed/Position", upperFeed.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Velocity", upperFeed.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Voltage", upperFeed.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Current", upperFeed.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Temperature", upperFeed.getDeviceTemp().getValueAsDouble(), "°C");
-    Logger.recordOutput(
-        "Hopper/lowerFeed/Position", lowerFeed.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Hopper/lowerFeed/Velocity", lowerFeed.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Hopper/lowerFeed/Voltage", lowerFeed.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Hopper/lowerFeed/Current", lowerFeed.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Hopper/lowerFeed/Temperature", lowerFeed.getDeviceTemp().getValueAsDouble(), "°C");
+    MotorTelemetry.logBasic("Hopper/upperFeed", upperFeed);
+    MotorTelemetry.logBasic("Hopper/lowerFeed", lowerFeed);
+  }
+
+  /** Sets both hopper motors to the same percent output. */
+  public void setHopperSpeed(double speed) {
+    upperFeed.set(speed);
+    lowerFeed.set(speed);
   }
 
   public Command runHopper(double speed) {
-    return Commands.runOnce(
-        () -> {
-          upperFeed.set(speed);
-          lowerFeed.set(speed);
-        });
+    return Commands.runOnce(() -> setHopperSpeed(speed));
+  }
+
+  /** Holds hopper speed while scheduled and stops on release. */
+  public Command holdHopper(double speed) {
+    return Commands.startEnd(() -> setHopperSpeed(speed), () -> setHopperSpeed(0.0), this);
   }
   // Hopper tests
   public Command runHoppertest() {
     return Commands.run(
         () -> {
-          upperFeed.set(SmartDashboard.getNumber("upperSpeed", 0));
-          lowerFeed.set(SmartDashboard.getNumber("lowerSpeed", 0));
+          upperFeed.set(SmartDashboard.getNumber("upperSpeed", 0.0));
+          lowerFeed.set(SmartDashboard.getNumber("lowerSpeed", 0.0));
         });
   }
 

@@ -25,6 +25,7 @@ public class PhoenixOdometryThread extends Thread {
 
   private static boolean isCANFD = TunerConstants.kCANBus.isNetworkFD();
   private static PhoenixOdometryThread instance = null;
+  private long droppedSamples = 0;
 
   public static PhoenixOdometryThread getInstance() {
     if (instance == null) {
@@ -127,14 +128,21 @@ public class PhoenixOdometryThread extends Thread {
 
         // Add new samples to queues
         for (int i = 0; i < phoenixSignals.length; i++) {
-          phoenixQueues.get(i).offer(phoenixSignals[i].getValueAsDouble());
+          if (!phoenixQueues.get(i).offer(phoenixSignals[i].getValueAsDouble())) {
+            droppedSamples++;
+          }
         }
         for (int i = 0; i < genericSignals.size(); i++) {
-          genericQueues.get(i).offer(genericSignals.get(i).getAsDouble());
+          if (!genericQueues.get(i).offer(genericSignals.get(i).getAsDouble())) {
+            droppedSamples++;
+          }
         }
         for (int i = 0; i < timestampQueues.size(); i++) {
-          timestampQueues.get(i).offer(timestamp);
+          if (!timestampQueues.get(i).offer(timestamp)) {
+            droppedSamples++;
+          }
         }
+        Logger.recordOutput("PhoenixOdometryThread/DroppedSamples", droppedSamples);
       } finally {
         Drive.odometryLock.unlock();
       }
