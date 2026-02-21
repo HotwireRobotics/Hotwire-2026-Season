@@ -7,7 +7,6 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.math.controller.BangBangController;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -33,7 +32,6 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final TalonFX m_leftShooter;
   private final TalonFX m_rightShooter;
   private final Slot0Configs motorRPSControl;
-  private final BangBangController instantRPSControl;
 
   /** Logical devices for percent/velocity/voltage control and active-state tracking. */
   public enum Device {

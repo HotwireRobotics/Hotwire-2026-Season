@@ -9,12 +9,6 @@
           "data": {
             "commands": [
               {
-                "type": "named",
-                "data": {
-                  "name": "Intake On"
-                }
-              },
-              {
                 "type": "path",
                 "data": {
                   "pathName": "Collect from Outpost"
@@ -24,9 +18,9 @@
           }
         },
         {
-          "type": "named",
+          "type": "wait",
           "data": {
-            "name": "Wait Collect"
+            "waitTime": 1.5
           }
         },
         {
@@ -38,13 +32,7 @@
         {
           "type": "named",
           "data": {
-            "name": "Shoot All"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Prepare for Climb from Outpost"
+            "name": "Firing Sequence"
           }
         }
       ]

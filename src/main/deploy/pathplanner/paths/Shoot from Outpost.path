@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.625,
-        "y": 0.6439333333333332
+        "x": 0.745,
+        "y": 0.7938659058487882
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.3547682316251888,
-        "y": 1.41435648144729
+        "x": 1.4747682316251889,
+        "y": 1.5642890539627454
       },
       "isLocked": false,
       "linkedName": "Outpost"
@@ -25,7 +25,7 @@
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "Outpost_"
+      "linkedName": "Lower Firing Location"
     }
   ],
   "rotationTargets": [],
@@ -42,7 +42,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 150.0
+    "rotation": 29.725
   },
   "reversed": false,
   "folder": null,
