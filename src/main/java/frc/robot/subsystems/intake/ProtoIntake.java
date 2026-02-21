@@ -6,10 +6,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import frc.robot.util.MotorTelemetry;
+import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoIntake extends ModularSubsystem implements Systerface {
-
+public class ProtoIntake extends ModularSubsystem<ProtoIntake.Device> implements Systerface {
   private final TalonFX rollers;
   private final TalonFX lower;
   // private final TalonFX arm;
@@ -28,7 +29,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     lower = new TalonFX(Constants.MotorIDs.i_follower);
     defineDevice(
-        new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.LOWER, lower));
+        List.of(
+            new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.LOWER, lower)));
   }
 
   private enum State {
@@ -55,15 +57,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
      *
      * <p>Logs temp with unit metadata
      */
-    Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Intake/Rollers/Voltage", rollers.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
+    MotorTelemetry.logBasic("Intake/Rollers", rollers);
 
     if (isActiveDevice(Device.ROLLERS)) {
       state = State.INTAKING;
@@ -114,6 +108,20 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
           runDevice(Device.ROLLERS, speed);
           runDevice(Device.LOWER, speed);
         });
+  }
+
+  /** Holds both intake motors at a shared speed while scheduled, then stops on release. */
+  public Command holdIntake(double speed) {
+    return Commands.startEnd(
+        () -> {
+          runDevice(Device.ROLLERS, speed);
+          runDevice(Device.LOWER, speed);
+        },
+        () -> {
+          runDevice(Device.ROLLERS, 0.0);
+          runDevice(Device.LOWER, 0.0);
+        },
+        this);
   }
 
   public Command moveIntake(double speed) {

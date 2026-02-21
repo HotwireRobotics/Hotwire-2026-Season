@@ -15,6 +15,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import frc.robot.util.MotorTelemetry;
+import java.util.List;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -23,7 +25,7 @@ import org.littletonrobotics.junction.Logger;
  * (RPS), and voltage control. runShooter runs both wheels; runLeftShooter/runRightShooter run one
  * side for tuning or backup.
  */
-public class ProtoShooter extends ModularSubsystem implements Systerface {
+public class ProtoShooter extends ModularSubsystem<ProtoShooter.Device> implements Systerface {
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;
   private final VoltageOut m_voltReq;
@@ -49,17 +51,16 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     motorRPSControl = new Slot0Configs();
     motorRPSControl.withKV(0.11451);
     motorRPSControl.withKS(0.19361);
-    motorRPSControl.withKP(0.8);
-
-    instantRPSControl = new BangBangController();
+    motorRPSControl.withKP(Constants.Shooter.kVelocityKp);
 
     final TalonFX[] bothShooters = {m_leftShooter, m_rightShooter};
 
     defineDevice(
-        new DevicePointer(Device.RIGHT_SHOOTER, m_rightShooter),
-        new DevicePointer(Device.LEFT_SHOOTER, m_leftShooter),
-        new DevicePointer(Device.BOTH_SHOOTER, bothShooters),
-        new DevicePointer(Device.FEEDER, m_feeder));
+        List.of(
+            new DevicePointer(Device.RIGHT_SHOOTER, m_rightShooter),
+            new DevicePointer(Device.LEFT_SHOOTER, m_leftShooter),
+            new DevicePointer(Device.BOTH_SHOOTER, bothShooters),
+            new DevicePointer(Device.FEEDER, m_feeder)));
 
     m_voltReq = new VoltageOut(0.0);
     m_velVolt = new VelocityVoltage(0.0);
@@ -98,59 +99,28 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
 
-    // Active device flags (what is currently being driven)
     Logger.recordOutput("Shooter/Active/BothShooter", isActiveDevice(Device.BOTH_SHOOTER));
     Logger.recordOutput("Shooter/Active/LeftShooter", isActiveDevice(Device.LEFT_SHOOTER));
     Logger.recordOutput("Shooter/Active/RightShooter", isActiveDevice(Device.RIGHT_SHOOTER));
     Logger.recordOutput("Shooter/Active/Feeder", isActiveDevice(Device.FEEDER));
 
-    // Left shooter: position, velocity (rpm + rps), voltage, supply/stator current, temp
-    Logger.recordOutput(
-        "Shooter/Left/Position", m_leftShooter.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Shooter/Left/VelocityRPM", m_leftShooter.getVelocity().getValueAsDouble() * 60, "rpm");
+    MotorTelemetry.logBasic("Shooter/Left", m_leftShooter);
     Logger.recordOutput(
         "Shooter/Left/VelocityRPS", m_leftShooter.getVelocity().getValueAsDouble(), "rps");
     Logger.recordOutput(
-        "Shooter/Left/Voltage", m_leftShooter.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Shooter/Left/SupplyCurrent", m_leftShooter.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
         "Shooter/Left/StatorCurrent", m_leftShooter.getStatorCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Shooter/Left/Temperature", m_leftShooter.getDeviceTemp().getValueAsDouble(), "°C");
 
-    // Right shooter
-    Logger.recordOutput(
-        "Shooter/Right/Position", m_rightShooter.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Shooter/Right/VelocityRPM", m_rightShooter.getVelocity().getValueAsDouble() * 60, "rpm");
+    MotorTelemetry.logBasic("Shooter/Right", m_rightShooter);
     Logger.recordOutput(
         "Shooter/Right/VelocityRPS", m_rightShooter.getVelocity().getValueAsDouble(), "rps");
     Logger.recordOutput(
-        "Shooter/Right/Voltage", m_rightShooter.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Shooter/Right/SupplyCurrent", m_rightShooter.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
         "Shooter/Right/StatorCurrent", m_rightShooter.getStatorCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Shooter/Right/Temperature", m_rightShooter.getDeviceTemp().getValueAsDouble(), "°C");
 
-    // Feeder
-    Logger.recordOutput(
-        "Shooter/Feeder/Position", m_feeder.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Shooter/Feeder/VelocityRPM", m_feeder.getVelocity().getValueAsDouble() * 60, "rpm");
+    MotorTelemetry.logBasic("Shooter/Feeder", m_feeder);
     Logger.recordOutput(
         "Shooter/Feeder/VelocityRPS", m_feeder.getVelocity().getValueAsDouble(), "rps");
     Logger.recordOutput(
-        "Shooter/Feeder/Voltage", m_feeder.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Shooter/Feeder/SupplyCurrent", m_feeder.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
         "Shooter/Feeder/StatorCurrent", m_feeder.getStatorCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Shooter/Feeder/Temperature", m_feeder.getDeviceTemp().getValueAsDouble(), "°C");
 
     if (isActiveDevice(Device.BOTH_SHOOTER)) {
       state = isActiveDevice(Device.FEEDER) ? State.FIRING : State.SPINNING;
@@ -248,6 +218,50 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
           runDeviceVelocity(Device.BOTH_SHOOTER, shooterVel.get());
           runDeviceVelocity(Device.FEEDER, feederVel.get());
         });
+  }
+
+  /** Command: hold both shooters and feeder at fixed percentages while scheduled. */
+  public Command holdMechanism(double feederSpeed, double shooterSpeed) {
+    return Commands.startEnd(
+        () -> {
+          runShooter(shooterSpeed);
+          runFeeder(feederSpeed);
+        },
+        () -> {
+          runShooter(0);
+          runFeeder(0);
+        },
+        this);
+  }
+
+  /** Command: hold both shooters and feeder at fixed velocity targets while scheduled. */
+  public Command holdMechanismVelocity(AngularVelocity feederVel, AngularVelocity shooterVel) {
+    return Commands.startEnd(
+        () -> {
+          runDeviceVelocity(Device.BOTH_SHOOTER, shooterVel);
+          runDeviceVelocity(Device.FEEDER, feederVel);
+        },
+        () -> {
+          runDeviceVelocity(Device.BOTH_SHOOTER, RotationsPerSecond.of(0));
+          runDeviceVelocity(Device.FEEDER, RotationsPerSecond.of(0));
+        },
+        this);
+  }
+
+  /** Command: continuously refresh velocity setpoints from suppliers while scheduled. */
+  public Command holdMechanismVelocity(
+      Supplier<AngularVelocity> feederVel, Supplier<AngularVelocity> shooterVel) {
+    return Commands.run(
+            () -> {
+              runDeviceVelocity(Device.BOTH_SHOOTER, shooterVel.get());
+              runDeviceVelocity(Device.FEEDER, feederVel.get());
+            },
+            this)
+        .finallyDo(
+            () -> {
+              runDeviceVelocity(Device.BOTH_SHOOTER, RotationsPerSecond.of(0));
+              runDeviceVelocity(Device.FEEDER, RotationsPerSecond.of(0));
+            });
   }
 
   public void configureProportional(double Kp) {

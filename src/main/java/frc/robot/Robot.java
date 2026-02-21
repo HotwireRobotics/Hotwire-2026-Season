@@ -71,10 +71,10 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
-    SmartDashboard.putNumber("Shooter RPM", robotContainer.shooterPower);
+    SmartDashboard.putNumber("Shooter RPM", robotContainer.getShooterPower());
     SmartDashboard.putNumber("Shooter Proportional", shooterKP);
-    SmartDashboard.putNumber("Exponential", Constants.exponential);
-    SmartDashboard.putNumber("Base", Constants.base);
+    SmartDashboard.putNumber("Exponential", Constants.ShooterRegression.getDistanceExponent());
+    SmartDashboard.putNumber("Base", Constants.ShooterRegression.getBaseRpm());
 
     SmartDashboard.setPersistent("Base");
     SmartDashboard.setPersistent("Exponential");
@@ -89,6 +89,20 @@ public class Robot extends LoggedRobot {
     processLimelightMeasurements();
 
     // Tracking
+    updateMatchFeedback();
+
+    updateDashboardInputs();
+
+    Logger.recordOutput("Hub Pose", Constants.Poses.hub);
+    Logger.recordOutput("Tower Pose", Constants.Poses.tower);
+
+    robotContainer.setHubTarget(Constants.Poses.hub);
+
+    Logger.recordOutput("Hub Target", robotContainer.getHubTarget());
+  }
+
+  /** Computes match-time cues and applies controller haptics for timing milestones. */
+  private void updateMatchFeedback() {
     Time time = Seconds.of(DriverStation.getMatchTime());
     Boolean isAutonomous = DriverStation.isAutonomous();
     Time length = (isAutonomous) ? Constants.autoLength : Constants.teleopLength;
@@ -106,21 +120,18 @@ public class Robot extends LoggedRobot {
     }
 
     Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
+  }
 
-    robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
-    robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
-    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter RPM", 0.0);
+  /** Pulls runtime tuning values from SmartDashboard with validation. */
+  private void updateDashboardInputs() {
+    robotContainer.setFeederVelocity(SmartDashboard.getNumber("Feeder Velocity", 0.0));
+    robotContainer.setShooterVelocity(SmartDashboard.getNumber("Shooter Velocity", 0.0));
+    robotContainer.setShooterPower(SmartDashboard.getNumber("Shooter RPM", 0.0));
     shooterKP = SmartDashboard.getNumber("Shooter Proportional", 0);
 
-    Constants.exponential = SmartDashboard.getNumber("Exponential", Constants.exponential);
-    Constants.base = SmartDashboard.getNumber("Base", Constants.base);
-
-    Logger.recordOutput("Hub Pose", Constants.Poses.hub);
-    Logger.recordOutput("Tower Pose", Constants.Poses.tower);
-
-    robotContainer.hubTarget = Constants.Poses.hub;
-
-    Logger.recordOutput("Hub Target", robotContainer.hubTarget);
+    Constants.ShooterRegression.update(
+        SmartDashboard.getNumber("Base", Constants.ShooterRegression.getBaseRpm()),
+        SmartDashboard.getNumber("Exponential", Constants.ShooterRegression.getDistanceExponent()));
   }
 
   private void processLimelightMeasurements() {

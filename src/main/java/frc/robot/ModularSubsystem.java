@@ -2,82 +2,97 @@ package frc.robot;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class ModularSubsystem extends SubsystemBase {
-  private final HashMap<Object, Object> devices = new HashMap<Object, Object>();
-  private List<Object> active = new ArrayList<Object>();
+public class ModularSubsystem<DeviceKey> extends SubsystemBase {
+  private final Map<DeviceKey, TalonFX[]> devices = new HashMap<>();
+  private final Set<TalonFX> active = new HashSet<>();
 
-  public void specifyActiveDevice(Object device) {
+  /** Marks every motor in a logical device group as active. */
+  public void specifyActiveDevice(DeviceKey device) {
     for (TalonFX d : getDevices(device)) {
       active.add(d);
     }
   }
 
-  public void specifyInactiveDevice(Object device) {
+  /** Marks every motor in a logical device group as inactive. */
+  public void specifyInactiveDevice(DeviceKey device) {
     for (TalonFX d : getDevices(device)) {
       active.remove(d);
     }
   }
 
-  public boolean isActiveDevice(Object device) {
-    boolean isActive = false;
+  /** Returns whether any motor in a logical device group is currently active. */
+  public boolean isActiveDevice(DeviceKey device) {
     for (TalonFX d : getDevices(device)) {
-      isActive = isActive || active.contains(d);
+      if (active.contains(d)) {
+        return true;
+      }
     }
-    return isActive;
+    return false;
   }
 
-  public void defineDevice(Object device, TalonFX actual) {
-    devices.put(device, actual);
+  /** Associates one logical device key with one physical motor. */
+  public void defineDevice(DeviceKey device, TalonFX actual) {
+    devices.put(device, new TalonFX[] {actual});
   }
 
-  public void defineDevice(Object device, TalonFX[] actual) {
-    devices.put(device, actual);
+  /** Associates one logical device key with a motor group. */
+  public void defineDevice(DeviceKey device, TalonFX[] actual) {
+    devices.put(device, Arrays.copyOf(actual, actual.length));
   }
 
-  public class DevicePointer {
-    private Object device;
-    private Object actual;
+  /** Lightweight pointer used to batch device definitions. */
+  public final class DevicePointer {
+    private final DeviceKey device;
+    private final TalonFX[] actual;
 
-    public DevicePointer(Object device, TalonFX actual) {
+    public DevicePointer(DeviceKey device, TalonFX actual) {
       this.device = device;
-      this.actual = actual;
+      this.actual = new TalonFX[] {actual};
     }
 
-    public DevicePointer(Object device, TalonFX[] actual) {
+    public DevicePointer(DeviceKey device, TalonFX[] actual) {
       this.device = device;
-      this.actual = actual;
+      this.actual = Arrays.copyOf(actual, actual.length);
     }
 
-    public Object getDevice() {
+    public DeviceKey getDevice() {
       return device;
     }
 
-    public Object getActual() {
+    public TalonFX[] getActual() {
       return actual;
     }
   }
 
-  public void defineDevice(DevicePointer... pointers) {
+  /** Defines multiple logical-to-physical device mappings at once. */
+  public void defineDevice(List<DevicePointer> pointers) {
     for (DevicePointer pointer : pointers) {
       devices.put(pointer.getDevice(), pointer.getActual());
     }
   }
 
+  /** Defines one logical-to-physical device mapping. */
   public void defineDevice(DevicePointer pointer) {
     devices.put(pointer.getDevice(), pointer.getActual());
   }
 
-  public TalonFX[] getDevices(Object device) {
-    Object group = devices.get(device);
-    if (group instanceof TalonFX[]) {
-      return ((TalonFX[]) group);
-    } else {
-      TalonFX[] items = {(TalonFX) group};
-      return items;
+  /**
+   * Returns the physical motors for a logical device key.
+   *
+   * <p>Returns an empty array when the key is not defined to avoid null iteration failures.
+   */
+  public TalonFX[] getDevices(DeviceKey device) {
+    TalonFX[] group = devices.get(device);
+    if (group == null) {
+      return new TalonFX[0];
     }
+    return Arrays.copyOf(group, group.length);
   }
 }
