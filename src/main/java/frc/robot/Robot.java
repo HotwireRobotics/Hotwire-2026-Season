@@ -75,6 +75,9 @@ public class Robot extends LoggedRobot {
     SmartDashboard.putNumber("Shooter Proportional", shooterKP);
     SmartDashboard.putNumber("Exponential", Constants.exponential);
     SmartDashboard.putNumber("Base", Constants.base);
+
+    SmartDashboard.setPersistent("Base");
+    SmartDashboard.setPersistent("Exponential");
   }
 
   @Override

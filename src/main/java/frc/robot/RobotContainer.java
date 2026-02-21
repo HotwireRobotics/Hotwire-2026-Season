@@ -42,6 +42,21 @@ public class RobotContainer {
 
   public Pose2d hubTarget = Constants.Poses.hub;
 
+  private enum VelocityType {
+    STATIC,
+    REGRESSION
+  }
+
+  VelocityType velocityType = VelocityType.REGRESSION;
+
+  private void staticVelocity() {
+    velocityType = VelocityType.STATIC;
+  }
+
+  private void regressVelocity() {
+    velocityType = VelocityType.REGRESSION;
+  }
+
   // Constants.Joysticks
 
   // Dashboard inputs
@@ -88,8 +103,15 @@ public class RobotContainer {
 
     velocity =
         () -> {
-          return Constants.regress(
-              Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+          switch (velocityType) {
+            case STATIC:
+              return Constants.Shooter.kStaticVel;
+            case REGRESSION:
+              return Constants.regress(
+                  Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+            default:
+              return RPM.of(0);
+          }
         };
 
     configureButtonBindings();
@@ -236,12 +258,17 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .rightTrigger()
-        .whileTrue(shooter.runMechanismVelocity(velocity, velocity).alongWith(pointToHub()))
+        .whileTrue(shooter.runMechanismVelocity(velocity, velocity))
         .whileFalse(shooter.runMechanism(0, 0));
 
     Constants.Joysticks.operator
+        .x()
+        .whileTrue(pointToHub().alongWith(Commands.runOnce(() -> regressVelocity())))
+        .whileFalse(Commands.runOnce(() -> staticVelocity()));
+
+    Constants.Joysticks.operator
         .leftTrigger()
-        .whileTrue(hopper.runHopper(0.75))
+        .whileTrue(hopper.runHopper(0.5))
         .whileFalse(hopper.runHopper(0));
 
     Constants.Joysticks.driver

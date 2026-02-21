@@ -32,6 +32,7 @@ public final class Constants {
   public static class Shooter {
     public static final Time kChargeUpTime = Seconds.of(1);
     public static final Time kFiringTime = Seconds.of(5.25);
+    public static final AngularVelocity kStaticVel = RPM.of(2500);
   }
 
   /*
@@ -56,7 +57,12 @@ public final class Constants {
 
   public static final Time[] autoTimes = {};
   public static final Time[] teleopTimes = {
-    Seconds.of(5), Seconds.of(30), Seconds.of(55), Seconds.of(80), Seconds.of(105), Seconds.of(133),
+    Seconds.of(10),
+    Seconds.of(25),
+    Seconds.of(50),
+    Seconds.of(75),
+    Seconds.of(100),
+    Seconds.of(125),
   };
   public static final Time autoLength = Seconds.of(20);
   public static final Time teleopLength = Seconds.of(140);
@@ -97,8 +103,8 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static double base = 1400.9197;
-  public static double exponential = 0.450548;
+  public static double base = 1550;
+  public static double exponential = 0.5;
 
   public static AngularVelocity regress(Distance distance) {
     return RPM.of(base * Math.pow(distance.in(Meters), exponential));
