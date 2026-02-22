@@ -42,6 +42,8 @@ public class RobotContainer {
 
   public Pose2d hubTarget = Constants.Poses.hub;
 
+  private final boolean firstPerson = false;
+
   private enum VelocityType {
     STATIC,
     REGRESSION
@@ -56,8 +58,6 @@ public class RobotContainer {
   private void regressVelocity() {
     velocityType = VelocityType.REGRESSION;
   }
-
-  // Constants.Joysticks
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -233,12 +233,21 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
     // Default command, normal field-relative drive
-    drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
-            drive,
-            () -> -Constants.Joysticks.driver.getLeftY(),
-            () -> -Constants.Joysticks.driver.getLeftX(),
-            () -> -Constants.Joysticks.driver.getRightX()));
+    if (firstPerson) {
+      drive.setDefaultCommand(
+          DriveCommands.firstPersonDrive(
+              drive,
+              () -> -Constants.Joysticks.operator.getLeftY(),
+              () -> -Constants.Joysticks.operator.getLeftX(),
+              () -> -Constants.Joysticks.operator.getRightX()));
+    } else {
+      drive.setDefaultCommand(
+          DriveCommands.joystickDrive(
+              drive,
+              () -> -Constants.Joysticks.driver.getLeftY(),
+              () -> -Constants.Joysticks.driver.getLeftX(),
+              () -> -Constants.Joysticks.driver.getRightX()));
+    }
 
     // Lock to 0° when down POV button is helds
     Constants.Joysticks.driver
