@@ -40,7 +40,7 @@ public class RobotContainer {
   public double shooterPower = 0;
   private final Supplier<AngularVelocity> velocity;
 
-  public Pose2d hubTarget = Constants.Poses.hub;
+  public Pose2d hubTarget;
 
   private final boolean firstPerson = false;
 
@@ -194,6 +194,8 @@ public class RobotContainer {
             shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse)));
+
+    hubTarget = Constants.Poses.hub;
   }
 
   private Command pointToHub() {

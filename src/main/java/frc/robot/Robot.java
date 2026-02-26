@@ -246,7 +246,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void testPeriodic() {
     teleopPeriodic();
-    indicateLimelight(Indicate.ENABLED);
   }
 
   @Override
