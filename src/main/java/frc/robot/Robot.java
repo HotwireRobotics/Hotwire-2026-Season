@@ -73,6 +73,9 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
+    Double[] robotpose = {robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()};
+    SmartDashboard.putNumberArray("robot-pose", robotpose);
+
     SmartDashboard.putNumber("Shooter RPM", robotContainer.shooterPower);
     SmartDashboard.putNumber("Shooter Proportional", shooterKP);
     SmartDashboard.putNumber("Exponential", Constants.exponential);
