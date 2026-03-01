@@ -72,14 +72,13 @@ public final class Constants {
   public static final Time teleopLength = Seconds.of(140);
 
   public static class MotorIDs {
-    public static final Integer i_rollers = 13;
-    public static final Integer i_follower = 9;
-    public static final Integer s_feederR = 11;
-    public static final Integer s_shooterR = 8;
-    public static final Integer s_shooterL = 15;
-    public static final Integer h_upperFeed = 14;
-    public static final Integer h_lowerFeed = 12;
-    public static final Integer i_arm = 17;
+    public static final Integer i_rollers = 17;
+    public static final Integer s_feeder = 11;
+    public static final Integer s_shooterR = 12;
+    public static final Integer s_shooterL = 13;
+    public static final Integer h_hopperU = 14;
+    // public static final Integer h_hopperL = 12;
+    public static final Integer i_arm = 15;
   }
 
   public static final PathConstraints constraints =

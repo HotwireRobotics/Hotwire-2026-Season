@@ -66,8 +66,8 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 
   public ProtoShooter() {
 
-    rightModule = new ShooterModule(Constants.MotorIDs.s_shooterR, Constants.MotorIDs.s_feederR);
-    leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feederR);
+    rightModule = new ShooterModule(Constants.MotorIDs.s_shooterR, Constants.MotorIDs.s_feeder);
+    leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feeder);
 
     motorRPSControl = new Slot0Configs();
     motorRPSControl.withKV(0.11451);
