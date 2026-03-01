@@ -2,6 +2,7 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Degrees;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Angle;
@@ -31,6 +32,9 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     arm = new TalonFX(Constants.MotorIDs.i_arm);
+    CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
+    currentLimits.withSupplyCurrentLimit(40);
+    arm.getConfigurator().apply(currentLimits);
     defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
 
     m_PositionVoltage = new PositionVoltage(Degrees.of(0));
