@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Lower Exolateral"
+                  "pathName": "Collect from Depot"
                 }
               },
               {
@@ -26,31 +26,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Lower Endolateral"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Firing Sequence"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Endo-Outpost"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 1.5
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Shoot from Outpost"
+            "pathName": "Shoot from Depot"
           }
         },
         {

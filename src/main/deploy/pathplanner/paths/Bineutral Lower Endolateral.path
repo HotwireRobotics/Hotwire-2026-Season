@@ -48,26 +48,26 @@
     },
     {
       "anchor": {
-        "x": 2.318216833095578,
-        "y": 2.502
+        "x": 4.033897727272727,
+        "y": 0.6127246790299581
       },
       "prevControl": {
-        "x": 1.7767045454545451,
-        "y": 0.24209090909090936
+        "x": 3.6421030438060313,
+        "y": 0.6127246790299581
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "Lower Firing Location"
+      "linkedName": "Lowest Firing Location"
     }
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 1.4840085287846385,
-      "rotationDegrees": 180.0
+      "waypointRelativePos": 1.0566037735849056,
+      "rotationDegrees": 80.0
     },
     {
       "waypointRelativePos": 2.347547974413639,
-      "rotationDegrees": 180.0
+      "rotationDegrees": 80.0
     }
   ],
   "constraintZones": [],
@@ -83,7 +83,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 34.725068658165235
+    "rotation": 80.65008402989388
   },
   "reversed": false,
   "folder": null,

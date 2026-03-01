@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.5628420377828474,
-        "y": 2.450439266571242
+        "x": 2.5467425301729074,
+        "y": 2.40062936433404
       },
       "isLocked": false,
       "linkedName": "Lower Firing Location"
@@ -20,8 +20,8 @@
         "y": 0.7938659058487882
       },
       "prevControl": {
-        "x": 0.3958486311156287,
-        "y": 0.1138654436135933
+        "x": 1.5290241228070176,
+        "y": 1.467467105263157
       },
       "nextControl": null,
       "isLocked": false,

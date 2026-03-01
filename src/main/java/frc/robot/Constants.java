@@ -51,11 +51,12 @@ public final class Constants {
     public static final double ANGLE_KD = rotationPID.kD;
   }
 
-  public static final double lerp = 1; // 1.7
+  public static final double lerp = 1.7; // 1.7
 
-  public static class LimelightGroups {
+  public static class Limelight {
     public static final String[] localization = {"limelight-one"};
     public static final String[] limelights = {"limelight-one", "limelight-two"};
+    public static final Distance maxDistance = Meters.of(3);
   }
 
   public static final Time[] autoTimes = {};
