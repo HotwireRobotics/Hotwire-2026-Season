@@ -1,22 +1,29 @@
 package frc.robot.subsystems.intake;
 
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+
+import static edu.wpi.first.units.Units.Degrees;
+
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private final TalonFX rollers;
-  private final TalonFX lower;
-  // private final TalonFX arm;
+  private final TalonFX arm;
+
+  private final PositionVoltage m_PositionVoltage;
 
   public enum Device {
     ROLLERS,
-    LOWER,
     ARM
   }
 
@@ -26,9 +33,13 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    lower = new TalonFX(Constants.MotorIDs.i_follower);
+    arm = new TalonFX(Constants.MotorIDs.i_arm);
     defineDevice(
-        new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.LOWER, lower));
+        new DevicePointer(Device.ROLLERS, rollers),
+        new DevicePointer(Device.ARM, arm)
+    );
+
+    m_PositionVoltage = new PositionVoltage(Degrees.of(0));
   }
 
   private enum State {
@@ -102,6 +113,15 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
+
+  public void runDevicePosition(Device device, Angle angle) {
+    for (TalonFX d : getDevices(device)) {
+      d.setControl(m_PositionVoltage.withPosition(angle));
+    }
+
+    specifyActiveDevice(device);
+  }
+
   /**
    * Allows you to limit the speed of the intake rollers
    *
@@ -112,15 +132,21 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           runDevice(Device.ROLLERS, speed);
-          runDevice(Device.LOWER, speed);
         });
   }
 
-  public Command moveIntake(double speed) {
+  public Command lowerArm(double speed) {
     return Commands.run(
         () -> {
-          runDevice(Device.ARM, speed);
+          runDevicePosition(Device.ARM, Degrees.of(0));
         });
+  }
+
+  public Command raiseArm() {
+    return Commands.run(
+      () -> {
+        runDevicePosition(Device.ARM, Degrees.of(90));
+      });
   }
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft

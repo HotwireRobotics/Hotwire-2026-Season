@@ -73,11 +73,6 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
-    Double[] robotpose = {
-      robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()
-    };
-    SmartDashboard.putNumberArray("robot-pose", robotpose);
-
     SmartDashboard.putNumber("Shooter RPM", robotContainer.shooterPower);
     SmartDashboard.putNumber("Shooter Proportional", shooterKP);
     SmartDashboard.putNumber("Exponential", Constants.exponential);
@@ -153,6 +148,11 @@ public class Robot extends LoggedRobot {
     robotContainer.hubTarget = Constants.Poses.hub;
 
     Logger.recordOutput("Hub Target", robotContainer.hubTarget);
+
+    Double[] robotpose = {
+      robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()
+    };
+    SmartDashboard.putNumberArray("robot-pose", robotpose);
   }
 
   private void processLimelightMeasurements() {
