@@ -90,8 +90,8 @@ while RUNNING:
 
     if (state == State.REAL):
         robotPose: list[int, int] = dashboard.getNumberArray("robot-pose", [0, 0])
-        source: str = "http://limelight-one.local:5800/"
-        stream = requests.get(source, stream=True)
+        # source: str = "http://limelight-one.local:5800/"
+        # stream = requests.get(source, stream=True)
     elif (state == State.SIM):
         robotPose: list[int, int] = [0, 0]
     
