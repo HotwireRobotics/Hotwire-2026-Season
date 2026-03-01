@@ -30,7 +30,8 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final VelocityVoltage m_velVolt;
   private final ShooterModule rightModule;
   private final ShooterModule leftModule;
-  private final Slot0Configs motorRPSControl;
+  private final Slot0Configs rightRPSControl;
+  private final Slot0Configs  leftRPSControl;
 
   public enum Device {
     RIGHT_FEEDER,
@@ -69,10 +70,15 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     rightModule = new ShooterModule(Constants.MotorIDs.s_shooterR, Constants.MotorIDs.s_feeder);
     leftModule = new ShooterModule(Constants.MotorIDs.s_shooterL, Constants.MotorIDs.s_feeder);
 
-    motorRPSControl = new Slot0Configs();
-    motorRPSControl.withKV(0.11451);
-    motorRPSControl.withKS(0.19361);
-    motorRPSControl.withKP(0.8);
+    rightRPSControl = new Slot0Configs();
+    rightRPSControl.withKV(0.11965);
+    rightRPSControl.withKS(0.3422);
+    rightRPSControl.withKP(0.8);
+
+    leftRPSControl = new Slot0Configs();
+    leftRPSControl.withKV(0.12009);
+    leftRPSControl.withKS(0.24998);
+    leftRPSControl.withKP(0.8);
 
     final TalonFX[] shooters = {leftModule.shooter, rightModule.shooter};
     final TalonFX[] feeders = {leftModule.feeder, rightModule.feeder};
@@ -298,15 +304,15 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   }
 
   public void configureProportional(double Kp) {
-    motorRPSControl.withKP(Kp);
+    rightRPSControl.withKP(Kp);
     configureControl();
   }
 
   private void configureControl() {
-    rightModule.shooter.getConfigurator().apply(motorRPSControl);
-    leftModule.shooter.getConfigurator().apply(motorRPSControl);
-    rightModule.feeder.getConfigurator().apply(motorRPSControl);
-    leftModule.feeder.getConfigurator().apply(motorRPSControl);
+    rightModule.shooter.getConfigurator().apply(rightRPSControl);
+    leftModule.shooter.getConfigurator().apply(leftRPSControl);
+    rightModule.feeder.getConfigurator().apply(rightRPSControl);
+    leftModule.feeder.getConfigurator().apply(leftRPSControl);
   }
   // Mechanism commands
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {

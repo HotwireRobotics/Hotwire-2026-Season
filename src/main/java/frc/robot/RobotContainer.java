@@ -279,6 +279,8 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
+    Constants.Joysticks.operator.b().onTrue(intake.raiseArm()).onFalse(intake.lowerArm());
+
     Constants.Joysticks.operator
         .a()
         .whileTrue(intake.runIntake(Constants.Intake.kSpeed))

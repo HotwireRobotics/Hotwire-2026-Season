@@ -41,7 +41,7 @@ public final class Constants {
   }
 
   public static class Hopper {
-    public static final double kSpeed = 0.5;
+    public static final double kSpeed = 0.6;
   }
 
   public static class Control {
@@ -77,7 +77,6 @@ public final class Constants {
     public static final Integer s_shooterR = 12;
     public static final Integer s_shooterL = 13;
     public static final Integer h_hopperU = 14;
-    // public static final Integer h_hopperL = 12;
     public static final Integer i_arm = 15;
   }
 

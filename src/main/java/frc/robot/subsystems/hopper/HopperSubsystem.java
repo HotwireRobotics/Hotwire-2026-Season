@@ -80,15 +80,6 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
     return Commands.runOnce(
         () -> {
           upperFeed.set(speed);
-          // lowerFeed.set(speed);
-        });
-  }
-  // Hopper tests
-  public Command runHoppertest() {
-    return Commands.run(
-        () -> {
-          upperFeed.set(SmartDashboard.getNumber("upperSpeed", 0));
-          // lowerFeed.set(SmartDashboard.getNumber("lowerSpeed", 0));
         });
   }
 

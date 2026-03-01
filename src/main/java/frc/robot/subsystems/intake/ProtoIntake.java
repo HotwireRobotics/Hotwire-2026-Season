@@ -1,18 +1,15 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
-
-import static edu.wpi.first.units.Units.Degrees;
-
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
@@ -34,12 +31,11 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     arm = new TalonFX(Constants.MotorIDs.i_arm);
-    defineDevice(
-        new DevicePointer(Device.ROLLERS, rollers),
-        new DevicePointer(Device.ARM, arm)
-    );
+    defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
 
     m_PositionVoltage = new PositionVoltage(Degrees.of(0));
+    m_PositionVoltage.withSlot(0);
+    // m_PositionVoltage.
   }
 
   private enum State {
@@ -135,7 +131,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command lowerArm(double speed) {
+  public Command lowerArm() {
     return Commands.run(
         () -> {
           runDevicePosition(Device.ARM, Degrees.of(0));
@@ -144,9 +140,9 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public Command raiseArm() {
     return Commands.run(
-      () -> {
-        runDevicePosition(Device.ARM, Degrees.of(90));
-      });
+        () -> {
+          runDevicePosition(Device.ARM, Degrees.of(90));
+        });
   }
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
