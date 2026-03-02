@@ -47,9 +47,22 @@
           "data": {
             "commands": [
               {
-                "type": "path",
+                "type": "sequential",
                 "data": {
-                  "pathName": "Bineutral Lower Exolateral"
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "Bineutral Lower Exolateral"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "Bineutral Lower Second Endolateral"
+                      }
+                    }
+                  ]
                 }
               },
               {

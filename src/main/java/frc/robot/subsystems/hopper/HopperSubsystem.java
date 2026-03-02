@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Systerface;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class HopperSubsystem extends SubsystemBase implements Systerface {
@@ -81,6 +82,14 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
         () -> {
           upperFeed.set(speed);
         });
+  }
+
+  public Command controlHopper(Supplier<Double> speed) {
+    return Commands.runOnce(
+        () -> {
+          upperFeed.set(speed.get());
+        },
+        this);
   }
 
   public void runUpper(double speed) {

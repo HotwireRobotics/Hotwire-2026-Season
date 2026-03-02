@@ -28,9 +28,9 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final SysIdRoutine m_sysIdRoutineLeft;
   private final VoltageOut m_voltReq;
   private final VelocityVoltage m_velVolt;
-  private final TalonFX m_feeder;
-  private final TalonFX m_leftShooter;
-  private final TalonFX m_rightShooter;
+  public final TalonFX m_feeder;
+  public final TalonFX m_leftShooter;
+  public final TalonFX m_rightShooter;
   private final Slot0Configs rightRPSControl;
   private final Slot0Configs leftRPSControl;
 

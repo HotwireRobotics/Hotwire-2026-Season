@@ -15,8 +15,8 @@ import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
 
-  private final TalonFX rollers;
-  private final TalonFX arm;
+  public final TalonFX rollers;
+  public final TalonFX arm;
 
   private final PositionVoltage m_PositionVoltage;
 

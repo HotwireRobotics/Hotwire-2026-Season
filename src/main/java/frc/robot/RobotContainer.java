@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -24,6 +23,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
+import frc.robot.subsystems.indication.LuminalIndicators;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import java.util.function.Supplier;
@@ -35,6 +35,7 @@ public class RobotContainer {
   public final ProtoIntake intake;
   public final ProtoShooter shooter;
   public final HopperSubsystem hopper;
+  public final LuminalIndicators lights;
   public double feederVelocity = 0;
   public double shooterVelocity = 0;
   public double shooterPower = 0;
@@ -100,6 +101,7 @@ public class RobotContainer {
     intake = new ProtoIntake();
     shooter = new ProtoShooter();
     hopper = new HopperSubsystem();
+    lights = new LuminalIndicators();
 
     velocity =
         () -> {
@@ -126,19 +128,17 @@ public class RobotContainer {
     //// NamedCommands.registerCommand("KillShooter", killShooter);
     final Command periodIntake =
         intake.runIntake(Constants.Intake.kSpeed).repeatedly().finallyDo(() -> intake.runIntake(0));
-    final Command runFiringSequence =
-        new SequentialCommandGroup(
-            startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
-            startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
-            killShooter, killHopper);
+    final Command runFiringSequence = Commands.waitSeconds(3);
+    // new SequentialCommandGroup(
+    //     startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
+    //     startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
+    //     killShooter, killHopper);
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
     NamedCommands.registerCommand("Start Intaking", startIntake);
     NamedCommands.registerCommand("Stop Intaking", killIntake);
     NamedCommands.registerCommand("Intake Period", periodIntake);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
-
-    SmartDashboard.putNumber("Shooter Velocity", shooterVelocity);
 
     autoChooser.addOption(
         "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
@@ -201,8 +201,8 @@ public class RobotContainer {
   private Command pointToHub() {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        () -> -Constants.Joysticks.driver.getLeftY(),
-        () -> -Constants.Joysticks.driver.getLeftX(),
+        () -> Constants.Joysticks.driver.getLeftY(),
+        () -> Constants.Joysticks.driver.getLeftX(),
         () -> {
           Pose2d robotPose = drive.getPose();
           if (robotPose != null) {
@@ -222,8 +222,8 @@ public class RobotContainer {
   private Command pointToAngle(Supplier<Angle> angle) {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        () -> -Constants.Joysticks.driver.getLeftY(),
-        () -> -Constants.Joysticks.driver.getLeftX(),
+        () -> Constants.Joysticks.driver.getLeftY(),
+        () -> Constants.Joysticks.driver.getLeftX(),
         () -> {
           return new Rotation2d(angle.get());
         });
@@ -296,10 +296,11 @@ public class RobotContainer {
         .whileTrue(pointToHub().alongWith(Commands.runOnce(() -> regressVelocity())))
         .whileFalse(Commands.runOnce(() -> staticVelocity()));
 
-    Constants.Joysticks.operator
-        .leftTrigger()
-        .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
-        .whileFalse(hopper.runHopper(0));
+    // Constants.Joysticks.operator
+    //     .leftTrigger()
+    //     .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
+    //     .whileFalse(hopper.runHopper(0));
+    hopper.setDefaultCommand(hopper.controlHopper(() -> Constants.Joysticks.operator.getLeftY()));
 
     Constants.Joysticks.driver
         .povLeft()

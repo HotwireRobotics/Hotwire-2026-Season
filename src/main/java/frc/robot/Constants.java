@@ -2,6 +2,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.controls.SolidColor;
+import com.ctre.phoenix6.signals.RGBWColor;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -33,7 +35,7 @@ public final class Constants {
   public static class Shooter {
     public static final Time kChargeUpTime = Seconds.of(0.2);
     public static final Time kFiringTime = Seconds.of(2.3);
-    public static final AngularVelocity kSpeed = RPM.of(1000);
+    public static final AngularVelocity kSpeed = RPM.of(2500);
   }
 
   public static class Intake {
@@ -45,29 +47,75 @@ public final class Constants {
   }
 
   public static class Control {
-    public static final PIDConstants translationPID = new PIDConstants(15.0, 0.0, 0.0);
-    public static final PIDConstants rotationPID = new PIDConstants(15.0, 0.0, 0.0);
+    public static final PIDConstants translationPID = new PIDConstants(25.0, 0.0, 0.0);
+    public static final PIDConstants rotationPID = new PIDConstants(25.0, 0.0, 0.0);
     public static final double ANGLE_KP = rotationPID.kP;
     public static final double ANGLE_KD = rotationPID.kD;
+  }
+
+  public static class Indication {
+    public static SolidColor LEDColor(int r, int g, int b, int w) {
+      return new SolidColor(0, 67).withColor(new RGBWColor(255, 255, 255));
+    }
+
+    public static class Autonomous {
+      public static final Time[] haptic = {};
+
+      public static final TimeTrigger[] times = {
+        new TimeTrigger(
+            Seconds.of(0), Seconds.of(10), Constants.Indication.LEDColor(255, 255, 255, 255))
+      };
+    }
+
+    public static class Teloperated {
+      public static final Time[] haptic = {
+        Seconds.of(10),
+        Seconds.of(25),
+        Seconds.of(50),
+        Seconds.of(75),
+        Seconds.of(100),
+        Seconds.of(125),
+      };
+
+      public static final TimeTrigger[] times = {
+        new TimeTrigger(
+            Seconds.of(0), Seconds.of(10), Constants.Indication.LEDColor(255, 255, 255, 255))
+      };
+    }
+  }
+
+  public static class TimeTrigger {
+
+    private Time target;
+    private Time magnitude;
+    private SolidColor color;
+
+    public TimeTrigger(Time time, Time magnitude, SolidColor color) {
+      this.target = time;
+      this.magnitude = magnitude;
+      this.color = color;
+    }
+
+    public boolean isTriggered(Time time) {
+      return true;
+      // double difference = target.minus(time).in(Seconds);
+      // if ((difference < magnitude.in(Seconds)) && (difference >= 0)) return true;
+      // return false;
+    }
+
+    public SolidColor getColor() {
+      return color;
+    }
   }
 
   public static final double lerp = 1.7; // 1.7
 
   public static class Limelight {
-    public static final String[] localization = {"limelight-one"};
-    public static final String[] limelights = {"limelight-one", "limelight-two"};
-    public static final Distance maxDistance = Meters.of(3);
+    public static final String[] localization = {"limelight-gamma", "limelight-alpha"};
+    public static final String[] limelights = {"limelight-gamma", "limelight-alpha"};
+    public static final Distance maxDistance = Meters.of(4);
   }
 
-  public static final Time[] autoTimes = {};
-  public static final Time[] teleopTimes = {
-    Seconds.of(10),
-    Seconds.of(25),
-    Seconds.of(50),
-    Seconds.of(75),
-    Seconds.of(100),
-    Seconds.of(125),
-  };
   public static final Time autoLength = Seconds.of(20);
   public static final Time teleopLength = Seconds.of(140);
 
@@ -81,7 +129,7 @@ public final class Constants {
   }
 
   public static final PathConstraints constraints =
-      new PathConstraints(2.9, 2.9, Units.degreesToRadians(540), Units.degreesToRadians(720));
+      new PathConstraints(4, 4, Units.degreesToRadians(540), Units.degreesToRadians(720));
 
   /*
    * Game element poses relative to blue origin.
