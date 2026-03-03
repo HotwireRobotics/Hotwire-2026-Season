@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.2207218561020086,
-        "y": 0.8658838144366462
+        "x": 3.308026315789474,
+        "y": 0.505844298245613
       },
       "isLocked": false,
       "linkedName": "Lowest Firing Location"
@@ -62,8 +62,12 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 1.0909090909090908,
-      "rotationDegrees": 80.0
+      "waypointRelativePos": 0.0,
+      "rotationDegrees": 180.0
+    },
+    {
+      "waypointRelativePos": 1.0801886792452828,
+      "rotationDegrees": 180.0
     },
     {
       "waypointRelativePos": 2.0707547169811313,
