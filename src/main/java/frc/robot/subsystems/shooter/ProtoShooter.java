@@ -28,10 +28,11 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   private final SysIdRoutine m_sysIdRoutineLeft;
   private final VoltageOut m_voltReq;
   private final VelocityVoltage m_velVolt;
-  private final TalonFX m_feeder;
-  private final TalonFX m_leftShooter;
-  private final TalonFX m_rightShooter;
-  private final Slot0Configs motorRPSControl;
+  public final TalonFX m_feeder;
+  public final TalonFX m_leftShooter;
+  public final TalonFX m_rightShooter;
+  private final Slot0Configs rightRPSControl;
+  private final Slot0Configs leftRPSControl;
 
   /** Logical devices for percent/velocity/voltage control and active-state tracking. */
   public enum Device {
@@ -42,16 +43,19 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   }
 
   public ProtoShooter() {
-    m_feeder = new TalonFX(Constants.MotorIDs.s_feederR);
+    m_feeder = new TalonFX(Constants.MotorIDs.s_feeder);
     m_leftShooter = new TalonFX(Constants.MotorIDs.s_shooterL);
     m_rightShooter = new TalonFX(Constants.MotorIDs.s_shooterR);
 
-    motorRPSControl = new Slot0Configs();
-    motorRPSControl.withKV(0.11451);
-    motorRPSControl.withKS(0.19361);
-    motorRPSControl.withKP(0.8);
+    rightRPSControl = new Slot0Configs();
+    rightRPSControl.withKV(0.11965);
+    rightRPSControl.withKS(0.3422);
+    rightRPSControl.withKP(0.8);
 
-    instantRPSControl = new BangBangController();
+    leftRPSControl = new Slot0Configs();
+    leftRPSControl.withKV(0.12009);
+    leftRPSControl.withKS(0.24998);
+    leftRPSControl.withKP(0.8);
 
     final TalonFX[] bothShooters = {m_leftShooter, m_rightShooter};
 
@@ -251,14 +255,15 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
   }
 
   public void configureProportional(double Kp) {
-    motorRPSControl.withKP(Kp);
+    leftRPSControl.withKP(Kp);
+    rightRPSControl.withKP(Kp);
     configureControl();
   }
 
   private void configureControl() {
-    m_rightShooter.getConfigurator().apply(motorRPSControl);
-    m_leftShooter.getConfigurator().apply(motorRPSControl);
-    m_feeder.getConfigurator().apply(motorRPSControl);
+    m_leftShooter.getConfigurator().apply(leftRPSControl);
+    m_rightShooter.getConfigurator().apply(rightRPSControl);
+    m_feeder.getConfigurator().apply(leftRPSControl);
   }
   // Mechanism commands
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {

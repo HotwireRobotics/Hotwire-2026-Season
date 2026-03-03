@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -24,6 +23,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
+import frc.robot.subsystems.indication.LuminalIndicators;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import java.util.function.Supplier;
@@ -35,12 +35,15 @@ public class RobotContainer {
   public final ProtoIntake intake;
   public final ProtoShooter shooter;
   public final HopperSubsystem hopper;
+  public final LuminalIndicators lights;
   public double feederVelocity = 0;
   public double shooterVelocity = 0;
   public double shooterPower = 0;
   private final Supplier<AngularVelocity> velocity;
 
-  public Pose2d hubTarget = Constants.Poses.hub;
+  public Pose2d hubTarget;
+
+  private final boolean firstPerson = false;
 
   private enum VelocityType {
     STATIC,
@@ -56,8 +59,6 @@ public class RobotContainer {
   private void regressVelocity() {
     velocityType = VelocityType.REGRESSION;
   }
-
-  // Constants.Joysticks
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -100,6 +101,7 @@ public class RobotContainer {
     intake = new ProtoIntake();
     shooter = new ProtoShooter();
     hopper = new HopperSubsystem();
+    lights = new LuminalIndicators();
 
     velocity =
         () -> {
@@ -126,19 +128,17 @@ public class RobotContainer {
     //// NamedCommands.registerCommand("KillShooter", killShooter);
     final Command periodIntake =
         intake.runIntake(Constants.Intake.kSpeed).repeatedly().finallyDo(() -> intake.runIntake(0));
-    final Command runFiringSequence =
-        new SequentialCommandGroup(
-            startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
-            startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
-            killShooter, killHopper);
+    final Command runFiringSequence = Commands.waitSeconds(3);
+    // new SequentialCommandGroup(
+    //     startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
+    //     startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
+    //     killShooter, killHopper);
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
     NamedCommands.registerCommand("Start Intaking", startIntake);
     NamedCommands.registerCommand("Stop Intaking", killIntake);
     NamedCommands.registerCommand("Intake Period", periodIntake);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
-
-    SmartDashboard.putNumber("Shooter Velocity", shooterVelocity);
 
     autoChooser.addOption(
         "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
@@ -194,13 +194,15 @@ public class RobotContainer {
             shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse)));
+
+    hubTarget = Constants.Poses.hub;
   }
 
   private Command pointToHub() {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        () -> -Constants.Joysticks.driver.getLeftY(),
-        () -> -Constants.Joysticks.driver.getLeftX(),
+        () -> Constants.Joysticks.driver.getLeftY(),
+        () -> Constants.Joysticks.driver.getLeftX(),
         () -> {
           Pose2d robotPose = drive.getPose();
           if (robotPose != null) {
@@ -220,8 +222,8 @@ public class RobotContainer {
   private Command pointToAngle(Supplier<Angle> angle) {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        () -> -Constants.Joysticks.driver.getLeftY(),
-        () -> -Constants.Joysticks.driver.getLeftX(),
+        () -> Constants.Joysticks.driver.getLeftY(),
+        () -> Constants.Joysticks.driver.getLeftX(),
         () -> {
           return new Rotation2d(angle.get());
         });
@@ -233,12 +235,21 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
     // Default command, normal field-relative drive
-    drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
-            drive,
-            () -> -Constants.Joysticks.driver.getLeftY(),
-            () -> -Constants.Joysticks.driver.getLeftX(),
-            () -> -Constants.Joysticks.driver.getRightX()));
+    if (firstPerson) {
+      drive.setDefaultCommand(
+          DriveCommands.firstPersonDrive(
+              drive,
+              () -> -Constants.Joysticks.operator.getLeftY(),
+              () -> -Constants.Joysticks.operator.getLeftX(),
+              () -> -Constants.Joysticks.operator.getRightX()));
+    } else {
+      drive.setDefaultCommand(
+          DriveCommands.joystickDrive(
+              drive,
+              () -> -Constants.Joysticks.driver.getLeftY(),
+              () -> -Constants.Joysticks.driver.getLeftX(),
+              () -> -Constants.Joysticks.driver.getRightX()));
+    }
 
     // Lock to 0° when down POV button is helds
     Constants.Joysticks.driver
@@ -259,7 +270,7 @@ public class RobotContainer {
             Commands.runOnce(
                     () -> {
                       drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero));
-                      for (String limelight : Constants.LimelightGroups.localization) {
+                      for (String limelight : Constants.Limelight.localization) {
                         LimelightHelpers.SetIMUMode(limelight, 1);
                         LimelightHelpers.SetRobotOrientation(limelight, 0, 0, 0, 0, 0, 0);
                         LimelightHelpers.SetIMUMode(limelight, 2);
@@ -267,6 +278,11 @@ public class RobotContainer {
                     },
                     drive)
                 .ignoringDisable(true));
+
+    Constants.Joysticks.operator
+        .b()
+        .whileTrue(intake.pointArm(Degrees.of(90)))
+        .whileFalse(intake.pointArm(Degrees.of(0)));
 
     Constants.Joysticks.operator
         .a()
@@ -287,6 +303,7 @@ public class RobotContainer {
         .leftTrigger()
         .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
         .whileFalse(hopper.runHopper(0));
+    hopper.setDefaultCommand(hopper.controlHopper(() -> Constants.Joysticks.operator.getLeftY()));
 
     Constants.Joysticks.driver
         .povLeft()

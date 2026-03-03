@@ -1,6 +1,12 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Degrees;
+
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
@@ -10,13 +16,14 @@ import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
 
-  private final TalonFX rollers;
-  private final TalonFX lower;
-  // private final TalonFX arm;
+  public final TalonFX rollers;
+  public final TalonFX arm;
+  public final Slot0Configs slot;
+
+  private final PositionVoltage m_PositionVoltage;
 
   public enum Device {
     ROLLERS,
-    LOWER,
     ARM
   }
 
@@ -26,9 +33,20 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    lower = new TalonFX(Constants.MotorIDs.i_follower);
-    defineDevice(
-        new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.LOWER, lower));
+    arm = new TalonFX(Constants.MotorIDs.i_arm);
+    CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
+    currentLimits.withSupplyCurrentLimit(40);
+    arm.getConfigurator().apply(currentLimits);
+    defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
+
+    m_PositionVoltage = new PositionVoltage(Degrees.of(0));
+
+    slot = new Slot0Configs();
+    slot.withKP(2.0);
+
+    // Configuration
+    arm.setControl(m_PositionVoltage);
+    arm.getConfigurator().apply(slot);
   }
 
   private enum State {
@@ -102,6 +120,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
       specifyActiveDevice(device);
     }
   }
+
   /**
    * Allows you to limit the speed of the intake rollers
    *
@@ -112,15 +131,11 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           runDevice(Device.ROLLERS, speed);
-          runDevice(Device.LOWER, speed);
         });
   }
 
-  public Command moveIntake(double speed) {
-    return Commands.run(
-        () -> {
-          runDevice(Device.ARM, speed);
-        });
+  public Command pointArm(Angle angle) {
+    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(angle)));
   }
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft

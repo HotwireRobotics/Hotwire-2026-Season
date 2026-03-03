@@ -1,7 +1,9 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 
+import com.ctre.phoenix6.Orchestra;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -9,6 +11,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -32,6 +35,8 @@ public class Robot extends LoggedRobot {
 
   private final Timer bitimer = new Timer();
   private final Timer unitimer = new Timer();
+
+  Orchestra music;
 
   public Robot() {
     // Record metadata
@@ -81,6 +86,15 @@ public class Robot extends LoggedRobot {
     SmartDashboard.setPersistent("Exponential");
 
     unitimer.start();
+
+    music = new Orchestra();
+    music.addInstrument(robotContainer.intake.rollers);
+    music.addInstrument(robotContainer.shooter.m_feeder);
+    music.addInstrument(robotContainer.shooter.m_rightShooter);
+    music.addInstrument(robotContainer.shooter.m_leftShooter);
+
+    music.loadMusic(
+        "C:\\Users\\HotwireProgrammer\\Documents\\Repositories\\2026Hotwire\\src\\main\\deploy\\orchestra\\output.chrp");
   }
 
   private enum Indicate {
@@ -93,17 +107,17 @@ public class Robot extends LoggedRobot {
     Boolean b = (Math.floor(unitimer.get() * 10) % 2) == 1;
     switch (mode) {
       case DISABLED:
-        for (String limelight : Constants.LimelightGroups.limelights) {
+        for (String limelight : Constants.Limelight.limelights) {
           LimelightHelpers.setLEDMode_ForceOff(limelight);
         }
         break;
       case ENABLED:
-        for (String limelight : Constants.LimelightGroups.limelights) {
+        for (String limelight : Constants.Limelight.limelights) {
           LimelightHelpers.setLEDMode_ForceOn(limelight);
         }
         break;
       case AUTO:
-        for (String limelight : Constants.LimelightGroups.limelights) {
+        for (String limelight : Constants.Limelight.limelights) {
           LimelightHelpers.setLEDMode_ForceBlink(limelight);
         }
         break;
@@ -128,7 +142,10 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Time", time.in(Seconds));
     Boolean rumble = false;
 
-    for (Time target : ((isAutonomous) ? Constants.autoTimes : Constants.teleopTimes)) {
+    for (Time target :
+        ((isAutonomous)
+            ? Constants.Indication.Autonomous.haptic
+            : Constants.Indication.Teloperated.haptic)) {
       double difference = target.minus(time).in(Seconds);
       if ((Math.abs(difference) < 1) && (difference < 0)) {
         rumble = true;
@@ -147,23 +164,43 @@ public class Robot extends LoggedRobot {
     robotContainer.hubTarget = Constants.Poses.hub;
 
     Logger.recordOutput("Hub Target", robotContainer.hubTarget);
+
+    Double[] robotpose = {
+      robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()
+    };
+    SmartDashboard.putNumberArray("robot-pose", robotpose);
+  }
+
+  public boolean autonomousVictory() {
+    String gameData = DriverStation.getGameSpecificMessage();
+    Boolean allianceIsRed = DriverStation.getAlliance().get().equals(Alliance.Red);
+    switch (gameData.charAt(0)) {
+      case 'R':
+        return (allianceIsRed);
+      case 'B':
+        return (!allianceIsRed);
+      default:
+        return true;
+    }
   }
 
   private void processLimelightMeasurements() {
     List<PoseEstimate> measurements = new ArrayList<>();
 
-    for (String limelight : Constants.LimelightGroups.localization) {
+    for (String limelight : Constants.Limelight.localization) {
       LimelightHelpers.SetIMUMode(limelight, 3);
       LimelightHelpers.setPipelineIndex(limelight, 0);
       Pose2d robotPose = robotContainer.drive.getPose();
       double headingDeg = robotPose.getRotation().getDegrees();
 
-      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.001);
+      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.005);
 
       // Get pose estimate from limelight
       PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
 
-      if ((measurement != null) && (measurement.tagCount > 0)) {
+      if ((measurement != null)
+          && (measurement.tagCount > 0)
+          && (measurement.avgTagDist <= Constants.Limelight.maxDistance.in(Meters))) {
         measurements.add(measurement);
         // Log pose estimate and limelight status
         Logger.recordOutput(limelight + " detecting", true);
@@ -223,11 +260,13 @@ public class Robot extends LoggedRobot {
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
+
+    music.play();
   }
 
   @Override
   public void teleopPeriodic() {
-    for (String limelight : Constants.LimelightGroups.localization) {
+    for (String limelight : Constants.Limelight.localization) {
       LimelightHelpers.SetThrottle(limelight, 0);
     }
     indicateLimelight(Indicate.ENABLED);
@@ -246,7 +285,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void testPeriodic() {
     teleopPeriodic();
-    indicateLimelight(Indicate.ENABLED);
   }
 
   @Override
