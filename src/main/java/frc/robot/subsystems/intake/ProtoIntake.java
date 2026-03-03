@@ -134,8 +134,16 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
+  public void runPivotArm(Angle angle){
+    arm.setControl(m_PositionVoltage.withPosition(angle));
+}
+    public Command moveIntake(){
+      runEnd(() -> runPivotArm(angle), stop)
+      .until()
+    }
+
   public Command pointArm(Angle angle) {
-    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(angle)));
+    return Commands.runOnce(() -> runPivotArm(angle));
   }
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
