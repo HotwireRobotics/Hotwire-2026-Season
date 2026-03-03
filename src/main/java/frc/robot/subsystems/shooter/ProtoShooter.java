@@ -51,8 +51,6 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     motorRPSControl.withKS(0.19361);
     motorRPSControl.withKP(0.8);
 
-    instantRPSControl = new BangBangController();
-
     final TalonFX[] bothShooters = {m_leftShooter, m_rightShooter};
 
     defineDevice(
