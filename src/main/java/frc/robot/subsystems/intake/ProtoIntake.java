@@ -1,12 +1,10 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
@@ -18,18 +16,19 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public final TalonFX rollers;
   public final TalonFX arm;
-  public final Slot0Configs slot;
-
-  private final PositionVoltage m_PositionVoltage;
 
   public enum Device {
     ROLLERS,
     ARM
   }
 
-  // private final SysIdRoutine m_sysIdRoutineRight;
-  // private final SysIdRoutine m_sysIdRoutineLeft;
-  // private final SysIdRoutine m_sysIdRoutineARM;
+  public enum ArmState {
+    FORWARD,
+    BACKWARD,
+    ZERO
+  }
+
+  private ArmState armState = ArmState.ZERO;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
@@ -38,15 +37,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     currentLimits.withSupplyCurrentLimit(40);
     arm.getConfigurator().apply(currentLimits);
     defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
-
-    m_PositionVoltage = new PositionVoltage(Degrees.of(0));
-
-    slot = new Slot0Configs();
-    slot.withKP(2.0);
-
-    // Configuration
-    arm.setControl(m_PositionVoltage);
-    arm.getConfigurator().apply(slot);
   }
 
   private enum State {
@@ -88,6 +78,14 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     } else {
       state = State.STOPPED;
     }
+
+    arm.setControl(
+        new VoltageOut(
+            armState.equals(ArmState.FORWARD)
+                ? Constants.Intake.kArmVolts
+                : (armState.equals(ArmState.BACKWARD)
+                    ? Constants.Intake.kArmVolts.times(-1)
+                    : Volts.of(0))));
   }
 
   // Device control methods
@@ -134,8 +132,11 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command pointArm(Angle angle) {
-    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(angle)));
+  public Command controlArm(ArmState state) {
+    return Commands.runOnce(
+        () -> {
+          armState = state;
+        });
   }
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft

@@ -25,6 +25,7 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.indication.LuminalIndicators;
 import frc.robot.subsystems.intake.ProtoIntake;
+import frc.robot.subsystems.intake.ProtoIntake.ArmState;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -121,6 +122,11 @@ public class RobotContainer {
     final Command startHopper = hopper.runHopper(Constants.Hopper.kSpeed);
     final Command startShooter = regressionShooting();
     final Command startIntake = intake.runIntake(Constants.Intake.kSpeed);
+    final Command dropArm =
+        intake
+            .controlArm(ArmState.BACKWARD)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(intake.controlArm(ArmState.ZERO));
     //// NamedCommands.registerCommand("StartShooter", regressionShooting().repeatedly());
     final Command killHopper = hopper.runHopper(0);
     final Command killShooter = shooter.runMechanism(0, 0);
@@ -137,6 +143,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("Start Intaking", startIntake);
     NamedCommands.registerCommand("Stop Intaking", killIntake);
     NamedCommands.registerCommand("Intake Period", periodIntake);
+    NamedCommands.registerCommand("Drop Arm", dropArm);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
@@ -280,9 +287,14 @@ public class RobotContainer {
                 .ignoringDisable(true));
 
     Constants.Joysticks.operator
-        .b()
-        .whileTrue(intake.pointArm(Degrees.of(90)))
-        .whileFalse(intake.pointArm(Degrees.of(0)));
+        .povUp()
+        .whileTrue(intake.controlArm(ArmState.FORWARD))
+        .whileFalse(intake.controlArm(ArmState.ZERO));
+
+    Constants.Joysticks.operator
+        .povDown()
+        .whileTrue(intake.controlArm(ArmState.BACKWARD))
+        .whileFalse(intake.controlArm(ArmState.ZERO));
 
     Constants.Joysticks.operator
         .a()
