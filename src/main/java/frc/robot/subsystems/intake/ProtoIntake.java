@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
@@ -132,12 +134,19 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
+  public void runPivotArm(Angle angle){
+    arm.setControl(m_PositionVoltage.withPosition(angle));
+}
+    public Command moveIntake(){
+      runEnd(() -> runPivotArm(angle), stop)
+      .until()
+    }
+
   public Command controlArm(ArmState state) {
     return Commands.runOnce(
         () -> {
           armState = state;
         });
-  }
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
    *
