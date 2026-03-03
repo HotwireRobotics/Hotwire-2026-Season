@@ -113,7 +113,7 @@ public final class Constants {
   public static class Limelight {
     public static final String[] localization = {"limelight-gamma", "limelight-alpha"};
     public static final String[] limelights = {"limelight-gamma", "limelight-alpha"};
-    public static final Distance maxDistance = Meters.of(4);
+    public static final Distance maxDistance = Meters.of(2.8);
   }
 
   public static final Time autoLength = Seconds.of(20);
