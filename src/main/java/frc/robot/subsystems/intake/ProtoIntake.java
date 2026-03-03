@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake;
 import static edu.wpi.first.units.Units.Degrees;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Angle;
@@ -17,6 +18,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public final TalonFX rollers;
   public final TalonFX arm;
+  public final Slot0Configs slot;
 
   private final PositionVoltage m_PositionVoltage;
 
@@ -38,8 +40,13 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
 
     m_PositionVoltage = new PositionVoltage(Degrees.of(0));
-    m_PositionVoltage.withSlot(0);
-    // m_PositionVoltage.
+
+    slot = new Slot0Configs();
+    slot.withKP(2.0);
+
+    // Configuration
+    arm.setControl(m_PositionVoltage);
+    arm.getConfigurator().apply(slot);
   }
 
   private enum State {
@@ -114,14 +121,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     }
   }
 
-  public void runDevicePosition(Device device, Angle angle) {
-    for (TalonFX d : getDevices(device)) {
-      d.setControl(m_PositionVoltage.withPosition(angle));
-    }
-
-    specifyActiveDevice(device);
-  }
-
   /**
    * Allows you to limit the speed of the intake rollers
    *
@@ -135,18 +134,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command lowerArm() {
-    return Commands.run(
-        () -> {
-          runDevicePosition(Device.ARM, Degrees.of(0));
-        });
-  }
-
-  public Command raiseArm() {
-    return Commands.run(
-        () -> {
-          runDevicePosition(Device.ARM, Degrees.of(90));
-        });
+  public Command pointArm(Angle angle) {
+    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(angle)));
   }
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft

@@ -279,7 +279,10 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    Constants.Joysticks.operator.b().onTrue(intake.raiseArm()).onFalse(intake.lowerArm());
+    Constants.Joysticks.operator
+        .b()
+        .whileTrue(intake.pointArm(Degrees.of(90)))
+        .whileFalse(intake.pointArm(Degrees.of(0)));
 
     Constants.Joysticks.operator
         .a()
@@ -296,10 +299,10 @@ public class RobotContainer {
         .whileTrue(pointToHub().alongWith(Commands.runOnce(() -> regressVelocity())))
         .whileFalse(Commands.runOnce(() -> staticVelocity()));
 
-    // Constants.Joysticks.operator
-    //     .leftTrigger()
-    //     .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
-    //     .whileFalse(hopper.runHopper(0));
+    Constants.Joysticks.operator
+        .leftTrigger()
+        .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
+        .whileFalse(hopper.runHopper(0));
     hopper.setDefaultCommand(hopper.controlHopper(() -> Constants.Joysticks.operator.getLeftY()));
 
     Constants.Joysticks.driver
