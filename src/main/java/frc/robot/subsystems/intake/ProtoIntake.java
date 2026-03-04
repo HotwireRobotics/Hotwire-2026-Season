@@ -5,8 +5,6 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
@@ -81,7 +79,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
       state = State.STOPPED;
     }
 
-  //TODO make more readable
+    // TODO make more readable
     arm.setControl(
         new VoltageOut(
             armState.equals(ArmState.FORWARD)
@@ -134,13 +132,16 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
           runDevice(Device.ROLLERS, speed);
         });
   }
-    public Command moveIntake(){
-     return Commands.run(() -> armState = ArmState.BACKWARD)
-     .withTimeout(Constants.Intake.targetSecUp)
-     .andThen(Commands.run(() -> armState = ArmState.FORWARD)
-     .withTimeout(Constants.Intake.targetSecDown))
-     .andThen(() -> armState = ArmState.ZERO);
-    }
+
+  public Command moveIntake() {
+    return Commands.run(() -> armState = ArmState.BACKWARD)
+        .withTimeout(Constants.Intake.targetSecUp)
+        .andThen(
+            Commands.run(() -> armState = ArmState.FORWARD)
+                .withTimeout(Constants.Intake.targetSecDown))
+        .andThen(() -> armState = ArmState.ZERO);
+  }
+
   boolean targetPos = false;
 
   public Command controlArm(ArmState state) {
@@ -148,34 +149,34 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         () -> {
           armState = state;
         });
-  /**
-   * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
-   *
-   * @param direction
-   * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
-   */
-  // public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineRight.quasistatic(direction);
-  // }
+    /**
+     * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
+     *
+     * @param direction
+     * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
+     */
+    // public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
+    //   return m_sysIdRoutineRight.quasistatic(direction);
+    // }
 
-  // public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineRight.dynamic(direction);
-  // }
+    // public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
+    //   return m_sysIdRoutineRight.dynamic(direction);
+    // }
 
-  // public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineLeft.quasistatic(direction);
-  // }
+    // public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
+    //   return m_sysIdRoutineLeft.quasistatic(direction);
+    // }
 
-  // public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineLeft.dynamic(direction);
-  // }
+    // public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
+    //   return m_sysIdRoutineLeft.dynamic(direction);
+    // }
 
-  // public Command sysIdQuasistaticARM(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineARM.quasistatic(direction);
-  // }
+    // public Command sysIdQuasistaticARM(SysIdRoutine.Direction direction) {
+    //   return m_sysIdRoutineARM.quasistatic(direction);
+    // }
 
-  // public Command sysIdDynamicARM(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineARM.dynamic(direction);
-  // }
-}
+    // public Command sysIdDynamicARM(SysIdRoutine.Direction direction) {
+    //   return m_sysIdRoutineARM.dynamic(direction);
+    // }
+  }
 }

@@ -145,7 +145,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("Intake Period", periodIntake);
     NamedCommands.registerCommand("Drop Arm", dropArm);
     NamedCommands.registerCommand("Lift Arm", intake.moveIntake());
-    
+
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
     autoChooser.addOption(
@@ -315,13 +315,14 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .leftTrigger()
         .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
-        .whileFalse(hopper.runHopper(0));
+        .whileFalse(hopper.runHopper(0))
+        .whileTrue(intake.moveIntake());
+
     hopper.setDefaultCommand(hopper.controlHopper(() -> Constants.Joysticks.operator.getLeftY()));
 
     // Constants.Joysticks.operator
     //     .b()
     //     .whileTrue(ProtoIntake.moveIntake());
-
 
     Constants.Joysticks.driver
         .povLeft()
