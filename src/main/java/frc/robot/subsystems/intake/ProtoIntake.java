@@ -81,6 +81,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
       state = State.STOPPED;
     }
 
+  //TODO make more readable
     arm.setControl(
         new VoltageOut(
             armState.equals(ArmState.FORWARD)
@@ -133,14 +134,14 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
           runDevice(Device.ROLLERS, speed);
         });
   }
-
-  public void runPivotArm(Angle angle){
-    arm.setControl(m_PositionVoltage.withPosition(angle));
-}
     public Command moveIntake(){
-      runEnd(() -> runPivotArm(angle), stop)
-      .until()
+     return Commands.run(() -> armState = ArmState.BACKWARD)
+     .withTimeout(Constants.Intake.targetSecUp)
+     .andThen(Commands.run(() -> armState = ArmState.FORWARD)
+     .withTimeout(Constants.Intake.targetSecDown))
+     .andThen(() -> armState = ArmState.ZERO);
     }
+  boolean targetPos = false;
 
   public Command controlArm(ArmState state) {
     return Commands.runOnce(
@@ -176,4 +177,5 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   // public Command sysIdDynamicARM(SysIdRoutine.Direction direction) {
   //   return m_sysIdRoutineARM.dynamic(direction);
   // }
+}
 }

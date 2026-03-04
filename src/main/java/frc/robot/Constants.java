@@ -42,6 +42,8 @@ public final class Constants {
   public static class Intake {
     public static final double kSpeed = 0.7;
     public static final Voltage kArmVolts = Volts.of(3);
+    public static final double targetSecUp = 1;
+    public static final double targetSecDown = .5;
   }
 
   public static class Hopper {
