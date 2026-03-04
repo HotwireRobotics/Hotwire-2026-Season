@@ -135,11 +135,11 @@ public class RobotContainer {
     //// NamedCommands.registerCommand("KillShooter", killShooter);
     final Command periodIntake =
         intake.runIntake(Constants.Intake.kSpeed).repeatedly().finallyDo(() -> intake.runIntake(0));
-    final Command runFiringSequence = Commands.waitSeconds(3);
-    // new SequentialCommandGroup(
-    //     startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
-    //     startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
-    //     killShooter, killHopper);
+    final Command runFiringSequence = // Commands.waitSeconds(3);
+        new SequentialCommandGroup(
+            startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
+            startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
+            killShooter, killHopper);
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
     NamedCommands.registerCommand("Start Intaking", startIntake);
     NamedCommands.registerCommand("Stop Intaking", killIntake);
@@ -288,10 +288,10 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    // Constants.Joysticks.operator
-    //     .b()
-    //     .whileTrue(intake.pointArm(Degrees.of(90)))
-    //     .whileFalse(intake.pointArm(Degrees.of(0)));
+    Constants.Joysticks.operator
+        .b()
+        .whileTrue(intake.pointArm(Degrees.of(90)))
+        .whileFalse(intake.pointArm(Degrees.of(0)));
 
     Constants.Joysticks.operator
         .a()

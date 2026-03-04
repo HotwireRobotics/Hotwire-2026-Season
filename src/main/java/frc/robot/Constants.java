@@ -34,7 +34,7 @@ public final class Constants {
 
   public static class Shooter {
     public static final Time kChargeUpTime = Seconds.of(0.2);
-    public static final Time kFiringTime = Seconds.of(2.3);
+    public static final Time kFiringTime = Seconds.of(3.0);
     public static final AngularVelocity kSpeed = RPM.of(2000);
   }
 
@@ -163,7 +163,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static double base = 1435;
+  public static double base = 1400;
   public static double exponential = 0.51;
 
   public static AngularVelocity regress(Distance distance) {
