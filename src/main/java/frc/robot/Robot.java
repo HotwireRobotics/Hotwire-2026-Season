@@ -3,7 +3,6 @@ package frc.robot;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 
-import com.ctre.phoenix6.Orchestra;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -36,7 +35,7 @@ public class Robot extends LoggedRobot {
   private final Timer bitimer = new Timer();
   private final Timer unitimer = new Timer();
 
-  Orchestra music;
+  // Orchestra music;
 
   public Robot() {
     // Record metadata
@@ -87,14 +86,15 @@ public class Robot extends LoggedRobot {
 
     unitimer.start();
 
-    music = new Orchestra();
-    music.addInstrument(robotContainer.intake.rollers);
-    music.addInstrument(robotContainer.shooter.m_feeder);
-    music.addInstrument(robotContainer.shooter.m_rightShooter);
-    music.addInstrument(robotContainer.shooter.m_leftShooter);
+    // music = new Orchestra();
+    // music.addInstrument(robotContainer.intake.rollers);
+    // music.addInstrument(robotContainer.shooter.m_feeder);
+    // music.addInstrument(robotContainer.shooter.m_rightShooter);
+    // music.addInstrument(robotContainer.shooter.m_leftShooter);
 
-    music.loadMusic(
-        "C:\\Users\\HotwireProgrammer\\Documents\\Repositories\\2026Hotwire\\src\\main\\deploy\\orchestra\\output.chrp");
+    // music.loadMusic(
+    //
+    // "C:\\Users\\HotwireProgrammer\\Documents\\Repositories\\2026Hotwire\\src\\main\\deploy\\orchestra\\output.chrp");
   }
 
   private enum Indicate {
@@ -260,8 +260,6 @@ public class Robot extends LoggedRobot {
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
-
-    music.play();
   }
 
   @Override

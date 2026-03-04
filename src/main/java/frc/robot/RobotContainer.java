@@ -303,7 +303,8 @@ public class RobotContainer {
         .leftTrigger()
         .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
         .whileFalse(hopper.runHopper(0));
-    hopper.setDefaultCommand(hopper.controlHopper(() -> Constants.Joysticks.operator.getLeftY()));
+    // hopper.setDefaultCommand(hopper.controlHopper(() ->
+    // Constants.Joysticks.operator.getLeftY()));
 
     Constants.Joysticks.driver
         .povLeft()

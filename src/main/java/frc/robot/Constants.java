@@ -111,7 +111,9 @@ public final class Constants {
   public static final double lerp = 1.7; // 1.7
 
   public static class Limelight {
-    public static final String[] localization = {"limelight-gamma", "limelight-alpha"};
+    public static final String[] localization = {
+      "limelight-gamma", "limelight-alpha", "limelight-two"
+    };
     public static final String[] limelights = {"limelight-gamma", "limelight-alpha"};
     public static final Distance maxDistance = Meters.of(2.8);
   }
