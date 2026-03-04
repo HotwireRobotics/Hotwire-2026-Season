@@ -48,7 +48,7 @@ public final class Constants {
 
   public static class Control {
     public static final PIDConstants translationPID = new PIDConstants(25.0, 0.0, 0.0);
-    public static final PIDConstants rotationPID = new PIDConstants(25.0, 0.0, 0.0);
+    public static final PIDConstants rotationPID = new PIDConstants(15.0, 0.0, 0.0);
     public static final double ANGLE_KP = rotationPID.kP;
     public static final double ANGLE_KD = rotationPID.kD;
   }
