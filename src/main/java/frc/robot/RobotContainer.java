@@ -27,6 +27,7 @@ import frc.robot.subsystems.indication.LuminalIndicators;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
@@ -39,7 +40,8 @@ public class RobotContainer {
   public double feederVelocity = 0;
   public double shooterVelocity = 0;
   public double shooterPower = 0;
-  private final Supplier<AngularVelocity> velocity;
+  private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
+  private Supplier<AngularVelocity> testing;
 
   public Pose2d hubTarget;
 
@@ -114,6 +116,11 @@ public class RobotContainer {
             default:
               return RPM.of(0);
           }
+        };
+
+    testing =
+        () -> {
+          return RPM.of(shooterPower);
         };
 
     configureButtonBindings();
@@ -213,7 +220,9 @@ public class RobotContainer {
                             (hubTarget.getY() - robotPose.getY())
                                 / (hubTarget.getX() - robotPose.getX())),
                         Constants.Mathematics.TAU));
-            return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+            Rotation2d rotation = new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+            Logger.recordOutput("PointToHub Rotation", rotation);
+            return rotation;
           }
           return Rotation2d.kZero;
         });
@@ -279,10 +288,10 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    Constants.Joysticks.operator
-        .b()
-        .whileTrue(intake.pointArm(Degrees.of(90)))
-        .whileFalse(intake.pointArm(Degrees.of(0)));
+    // Constants.Joysticks.operator
+    //     .b()
+    //     .whileTrue(intake.pointArm(Degrees.of(90)))
+    //     .whileFalse(intake.pointArm(Degrees.of(0)));
 
     Constants.Joysticks.operator
         .a()
@@ -296,15 +305,13 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .x()
-        .whileTrue(pointToHub().alongWith(Commands.runOnce(() -> regressVelocity())))
+        .whileTrue(Commands.run(() -> regressVelocity()).alongWith(pointToHub()))
         .whileFalse(Commands.runOnce(() -> staticVelocity()));
 
     Constants.Joysticks.operator
         .leftTrigger()
         .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
         .whileFalse(hopper.runHopper(0));
-    // hopper.setDefaultCommand(hopper.controlHopper(() ->
-    // Constants.Joysticks.operator.getLeftY()));
 
     Constants.Joysticks.driver
         .povLeft()

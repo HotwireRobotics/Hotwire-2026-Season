@@ -76,6 +76,8 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
+    SmartDashboard.putNumber("Shooter Power", robotContainer.shooterPower);
+
     SmartDashboard.putNumber("Shooter RPM", robotContainer.shooterPower);
     SmartDashboard.putNumber("Shooter Proportional", shooterKP);
     SmartDashboard.putNumber("Exponential", Constants.exponential);
@@ -154,9 +156,7 @@ public class Robot extends LoggedRobot {
 
     Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
 
-    robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
-    robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
-    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter RPM", 0.0);
+    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter Power", 0.0);
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
@@ -164,6 +164,9 @@ public class Robot extends LoggedRobot {
     robotContainer.hubTarget = Constants.Poses.hub;
 
     Logger.recordOutput("Hub Target", robotContainer.hubTarget);
+
+    Constants.exponential = SmartDashboard.getNumber("Exponential", Constants.exponential);
+    Constants.base = SmartDashboard.getNumber("Base", Constants.base);
 
     Double[] robotpose = {
       robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()
