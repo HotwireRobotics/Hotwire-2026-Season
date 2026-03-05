@@ -149,7 +149,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         () -> {
           armState = state;
         });
-      
+
     /**
      * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
      *
@@ -179,4 +179,5 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     // public Command sysIdDynamicARM(SysIdRoutine.Direction direction) {
     //   return m_sysIdRoutineARM.dynamic(direction);
     // }
-      }}
+  }
+}

@@ -323,7 +323,7 @@ public class RobotContainer {
     // Constants.Joysticks.operator
     //     .b()
     //     .whileTrue(ProtoIntake.moveIntake())
-    
+
     Constants.Joysticks.driver
         .povLeft()
         .whileTrue(
