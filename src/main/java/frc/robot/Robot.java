@@ -160,6 +160,8 @@ public class Robot extends LoggedRobot {
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
+    
+    Logger.recordOutput("Shooting State", robotContainer.velocityType.toString());
 
     robotContainer.hubTarget = Constants.Poses.hub;
 

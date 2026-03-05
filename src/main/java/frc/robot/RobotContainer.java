@@ -47,12 +47,12 @@ public class RobotContainer {
 
   private final boolean firstPerson = false;
 
-  private enum VelocityType {
+  public enum VelocityType {
     STATIC,
     REGRESSION
   }
 
-  VelocityType velocityType = VelocityType.REGRESSION;
+  public VelocityType velocityType = VelocityType.REGRESSION;
 
   private void staticVelocity() {
     velocityType = VelocityType.STATIC;
@@ -304,8 +304,12 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .x()
-        .whileTrue(Commands.run(() -> regressVelocity()).alongWith(pointToHub()))
+        .whileTrue(Commands.run(() -> regressVelocity()))
         .whileFalse(Commands.run(() -> staticVelocity()));
+
+    Constants.Joysticks.operator
+        .y()
+        .whileTrue(pointToHub());
 
     Constants.Joysticks.operator
         .leftTrigger()
