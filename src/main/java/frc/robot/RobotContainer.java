@@ -207,31 +207,32 @@ public class RobotContainer {
 
   private Command pointToHub() {
     return DriveCommands.joystickDriveAtAngle(
-          drive,
-          () -> -Constants.Joysticks.driver.getLeftY(),
-          () -> -Constants.Joysticks.driver.getLeftX(),
-          () -> {
-            Pose2d robotPose = drive.getPose();
-            Pose2d hubPose = Constants.Poses.hub;
+        drive,
+        () -> -Constants.Joysticks.driver.getLeftY(),
+        () -> -Constants.Joysticks.driver.getLeftX(),
+        () -> {
+          Pose2d robotPose = drive.getPose();
+          Pose2d hubPose = Constants.Poses.hub;
 
-            Angle toHub =
-                Radians.of(
-                    Math.IEEEremainder(
-                        Math.atan(
-                            (hubPose.getY() - robotPose.getY())
-                                / (hubPose.getX() - robotPose.getX())),
-                        Constants.Mathematics.TAU));
-            Pose2d pointer = new Pose2d(robotPose.getMeasureX(), robotPose.getMeasureY(), new Rotation2d(toHub));
-            Logger.recordOutput("Hub Pointer", pointer);
-            return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
-          });
+          Angle toHub =
+              Radians.of(
+                  Math.IEEEremainder(
+                      Math.atan(
+                          (hubPose.getY() - robotPose.getY())
+                              / (hubPose.getX() - robotPose.getX())),
+                      Constants.Mathematics.TAU));
+          Pose2d pointer =
+              new Pose2d(robotPose.getMeasureX(), robotPose.getMeasureY(), new Rotation2d(toHub));
+          Logger.recordOutput("Hub Pointer", pointer);
+          return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+        });
   }
 
   private Command pointToAngle(Supplier<Angle> angle) {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        () -> Constants.Joysticks.driver.getLeftY(),
-        () -> Constants.Joysticks.driver.getLeftX(),
+        () -> -Constants.Joysticks.driver.getLeftY(),
+        () -> -Constants.Joysticks.driver.getLeftX(),
         () -> {
           return new Rotation2d(angle.get());
         });
@@ -309,7 +310,28 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .y()
-        .whileTrue(pointToHub());
+        .whileTrue(
+            DriveCommands.joystickDriveAtAngle(
+                drive,
+                () -> -Constants.Joysticks.driver.getLeftY(),
+                () -> -Constants.Joysticks.driver.getLeftX(),
+                () -> {
+                  Pose2d robotPose = drive.getPose();
+                  Pose2d hubPose = Constants.Poses.hub;
+
+                  Angle toHub =
+                      Radians.of(
+                          Math.IEEEremainder(
+                              Math.atan(
+                                  (hubPose.getY() - robotPose.getY())
+                                      / (hubPose.getX() - robotPose.getX())),
+                              Constants.Mathematics.TAU));
+                  Pose2d pointer =
+                      new Pose2d(
+                          robotPose.getMeasureX(), robotPose.getMeasureY(), new Rotation2d(toHub));
+                  Logger.recordOutput("Hub Pointer", pointer);
+                  return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+                }));
 
     Constants.Joysticks.operator
         .leftTrigger()
