@@ -136,11 +136,16 @@ public class RobotContainer {
     //// NamedCommands.registerCommand("KillShooter", killShooter);
     final Command periodIntake =
         intake.runIntake(Constants.Intake.kSpeed).repeatedly().finallyDo(() -> intake.runIntake(0));
-    final Command runFiringSequence = // Commands.waitSeconds(3);
+    final Command runFiringSequence =
         new SequentialCommandGroup(
-            startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
-            startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
-            killShooter, killHopper);
+            Commands.run(() -> regressVelocity()),
+            startShooter,
+            Commands.waitTime(Constants.Shooter.kChargeUpTime),
+            startHopper,
+            Commands.waitTime(Constants.Shooter.kFiringTime),
+            killShooter,
+            killHopper,
+            Commands.run(() -> staticVelocity()));
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
     NamedCommands.registerCommand("Start Intaking", startIntake);
     NamedCommands.registerCommand("Stop Intaking", killIntake);
@@ -338,8 +343,8 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .leftTrigger()
-        .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
-        .whileFalse(hopper.runHopper(0));
+        .onFalse(hopper.runHopper(0))
+        .onTrue(hopper.runHopper(Constants.Hopper.kSpeed));
 
     Constants.Joysticks.driver
         .povLeft()
