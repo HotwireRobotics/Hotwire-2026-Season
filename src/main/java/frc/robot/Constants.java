@@ -43,7 +43,7 @@ public final class Constants {
   }
 
   public static class Hopper {
-    public static final double kSpeed = 0.6;
+    public static final double kSpeed = 0.8;
   }
 
   public static class Control {
@@ -163,11 +163,11 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static double base = 1400;
-  public static double exponential = 0.51;
+  public static final double base = 1480.92838;
+  public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {
-    return RPM.of(base * Math.pow(distance.in(Meters), exponential));
+    return RPM.of(base * Math.pow(exponential, distance.in(Inches)));
   }
 
   public static enum Mode {

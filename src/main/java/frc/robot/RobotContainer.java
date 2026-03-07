@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -37,9 +38,7 @@ public class RobotContainer {
   public final ProtoShooter shooter;
   public final HopperSubsystem hopper;
   public final LuminalIndicators lights;
-  public double feederVelocity = 0;
-  public double shooterVelocity = 0;
-  public double shooterPower = 0;
+  public double testVelocity = 0;
   private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
   private Supplier<AngularVelocity> testing;
 
@@ -49,7 +48,8 @@ public class RobotContainer {
 
   public enum VelocityType {
     STATIC,
-    REGRESSION
+    REGRESSION,
+    TESTING
   }
 
   public VelocityType velocityType = VelocityType.REGRESSION;
@@ -60,6 +60,10 @@ public class RobotContainer {
 
   private void regressVelocity() {
     velocityType = VelocityType.REGRESSION;
+  }
+
+  private void testVelocity() {
+    velocityType = VelocityType.TESTING;
   }
 
   // Dashboard inputs
@@ -113,14 +117,11 @@ public class RobotContainer {
             case REGRESSION:
               return Constants.regress(
                   Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+            case TESTING:
+              return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             default:
               return RPM.of(0);
           }
-        };
-
-    testing =
-        () -> {
-          return RPM.of(shooterPower);
         };
 
     configureButtonBindings();
@@ -307,6 +308,8 @@ public class RobotContainer {
         .x()
         .whileTrue(Commands.run(() -> regressVelocity()))
         .whileFalse(Commands.run(() -> staticVelocity()));
+    // .whileTrue(Commands.run(() -> testVelocity()))
+    // .whileFalse(Commands.run(() -> testVelocity()));
 
     Constants.Joysticks.operator
         .y()

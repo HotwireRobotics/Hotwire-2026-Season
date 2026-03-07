@@ -49,13 +49,13 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
 
     rightRPSControl = new Slot0Configs();
     rightRPSControl.withKV(0.11965);
-    rightRPSControl.withKS(0.3422);
-    rightRPSControl.withKP(0.8);
+    // rightRPSControl.withKS(0.3422);
+    // rightRPSControl.withKP(0.8);
 
     leftRPSControl = new Slot0Configs();
     leftRPSControl.withKV(0.12009);
-    leftRPSControl.withKS(0.24998);
-    leftRPSControl.withKP(0.8);
+    // leftRPSControl.withKS(0.24998);
+    // leftRPSControl.withKP(0.8);
 
     final TalonFX[] bothShooters = {m_leftShooter, m_rightShooter};
 
