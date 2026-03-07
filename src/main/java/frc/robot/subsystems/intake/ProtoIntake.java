@@ -2,7 +2,6 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Degrees;
 
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -34,15 +33,15 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     arm = new TalonFX(Constants.MotorIDs.i_arm);
-    CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
-    currentLimits.withSupplyCurrentLimit(40);
-    arm.getConfigurator().apply(currentLimits);
+    // CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
+    // currentLimits.withSupplyCurrentLimit(40);
+    // arm.getConfigurator().apply(currentLimits);
     defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
 
     m_PositionVoltage = new PositionVoltage(Degrees.of(0));
 
     slot = new Slot0Configs();
-    slot.withKP(2.0);
+    slot.withKP(8.0);
 
     // Configuration
     arm.setControl(m_PositionVoltage);
@@ -64,15 +63,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Intake/State", state.toString());
 
-    /**
-     * Logs position of (rot)
-     *
-     * <p>Logs velocity in (rpm)
-     *
-     * <p>Logs voltage current
-     *
-     * <p>Logs temp with unit metadata
-     */
     Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
         "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
@@ -136,6 +126,14 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public Command pointArm(Angle angle) {
     return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(angle)));
+  }
+
+  public Command raiseArm() {
+    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(Degrees.of(70))));
+  }
+
+  public Command lowerArm() {
+    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0))));
   }
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft

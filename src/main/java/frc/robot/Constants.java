@@ -33,13 +33,14 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(0.2);
-    public static final Time kFiringTime = Seconds.of(3.0);
+    public static final Time kChargeUpTime = Seconds.of(0.25);
+    public static final Time kFiringTime = Seconds.of(4.5);
+    public static final Time kUntilAggitateTime = Seconds.of(1);
     public static final AngularVelocity kSpeed = RPM.of(2000);
   }
 
   public static class Intake {
-    public static final double kSpeed = 0.7;
+    public static final double kSpeed = 0.8;
   }
 
   public static class Hopper {
