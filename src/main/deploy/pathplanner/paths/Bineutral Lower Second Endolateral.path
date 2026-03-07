@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 6.8746153846115154,
-        "y": 3.345420393567135
+        "x": 6.4852057245080506,
+        "y": 2.939785330948122
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.615008944543828,
-        "y": 2.517924865831842
+        "x": 6.225599284440363,
+        "y": 2.1122898032128288
       },
       "isLocked": false,
       "linkedName": "Bineutral Exo"
@@ -66,14 +66,14 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 5.0,
+    "velocity": 0.0,
     "rotation": 63.13022918405055
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -112.52100000000002
+    "rotation": -88.26429541107166
   },
   "useDefaultConstraints": false
 }

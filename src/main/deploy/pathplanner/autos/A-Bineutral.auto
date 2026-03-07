@@ -5,35 +5,33 @@
     "data": {
       "commands": [
         {
-          "type": "race",
+          "type": "named",
           "data": {
-            "commands": [
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Lower Exolateral"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Bineutral Lower Endolateral"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Intake Period"
-                }
-              }
-            ]
+            "name": "Lower Intake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Start Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Lower Exolateral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Bineutral Lower Endolateral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop Intaking"
           }
         },
         {
@@ -43,35 +41,27 @@
           }
         },
         {
-          "type": "race",
+          "type": "named",
           "data": {
-            "commands": [
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Bineutral Lower Exolateral"
-                      }
-                    },
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Bineutral Lower Second Endolateral"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Intake Period"
-                }
-              }
-            ]
+            "name": "Start Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Bineutral Lower Exolateral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Bineutral Lower Second Endolateral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop Intaking"
           }
         },
         {

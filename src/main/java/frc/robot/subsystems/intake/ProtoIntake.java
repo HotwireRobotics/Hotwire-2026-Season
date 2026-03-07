@@ -41,7 +41,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     m_PositionVoltage = new PositionVoltage(Degrees.of(0));
 
     slot = new Slot0Configs();
-    slot.withKP(8.0);
+    slot.withKP(18.0);
 
     // Configuration
     arm.setControl(m_PositionVoltage);
@@ -129,7 +129,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   }
 
   public Command raiseArm() {
-    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(Degrees.of(70))));
+    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(Degrees.of(60))));
   }
 
   public Command lowerArm() {

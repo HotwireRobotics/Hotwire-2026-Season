@@ -137,24 +137,28 @@ public class RobotContainer {
     final Command periodIntake =
         intake.runIntake(Constants.Intake.kSpeed).repeatedly().finallyDo(() -> intake.runIntake(0));
     final Command raiseIntake = intake.raiseArm();
-    final Command lowerIntake = intake.lowerArm();
+    final Command lowerIntake = intake.lowerArm().andThen(Commands.waitTime(Seconds.of(0.5)));
+    final Command stopDrive = Commands.runOnce(() -> drive.stop());
     final Command runFiringSequence =
         new SequentialCommandGroup(
-            Commands.run(() -> regressVelocity()),
+            Commands.runOnce(() -> regressVelocity()),
             startShooter,
             Commands.waitTime(Constants.Shooter.kChargeUpTime),
             startHopper,
             Commands.waitTime(Constants.Shooter.kFiringTime)
-                .alongWith(Commands.waitTime(Constants.Shooter.kUntilAggitateTime)),
+                .alongWith(
+                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime).andThen(raiseIntake)),
             killShooter,
             killHopper,
-            Commands.run(() -> staticVelocity()));
+            lowerIntake,
+            Commands.runOnce(() -> staticVelocity()));
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
     NamedCommands.registerCommand("Start Intaking", startIntake);
     NamedCommands.registerCommand("Stop Intaking", killIntake);
     NamedCommands.registerCommand("Intake Period", periodIntake);
     NamedCommands.registerCommand("Raise Intake", raiseIntake);
     NamedCommands.registerCommand("Lower Intake", lowerIntake);
+    NamedCommands.registerCommand("Stop", stopDrive);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 

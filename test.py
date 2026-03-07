@@ -5,28 +5,26 @@ def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 clear()
-print(16 * 60)
-# right  : float = float(eval(input(  "right (in): ")))
-# up     : float = float(eval(input(     "up (in): ")))
-# forward: float = float(eval(input("forward (in): ")))
+right  : float = float(eval(input(  "right (in): ")))
+up     : float = float(eval(input(     "up (in): ")))
+forward: float = float(eval(input("forward (in): ")))
 
-# constant: float = 0.0254
-# print("------------------")
+constant: float = 0.0254
+print("------------------")
 
-# print(  "right: ", constant * right, "m")
-# print(     "up: ", constant * up, "m")
-# print("forward: ", constant * forward, "m")
+print(  "right: ", constant * right, "m")
+print(     "up: ", constant * up, "m")
+print("forward: ", constant * forward, "m")
 
-# # GAMMA
-# # 19.375in UP
-# # 13.5 - 3.75in RIGHT
-# # 13.5 - 4.25in FORWARD
+# GAMMA
+# 19.375in UP
+# 13.5 - 3.75in RIGHT
+# 13.5 - 4.25in FORWARD
 
-# # ALPHA
-# # 17.25in UP
-# # 13.5 - 3.375in RIGHT
-# # 13.5 - .5
-
+# ALPHA
+# 17.25in UP
+# 13.5 - 3.375in RIGHT
+# 13.5 - .5
 
 # DISTANCE (in)   SPEED (RPM)
 #    118.5     |     2500
