@@ -44,11 +44,15 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     m_PositionVoltage = new PositionVoltage(Degrees.of(0));
 
     slot = new Slot0Configs();
-    slot.withKP(18.0);
+    configureProportional(18.0);
 
     // Configuration
     arm.setControl(m_PositionVoltage);
     arm.getConfigurator().apply(slot);
+  }
+
+  public void configureProportional(double kP) {
+    slot.withKP(kP);
   }
 
   private enum State {
@@ -138,12 +142,26 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   }
 
   public Command raiseArm() {
-    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(Degrees.of(60))));
+    return Commands.runOnce(() -> {
+      configureProportional(18.0);
+      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(60)));
+    });
   }
 
   public Command lowerArm() {
-    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0))));
+    return Commands.runOnce(() -> {
+      configureProportional(18.0);
+      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
+    });
   }
+
+  public Command emergency() {
+    return Commands.runOnce(() -> {
+      configureProportional(28.0);
+      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
+    });
+  }
+
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
    *

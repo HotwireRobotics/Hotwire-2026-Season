@@ -338,6 +338,11 @@ public class RobotContainer {
                 aligned));
 
     Constants.Joysticks.operator
+        .povRight()
+        .onFalse(intake.lowerArm())
+        .onTrue(intake.emergency());
+
+    Constants.Joysticks.operator
         .x()
         .whileTrue(Commands.run(() -> regressVelocity()).alongWith(pointToHub()))
         .whileFalse(Commands.run(() -> staticVelocity()));
