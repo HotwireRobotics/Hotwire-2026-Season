@@ -27,6 +27,7 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.indication.LuminalIndicators;
 import frc.robot.subsystems.intake.ProtoIntake;
+import frc.robot.subsystems.intake.ProtoIntake.ArmState;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -138,6 +139,11 @@ public class RobotContainer {
     final Command startHopper = hopper.runHopper(Constants.Hopper.kSpeed);
     final Command startShooter = conditionalShooting();
     final Command startIntake = intake.runIntake(Constants.Intake.kSpeed);
+    final Command dropArm =
+        intake
+            .controlArm(ArmState.BACKWARD)
+            .andThen(Commands.waitSeconds(0.5))
+            .andThen(intake.controlArm(ArmState.ZERO));
     //// NamedCommands.registerCommand("StartShooter", regressionShooting().repeatedly());
     final Command killHopper = hopper.runHopper(0);
     final Command killShooter = shooter.runMechanism(0, 0);

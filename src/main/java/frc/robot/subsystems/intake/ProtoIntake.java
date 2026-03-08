@@ -20,18 +20,19 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public final TalonFX rollers;
   public final TalonFX arm;
-  public final Slot0Configs slot;
-
-  private final PositionVoltage m_PositionVoltage;
 
   public enum Device {
     ROLLERS,
     ARM
   }
 
-  // private final SysIdRoutine m_sysIdRoutineRight;
-  // private final SysIdRoutine m_sysIdRoutineLeft;
-  // private final SysIdRoutine m_sysIdRoutineARM;
+  public enum ArmState {
+    FORWARD,
+    BACKWARD,
+    ZERO
+  }
+
+  private ArmState armState = ArmState.ZERO;
 
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
@@ -85,6 +86,14 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     } else {
       state = State.STOPPED;
     }
+
+    arm.setControl(
+        new VoltageOut(
+            armState.equals(ArmState.FORWARD)
+                ? Constants.Intake.kArmVolts
+                : (armState.equals(ArmState.BACKWARD)
+                    ? Constants.Intake.kArmVolts.times(-1)
+                    : Volts.of(0))));
   }
 
   // Device control methods
@@ -131,8 +140,11 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command pointArm(Angle angle) {
-    return Commands.runOnce(() -> arm.setControl(m_PositionVoltage.withPosition(angle)));
+  public Command controlArm(ArmState state) {
+    return Commands.runOnce(
+        () -> {
+          armState = state;
+        });
   }
 
   public Command occilateArm(Frequency frequency) {
