@@ -26,9 +26,9 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.indication.LuminalIndicators;
-import frc.robot.subsystems.intake.ProtoIntake;
-import frc.robot.subsystems.intake.ProtoIntake.ArmState;
-import frc.robot.subsystems.shooter.ProtoShooter;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.Intake.ArmState;
+import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -37,8 +37,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   public final Drive drive;
-  public final ProtoIntake intake;
-  public final ProtoShooter shooter;
+  public final Intake intake;
+  public final Shooter shooter;
   public final HopperSubsystem hopper;
   public final LuminalIndicators lights;
   public double testVelocity = 0;
@@ -108,14 +108,14 @@ public class RobotContainer {
     }
 
     aligned =
-      () -> {
-        Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
-        return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
-            .lt(Constants.Shooter.kAlignmentError);
-      };
+        () -> {
+          Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
+          return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
+              .lt(Constants.Shooter.kAlignmentError);
+        };
 
-    intake = new ProtoIntake();
-    shooter = new ProtoShooter();
+    intake = new Intake();
+    shooter = new Shooter();
     hopper = new HopperSubsystem();
     lights = new LuminalIndicators();
 
@@ -163,7 +163,8 @@ public class RobotContainer {
             startHopper,
             Commands.waitTime(Constants.Shooter.kFiringTime)
                 .raceWith(
-                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime).andThen(occilateIntake)),
+                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime)
+                        .andThen(occilateIntake)),
             killShooter,
             killHopper,
             lowerIntake,
@@ -343,10 +344,7 @@ public class RobotContainer {
                 shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)),
                 aligned));
 
-    Constants.Joysticks.operator
-        .povRight()
-        .onFalse(intake.lowerArm())
-        .onTrue(intake.emergency());
+    Constants.Joysticks.operator.povRight().onFalse(intake.lowerArm()).onTrue(intake.emergency());
 
     Constants.Joysticks.operator
         .x()

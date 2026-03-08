@@ -38,13 +38,15 @@ public final class Constants {
     public static final Time kChargeUpTime = Seconds.of(0.25);
     public static final Time kFiringTime = Seconds.of(4.1);
     public static final Time kUntilAggitateTime = Seconds.of(2);
-    public static       AngularVelocity kSpeed = RPM.of(2500);
+    public static AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
   }
 
   public static class Intake {
     public static final double kSpeed = 0.8;
     public static final Frequency kOccilationFrequency = Hertz.of(2.62);
+    /** Voltage applied to the intake arm when moving forward/backward. */
+    public static final Voltage kArmVolts = Volts.of(4.0);
   }
 
   public static class Hopper {
