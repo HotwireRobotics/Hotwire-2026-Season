@@ -1,12 +1,16 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.units.Units.Volts;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Hertz;
 
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
@@ -33,10 +37,23 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     arm = new TalonFX(Constants.MotorIDs.i_arm);
-    CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
-    currentLimits.withSupplyCurrentLimit(40);
-    arm.getConfigurator().apply(currentLimits);
+    // CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
+    // currentLimits.withSupplyCurrentLimit(40);
+    // arm.getConfigurator().apply(currentLimits);
     defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
+
+    m_PositionVoltage = new PositionVoltage(Degrees.of(0));
+
+    slot = new Slot0Configs();
+    configureProportional(18.0);
+
+    // Configuration
+    arm.setControl(m_PositionVoltage);
+    arm.getConfigurator().apply(slot);
+  }
+
+  public void configureProportional(double kP) {
+    slot.withKP(kP);
   }
 
   private enum State {
@@ -54,15 +71,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public void periodic() {
     Logger.recordOutput("Intake/State", state.toString());
 
-    /**
-     * Logs position of (rot)
-     *
-     * <p>Logs velocity in (rpm)
-     *
-     * <p>Logs voltage current
-     *
-     * <p>Logs temp with unit metadata
-     */
     Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
         "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
@@ -138,6 +146,34 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
           armState = state;
         });
   }
+
+  public Command occilateArm(Frequency frequency) {
+    return new SequentialCommandGroup(
+        lowerArm(), Commands.waitSeconds(1 / frequency.in(Hertz)), raiseArm())
+        .repeatedly();
+  }
+
+  public Command raiseArm() {
+    return Commands.runOnce(() -> {
+      configureProportional(18.0);
+      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(60)));
+    });
+  }
+
+  public Command lowerArm() {
+    return Commands.runOnce(() -> {
+      configureProportional(18.0);
+      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
+    });
+  }
+
+  public Command emergency() {
+    return Commands.runOnce(() -> {
+      configureProportional(28.0);
+      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
+    });
+  }
+
   /**
    * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
    *

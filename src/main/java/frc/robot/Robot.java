@@ -3,7 +3,6 @@ package frc.robot;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 
-import com.ctre.phoenix6.Orchestra;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -14,6 +13,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -29,14 +29,15 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 public class Robot extends LoggedRobot {
   private Command autonomousCommand;
-  private RobotContainer robotContainer;
+  private final RobotContainer robotContainer;
   public Pose2d poseEstimate = new Pose2d();
-  private double shooterKP = 0;
 
   private final Timer bitimer = new Timer();
   private final Timer unitimer = new Timer();
 
-  Orchestra music;
+  private final Field2d field = new Field2d();
+
+  // Orchestra music;
 
   public Robot() {
     // Record metadata
@@ -77,24 +78,21 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
-    SmartDashboard.putNumber("Shooter RPM", robotContainer.shooterPower);
-    SmartDashboard.putNumber("Shooter Proportional", shooterKP);
-    SmartDashboard.putNumber("Exponential", Constants.exponential);
-    SmartDashboard.putNumber("Base", Constants.base);
-
-    SmartDashboard.setPersistent("Base");
-    SmartDashboard.setPersistent("Exponential");
+    SmartDashboard.putNumber("Test Shooter RPM", robotContainer.testVelocity);
+    SmartDashboard.setPersistent("Test Shooter RPM");
+    SmartDashboard.putData("Robot Pose (Field)", field);
 
     unitimer.start();
 
-    music = new Orchestra();
-    music.addInstrument(robotContainer.intake.rollers);
-    music.addInstrument(robotContainer.shooter.m_feeder);
-    music.addInstrument(robotContainer.shooter.m_rightShooter);
-    music.addInstrument(robotContainer.shooter.m_leftShooter);
+    // music = new Orchestra();
+    // music.addInstrument(robotContainer.intake.rollers);
+    // music.addInstrument(robotContainer.shooter.m_feeder);
+    // music.addInstrument(robotContainer.shooter.m_rightShooter);
+    // music.addInstrument(robotContainer.shooter.m_leftShooter);
 
-    music.loadMusic(
-        "C:\\Users\\HotwireProgrammer\\Documents\\Repositories\\2026Hotwire\\src\\main\\deploy\\orchestra\\output.chrp");
+    // music.loadMusic(
+    //
+    // "C:\\Users\\HotwireProgrammer\\Documents\\Repositories\\2026Hotwire\\src\\main\\deploy\\orchestra\\output.chrp");
   }
 
   private enum Indicate {
@@ -127,6 +125,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
+    Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
     CommandScheduler.getInstance().run();
 
     // Localization and orienttion feeding
@@ -154,21 +153,17 @@ public class Robot extends LoggedRobot {
 
     Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
 
-    robotContainer.feederVelocity = SmartDashboard.getNumber("Feeder Velocity", 0.0);
-    robotContainer.shooterVelocity = SmartDashboard.getNumber("Shooter Velocity", 0.0);
-    robotContainer.shooterPower = SmartDashboard.getNumber("Shooter RPM", 0.0);
-
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
 
-    robotContainer.hubTarget = Constants.Poses.hub;
-
-    Logger.recordOutput("Hub Target", robotContainer.hubTarget);
+    Logger.recordOutput("Shooting State", robotContainer.velocityType.toString());
 
     Double[] robotpose = {
       robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()
     };
     SmartDashboard.putNumberArray("robot-pose", robotpose);
+
+    field.setRobotPose(robotContainer.drive.getPose());
   }
 
   public boolean autonomousVictory() {
@@ -260,8 +255,6 @@ public class Robot extends LoggedRobot {
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
-
-    music.play();
   }
 
   @Override

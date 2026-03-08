@@ -10,8 +10,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
@@ -27,7 +29,9 @@ import frc.robot.subsystems.indication.LuminalIndicators;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.intake.ProtoIntake.ArmState;
 import frc.robot.subsystems.shooter.ProtoShooter;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
@@ -37,21 +41,21 @@ public class RobotContainer {
   public final ProtoShooter shooter;
   public final HopperSubsystem hopper;
   public final LuminalIndicators lights;
-  public double feederVelocity = 0;
-  public double shooterVelocity = 0;
-  public double shooterPower = 0;
-  private final Supplier<AngularVelocity> velocity;
+  public double testVelocity = 0;
+  private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
+  public final BooleanSupplier aligned;
 
   public Pose2d hubTarget;
 
   private final boolean firstPerson = false;
 
-  private enum VelocityType {
+  public enum VelocityType {
     STATIC,
-    REGRESSION
+    REGRESSION,
+    TESTING
   }
 
-  VelocityType velocityType = VelocityType.REGRESSION;
+  public VelocityType velocityType = VelocityType.REGRESSION;
 
   private void staticVelocity() {
     velocityType = VelocityType.STATIC;
@@ -59,6 +63,10 @@ public class RobotContainer {
 
   private void regressVelocity() {
     velocityType = VelocityType.REGRESSION;
+  }
+
+  private void testVelocity() {
+    velocityType = VelocityType.TESTING;
   }
 
   // Dashboard inputs
@@ -99,6 +107,13 @@ public class RobotContainer {
         break;
     }
 
+    aligned =
+      () -> {
+        Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
+        return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
+            .lt(Constants.Shooter.kAlignmentError);
+      };
+
     intake = new ProtoIntake();
     shooter = new ProtoShooter();
     hopper = new HopperSubsystem();
@@ -112,6 +127,8 @@ public class RobotContainer {
             case REGRESSION:
               return Constants.regress(
                   Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+            case TESTING:
+              return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             default:
               return RPM.of(0);
           }
@@ -120,7 +137,7 @@ public class RobotContainer {
     configureButtonBindings();
 
     final Command startHopper = hopper.runHopper(Constants.Hopper.kSpeed);
-    final Command startShooter = regressionShooting();
+    final Command startShooter = conditionalShooting();
     final Command startIntake = intake.runIntake(Constants.Intake.kSpeed);
     final Command dropArm =
         intake
@@ -134,16 +151,30 @@ public class RobotContainer {
     //// NamedCommands.registerCommand("KillShooter", killShooter);
     final Command periodIntake =
         intake.runIntake(Constants.Intake.kSpeed).repeatedly().finallyDo(() -> intake.runIntake(0));
-    final Command runFiringSequence = Commands.waitSeconds(3);
-    // new SequentialCommandGroup(
-    //     startShooter, Commands.waitTime(Constants.Shooter.kChargeUpTime),
-    //     startHopper, Commands.waitTime(Constants.Shooter.kFiringTime),
-    //     killShooter, killHopper);
+    final Command raiseIntake = intake.raiseArm();
+    final Command lowerIntake = intake.lowerArm().andThen(Commands.waitTime(Seconds.of(0.5)));
+    final Command occilateIntake = intake.occilateArm(Constants.Intake.kOccilationFrequency);
+    final Command stopDrive = Commands.runOnce(() -> drive.stop());
+    final Command runFiringSequence =
+        new SequentialCommandGroup(
+            Commands.runOnce(() -> regressVelocity()),
+            startShooter,
+            Commands.waitTime(Constants.Shooter.kChargeUpTime),
+            startHopper,
+            Commands.waitTime(Constants.Shooter.kFiringTime)
+                .raceWith(
+                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime).andThen(occilateIntake)),
+            killShooter,
+            killHopper,
+            lowerIntake,
+            Commands.runOnce(() -> staticVelocity()));
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
     NamedCommands.registerCommand("Start Intaking", startIntake);
     NamedCommands.registerCommand("Stop Intaking", killIntake);
     NamedCommands.registerCommand("Intake Period", periodIntake);
-    NamedCommands.registerCommand("Drop Arm", dropArm);
+    NamedCommands.registerCommand("Raise Intake", raiseIntake);
+    NamedCommands.registerCommand("Lower Intake", lowerIntake);
+    NamedCommands.registerCommand("Stop", stopDrive);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
@@ -208,36 +239,43 @@ public class RobotContainer {
   private Command pointToHub() {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        () -> Constants.Joysticks.driver.getLeftY(),
-        () -> Constants.Joysticks.driver.getLeftX(),
+        () -> -Constants.Joysticks.driver.getLeftY(),
+        () -> -Constants.Joysticks.driver.getLeftX(),
         () -> {
           Pose2d robotPose = drive.getPose();
-          if (robotPose != null) {
-            Angle toHub =
-                Radians.of(
-                    Math.IEEEremainder(
-                        Math.atan(
-                            (hubTarget.getY() - robotPose.getY())
-                                / (hubTarget.getX() - robotPose.getX())),
-                        Constants.Mathematics.TAU));
-            return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
-          }
-          return Rotation2d.kZero;
+          Pose2d hubPose = Constants.Poses.hub;
+
+          Angle toHub =
+              Radians.of(
+                  Math.IEEEremainder(
+                      Math.atan(
+                          (hubPose.getY() - robotPose.getY())
+                              / (hubPose.getX() - robotPose.getX())),
+                      Constants.Mathematics.TAU));
+          Pose2d pointer =
+              new Pose2d(robotPose.getMeasureX(), robotPose.getMeasureY(), new Rotation2d(toHub));
+          Logger.recordOutput("Hub Pointer", pointer);
+          drive.setRotationTarget(new Rotation2d(toHub).rotateBy(Rotation2d.k180deg));
+          return drive.getRotationTarget();
         });
   }
 
   private Command pointToAngle(Supplier<Angle> angle) {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        () -> Constants.Joysticks.driver.getLeftY(),
-        () -> Constants.Joysticks.driver.getLeftX(),
+        () -> -Constants.Joysticks.driver.getLeftY(),
+        () -> -Constants.Joysticks.driver.getLeftX(),
         () -> {
           return new Rotation2d(angle.get());
         });
   }
 
-  private Command regressionShooting() {
+  private Command conditionalShooting() {
     return shooter.runMechanismVelocity(velocity, velocity);
+  }
+
+  private Command staticShooting(AngularVelocity v) {
+    return shooter.runMechanismVelocity(v, v);
   }
 
   private void configureButtonBindings() {
@@ -269,7 +307,7 @@ public class RobotContainer {
                 () -> Rotation2d.kZero));
 
     // Hold wheel position.
-    Constants.Joysticks.driver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    // Constants.Joysticks.driver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     Constants.Joysticks.driver
         .a()
@@ -288,39 +326,32 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .povUp()
-        .whileTrue(intake.controlArm(ArmState.FORWARD))
-        .whileFalse(intake.controlArm(ArmState.ZERO));
-
-    Constants.Joysticks.operator
-        .povDown()
-        .whileTrue(intake.controlArm(ArmState.BACKWARD))
-        .whileFalse(intake.controlArm(ArmState.ZERO));
-
-    Constants.Joysticks.operator
-        .a()
-        .whileTrue(intake.runIntake(Constants.Intake.kSpeed))
-        .whileFalse(intake.runIntake(0.0));
-
-    Constants.Joysticks.operator
-        .rightTrigger()
-        .whileTrue(shooter.runMechanismVelocity(velocity, velocity))
-        .whileFalse(shooter.runMechanism(0, 0));
-
-    Constants.Joysticks.operator
-        .x()
-        .whileTrue(pointToHub().alongWith(Commands.runOnce(() -> regressVelocity())))
-        .whileFalse(Commands.runOnce(() -> staticVelocity()));
+        .onFalse(intake.lowerArm().alongWith(intake.runIntake(0.0)))
+        .onTrue(intake.raiseArm().alongWith(intake.runIntake(Constants.Intake.kSpeed)));
 
     Constants.Joysticks.operator
         .leftTrigger()
-        .whileTrue(hopper.runHopper(Constants.Hopper.kSpeed))
-        .whileFalse(hopper.runHopper(0));
-    hopper.setDefaultCommand(hopper.controlHopper(() -> Constants.Joysticks.operator.getLeftY()));
+        .onFalse(intake.runIntake(0.0))
+        .onTrue(intake.runIntake(Constants.Intake.kSpeed));
 
-    Constants.Joysticks.driver
-        .povLeft()
-        .whileTrue(
-            DriveCommands.pathfind(drive, Constants.Poses.lowerStart, Constants.constraints));
+    Constants.Joysticks.operator
+        .rightTrigger()
+        .onFalse(shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)))
+        .onTrue(
+            new ConditionalCommand(
+                conditionalShooting().alongWith(hopper.runHopper(Constants.Hopper.kSpeed)),
+                shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)),
+                aligned));
+
+    Constants.Joysticks.operator
+        .povRight()
+        .onFalse(intake.lowerArm())
+        .onTrue(intake.emergency());
+
+    Constants.Joysticks.operator
+        .x()
+        .whileTrue(Commands.run(() -> regressVelocity()).alongWith(pointToHub()))
+        .whileFalse(Commands.run(() -> staticVelocity()));
   }
 
   public Command getAutonomousCommand() {

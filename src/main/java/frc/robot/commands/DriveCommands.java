@@ -153,9 +153,7 @@ public class DriveCommands {
             () -> {
               // Get linear velocity
               Translation2d linearVelocity =
-                  getLinearVelocityFromJoysticks(
-                      Math.pow(xSupplier.getAsDouble(), Constants.lerp),
-                      Math.pow(ySupplier.getAsDouble(), Constants.lerp));
+                  getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
 
               // Calculate angular speed
               double omega =

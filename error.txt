@@ -1,0 +1,56 @@
+
+> Task :eventDeploy
+Not on an event branch, skipping commit
+
+> Task :createVersionFile
+createVersionFile called. Path C:\Users\HotwireProgrammer\Documents\Repositories\2026 Hotwire\src\main\java\frc\robot
+Driver Station reported IP: 10.29.90.2
+
+> Task :discoverroborio
+Discovering Target roborio
+Using admin@10.29.90.2:22 for target roborio
+
+> Task :deployprogramKillroborioroborio
+    -C-> md5sum /usr/local/frc/bin/frcKillRobot.sh @ /home/lvuser
+      -[0]-> cc368f9fa55a797bf9ffa25b6008662d  /usr/local/frc/bin/frcKillRobot.sh
+
+  Skipping redeploy of frcKillRobot script
+    -C-> . /etc/profile.d/natinst-path.sh; /usr/local/frc/bin/frcKillRobot.sh -t 2> /dev/null @ /home/lvuser
+
+> Task :deployrobotCommandfrcJavaroborio
+    -C-> echo '/usr/local/frc/JRE/bin/java -XX:+UseSerialGC -Djava.lang.invoke.stringConcat=BC_SB -Djava.library.path=/usr/local/frc/third-party/lib -XX:+UnlockExperimentalVMOptions -XX:GCTimeRatio=5 -XX:+UseSerialGC -XX:MaxGCPauseMillis=50 -Xmx100M -Xms100M -XX:+AlwaysPreTouch -jar "/home/lvuser/2026 Hotwire.jar" ' > /home/lvuser/robotCommand @ /home/lvuser
+    -C-> chmod +x /home/lvuser/robotCommand; chown lvuser /home/lvuser/robotCommand @ /home/lvuser
+
+> Task :deployjrefrcJavaroborio
+    -C-> if [[ -f "/usr/local/frc/JRE/bin/java" ]]; then echo OK; else echo MISSING; fi @ /tmp
+      -[0]-> OK
+
+    -C-> opkg list-installed | grep openjdk @ /tmp
+      -[0]-> frc2024-openjdk-17-jre - 17.0.9u7-3 - FRC OpenJDK Java Runtime Environment
+
+  Searching for JRE 17.0.9u7-3
+  Found JRE frc2024-openjdk-17-jre - 17.0.9u7-3 - FRC OpenJDK Java Runtime Environment
+  JRE Is Correct Version
+  Artifact skipped
+
+> Task :deployfrcStaticFileDeployroborio
+    -C-> mkdir -p pathplanner orchestra pathplanner/paths pathplanner/autos @ /home/lvuser/deploy
+    29 file(s) are up-to-date and were not deployed
+
+> Task :deployfrcJavaroborio
+    -F-> C:\Users\HotwireProgrammer\Documents\Repositories\2026 Hotwire\build\libs\2026 Hotwire.jar -> 2026 Hotwire.jar @ /home/lvuser
+    -C-> chmod +x "/home/lvuser/2026 Hotwire.jar"; chown lvuser "/home/lvuser/2026 Hotwire.jar" @ /home/lvuser
+
+> Task :deploynativeZipsfrcJavaroborio
+    35 file(s) are up-to-date and were not deployed
+    -C-> chmod -R 777 "/usr/local/frc/third-party/lib" || true; chown -R lvuser:ni "/usr/local/frc/third-party/lib" @ /usr/local/frc/third-party/lib                                            
+    -C-> ldconfig @ /usr/local/frc/third-party/lib
+
+> Task :deployprogramStartfrcJavaroborio
+    -C-> sync @ /home/lvuser
+<===========--> 86% EXECUTING [33s]                                                                                                                                                             
+> IDLE                                                                                                                                                                                          
+> IDLE
+> IDLE
+> :deployprogramStartfrcJavaroborio
+> IDLE

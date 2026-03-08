@@ -2,6 +2,9 @@ package frc.robot.subsystems.indication;
 
 import static edu.wpi.first.units.Units.Seconds;
 
+import java.util.HashMap;
+
+import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import edu.wpi.first.units.measure.Time;
@@ -9,14 +12,23 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.Constants.TimeTrigger;
 
 public class LuminalIndicators extends SubsystemBase {
 
   private final CANdle candle;
+  private enum Event {
+    AUTONOMOUS,
+    ACTIVE, INACTIVE,
+
+  }
+  private final HashMap<Event, ControlRequest> color;
 
   public LuminalIndicators() {
     candle = new CANdle(0);
+    color = new HashMap<>();
+    color.put(Event.ACTIVE,   Constants.Indication.LEDColor(180, 255, 180));
+    color.put(Event.INACTIVE, Constants.Indication.LEDColor(255, 190, 180));
+    color.put(Event.AUTONOMOUS, Constants.Indication.LEDColor(0, 200, 0));
   }
 
   @Override
@@ -27,20 +39,17 @@ public class LuminalIndicators extends SubsystemBase {
     // Get period-relative time.
     Time time = (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(0) : length.minus(t);
 
-    for (TimeTrigger trigger :
-        ((DriverStation.isAutonomous())
-            ? Constants.Indication.Autonomous.times
-            : Constants.Indication.Teloperated.times)) {
-      if (trigger.isTriggered(time)) {
-        updateLEDs(trigger.getColor());
-      }
-    }
+    indicatorPipeline();
+  }
+
+  public void indicatorPipeline() {
+    
   }
 
   public Command updateLEDs(SolidColor color) {
     return runOnce(
-        () -> {
-          candle.setControl(color);
-        });
+      () -> {
+        candle.setControl(color);
+      });
   }
 }

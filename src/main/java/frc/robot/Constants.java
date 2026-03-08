@@ -13,6 +13,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -34,39 +35,36 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(0.2);
-    public static final Time kFiringTime = Seconds.of(2.3);
-    public static final AngularVelocity kSpeed = RPM.of(2500);
+    public static final Time kChargeUpTime = Seconds.of(0.25);
+    public static final Time kFiringTime = Seconds.of(4.1);
+    public static final Time kUntilAggitateTime = Seconds.of(2);
+    public static       AngularVelocity kSpeed = RPM.of(2500);
+    public static final Angle kAlignmentError = Degrees.of(4);
   }
 
   public static class Intake {
-    public static final double kSpeed = 0.7;
-    public static final Voltage kArmVolts = Volts.of(3);
+    public static final double kSpeed = 0.8;
+    public static final Frequency kOccilationFrequency = Hertz.of(2.62);
   }
 
   public static class Hopper {
-    public static final double kSpeed = 0.6;
+    public static final double kSpeed = 0.8;
   }
 
   public static class Control {
     public static final PIDConstants translationPID = new PIDConstants(25.0, 0.0, 0.0);
-    public static final PIDConstants rotationPID = new PIDConstants(25.0, 0.0, 0.0);
+    public static final PIDConstants rotationPID = new PIDConstants(15.0, 0.0, 0.0);
     public static final double ANGLE_KP = rotationPID.kP;
     public static final double ANGLE_KD = rotationPID.kD;
   }
 
   public static class Indication {
-    public static SolidColor LEDColor(int r, int g, int b, int w) {
+    public static SolidColor LEDColor(int r, int g, int b) {
       return new SolidColor(0, 67).withColor(new RGBWColor(255, 255, 255));
     }
 
     public static class Autonomous {
       public static final Time[] haptic = {};
-
-      public static final TimeTrigger[] times = {
-        new TimeTrigger(
-            Seconds.of(0), Seconds.of(10), Constants.Indication.LEDColor(255, 255, 255, 255))
-      };
     }
 
     public static class Teloperated {
@@ -78,44 +76,17 @@ public final class Constants {
         Seconds.of(100),
         Seconds.of(125),
       };
-
-      public static final TimeTrigger[] times = {
-        new TimeTrigger(
-            Seconds.of(0), Seconds.of(10), Constants.Indication.LEDColor(255, 255, 255, 255))
-      };
-    }
-  }
-
-  public static class TimeTrigger {
-
-    private Time target;
-    private Time magnitude;
-    private SolidColor color;
-
-    public TimeTrigger(Time time, Time magnitude, SolidColor color) {
-      this.target = time;
-      this.magnitude = magnitude;
-      this.color = color;
-    }
-
-    public boolean isTriggered(Time time) {
-      return true;
-      // double difference = target.minus(time).in(Seconds);
-      // if ((difference < magnitude.in(Seconds)) && (difference >= 0)) return true;
-      // return false;
-    }
-
-    public SolidColor getColor() {
-      return color;
     }
   }
 
   public static final double lerp = 1.7; // 1.7
 
   public static class Limelight {
-    public static final String[] localization = {"limelight-gamma", "limelight-alpha"};
+    public static final String[] localization = {
+      "limelight-gamma", "limelight-alpha", "limelight-two"
+    };
     public static final String[] limelights = {"limelight-gamma", "limelight-alpha"};
-    public static final Distance maxDistance = Meters.of(4);
+    public static final Distance maxDistance = Meters.of(2.8);
   }
 
   public static final Time autoLength = Seconds.of(20);
@@ -163,11 +134,11 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1705;
-  public static final double exponential = 0.5;
+  public static final double base = 1480.92838;
+  public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {
-    return RPM.of(base * Math.pow(distance.in(Meters), exponential));
+    return RPM.of(base * Math.pow(exponential, distance.in(Inches)));
   }
 
   public static enum Mode {
