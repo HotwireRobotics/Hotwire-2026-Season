@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Hertz;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Angle;
@@ -20,6 +21,8 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public final TalonFX rollers;
   public final TalonFX arm;
+  private final PositionVoltage m_PositionVoltage;
+  private final Slot0Configs slot;
 
   public enum Device {
     ROLLERS,
@@ -37,9 +40,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   public ProtoIntake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     arm = new TalonFX(Constants.MotorIDs.i_arm);
-    // CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
-    // currentLimits.withSupplyCurrentLimit(40);
-    // arm.getConfigurator().apply(currentLimits);
     defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
 
     m_PositionVoltage = new PositionVoltage(Degrees.of(0));
@@ -86,14 +86,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     } else {
       state = State.STOPPED;
     }
-
-    arm.setControl(
-        new VoltageOut(
-            armState.equals(ArmState.FORWARD)
-                ? Constants.Intake.kArmVolts
-                : (armState.equals(ArmState.BACKWARD)
-                    ? Constants.Intake.kArmVolts.times(-1)
-                    : Volts.of(0))));
   }
 
   // Device control methods
