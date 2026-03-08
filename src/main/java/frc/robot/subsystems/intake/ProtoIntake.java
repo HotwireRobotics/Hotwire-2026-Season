@@ -2,6 +2,11 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Hertz;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.ControlRequest;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -63,6 +68,12 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
                 ? -Constants.Intake.kArmVolts.in(edu.wpi.first.units.Units.Volts)
                 : 0.0);
     io.setArmVoltage(armVolts);
+
+    // if (isActiveDevice(Device.ROLLERS)) {
+    //   state = State.INTAKING;
+    // } else {
+    //   state = State.STOPPED;
+    // }
   }
 
   /** Device open-loop control helper. */
