@@ -1,10 +1,13 @@
 package frc.robot;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ModularSubsystem extends SubsystemBase {
   private final HashMap<Object, Object> devices = new HashMap<Object, Object>();
@@ -36,6 +39,34 @@ public class ModularSubsystem extends SubsystemBase {
 
   public void defineDevice(Object device, TalonFX[] actual) {
     devices.put(device, actual);
+  }
+
+  public Command runDevice(Object device, double speed) {
+    return Commands.runOnce(
+        () -> {
+          for (TalonFX d : getDevices(device)) {
+            d.set(speed);
+          }
+          if (speed == 0) {
+            specifyInactiveDevice(device);
+          } else {
+            specifyActiveDevice(device);
+          }
+        });
+  }
+
+  public Command runDevice(Object device, Supplier<Double> speed) {
+    return Commands.runOnce(
+        () -> {
+          for (TalonFX d : getDevices(device)) {
+            d.set(speed.get());
+          }
+          if (speed.get() == 0) {
+            specifyInactiveDevice(device);
+          } else {
+            specifyActiveDevice(device);
+          }
+        });
   }
 
   public class DevicePointer {

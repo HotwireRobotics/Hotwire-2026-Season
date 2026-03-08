@@ -12,9 +12,9 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import frc.robot.constants.Constants;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -23,7 +23,7 @@ import org.littletonrobotics.junction.Logger;
  * (RPS), and voltage control. runShooter runs both wheels; runLeftShooter/runRightShooter run one
  * side for tuning or backup.
  */
-public class ProtoShooter extends ModularSubsystem implements Systerface {
+public class Shooter extends ModularSubsystem implements Systerface {
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;
   private final VoltageOut m_voltReq;
@@ -42,7 +42,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     FEEDER
   }
 
-  public ProtoShooter() {
+  public Shooter() {
     m_feeder = new TalonFX(Constants.MotorIDs.s_feeder);
     m_leftShooter = new TalonFX(Constants.MotorIDs.s_shooterL);
     m_rightShooter = new TalonFX(Constants.MotorIDs.s_shooterR);

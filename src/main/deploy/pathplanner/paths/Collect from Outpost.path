@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.583,
-        "y": 2.008
+        "x": 3.5731777777777776,
+        "y": 0.4685333333333336
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.630532610585817,
-        "y": 1.6164127453863901
+        "x": 2.81574929632977,
+        "y": 0.5598703713314177
       },
       "isLocked": false,
-      "linkedName": "Lower Start"
+      "linkedName": "Lowest Start Location"
     },
     {
       "anchor": {
@@ -20,8 +20,8 @@
         "y": 0.7938659058487882
       },
       "prevControl": {
-        "x": 1.1806977203580127,
-        "y": 0.9404161853240326
+        "x": 1.282340233162151,
+        "y": 0.7298620195374471
       },
       "nextControl": null,
       "isLocked": false,

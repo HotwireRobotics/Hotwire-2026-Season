@@ -5,33 +5,21 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "Lower Intake"
+            "pathName": "Collect from Outpost"
           }
         },
         {
-          "type": "named",
+          "type": "wait",
           "data": {
-            "name": "Start Intaking"
+            "waitTime": 1.5
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Lower Exolateral"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Bineutral Lower Endolateral"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Stop Intaking"
+            "pathName": "Shoot from Outpost"
           }
         },
         {
@@ -49,19 +37,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Bineutral Lower Exolateral"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Bineutral Lower Second Endolateral"
+            "pathName": "Abias Outpost to Depot"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Stop Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Shoot from Depot"
           }
         },
         {
