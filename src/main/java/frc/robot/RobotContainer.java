@@ -42,7 +42,7 @@ public class RobotContainer {
   public final LuminalIndicators lights;
   public double testVelocity = 0;
   private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
-  private final BooleanSupplier aligned;
+  public final BooleanSupplier aligned;
 
   public Pose2d hubTarget;
 
