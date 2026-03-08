@@ -125,6 +125,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
+    Logger.recordOutput("Shooter/aligned", aligned);
     CommandScheduler.getInstance().run();
 
     // Localization and orienttion feeding
