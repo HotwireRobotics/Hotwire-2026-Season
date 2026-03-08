@@ -39,6 +39,12 @@
           "data": {
             "name": "Firing Sequence"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Unineutral Second Lower Endolateral"
+          }
         }
       ]
     }

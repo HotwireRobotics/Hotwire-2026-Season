@@ -24,10 +24,8 @@ public class LuminalArray extends SubsystemBase {
 
   private enum Event {
     AUTOENABLED,
-    ACTIVE,
-    WANING,
-    INACTIVE,
-    WAXING,
+    ACTIVE, WANING,
+    INACTIVE, WAXING,
     TELEDISABLED,
     TELEENABLED,
     EMERGENCY,
@@ -43,8 +41,7 @@ public class LuminalArray extends SubsystemBase {
     return () -> (((Math.floor(time.in(Seconds) * frequency.in(Hertz)) % 2) == 1) ? t : f);
   }
 
-  private Supplier<ControlRequest> tick(
-      ControlRequest high, ControlRequest low, Frequency frequency) {
+  private Supplier<ControlRequest> tick(ControlRequest high, ControlRequest low, Frequency frequency) {
     return () -> ((((time.in(Seconds) * frequency.in(Hertz)) % 2) >= 1.7) ? high : low);
   }
 
@@ -61,11 +58,11 @@ public class LuminalArray extends SubsystemBase {
     color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(180, 0, 0));
     color.put(Event.ACTIVE, () -> Constants.Indication.LEDColor(0, 180, 0));
     color.put(
-        Event.WANING,
-        tick(
-            Constants.Indication.LEDColor(180, 0, 0),
-            Constants.Indication.LEDColor(0, 180, 0),
-            Hertz.of(2)));
+      Event.WANING,
+      tick(
+          Constants.Indication.LEDColor(0, 180, 0),
+          Constants.Indication.LEDColor(0, 0, 0),
+          Hertz.of(2)));
     color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(0, 10, 0));
     color.put(
         Event.TELEDISABLED,
@@ -82,11 +79,11 @@ public class LuminalArray extends SubsystemBase {
             Hertz.of(3)));
     color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(180, 0, 0));
     color.put(
-        Event.WAXING,
-        toggle(
-            Constants.Indication.LEDColor(0, 180, 0),
-            Constants.Indication.LEDColor(180, 0, 0),
-            Hertz.of(2)));
+      Event.WAXING,
+      toggle(
+          Constants.Indication.LEDColor(0, 180, 0),
+          Constants.Indication.LEDColor(0, 0, 0),
+          Hertz.of(2)));
     color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(255, 0, 0));
 
     color.put(Event.AUTODISABLED, () -> Constants.Indication.LEDColor(255, 0, 0));

@@ -75,13 +75,6 @@ public class RobotContainer {
         });
   }
 
-  private Command autoVelocity() {
-    return Commands.runOnce(
-        () -> {
-          velocityType = VelocityType.AUTO;
-        });
-  }
-
   private Command regressVelocity() {
     return Commands.runOnce(
         () -> {
@@ -165,12 +158,12 @@ public class RobotContainer {
             case STATIC:
               return Constants.Shooter.kSpeed;
             case REGRESSION:
-              // if (aligned.getAsBoolean()) {
-              return Constants.regress(
-                  Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
-              // } else {
-              //   return Constants.Shooter.kSpeed;
-              // }
+              if (aligned.getAsBoolean()) {
+                return Constants.regress(
+                    Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+              } else {
+                return Constants.Shooter.kSpeed;
+              }
             case TESTING:
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             case AUTO:
@@ -297,6 +290,10 @@ public class RobotContainer {
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
 
     autoChooser.addOption("Shooting Sequence", runFiringSequence);
+
+    // autoChooser.addOption("Shooter Clea  ning", shooter (RPM.of(-50)).repeatedly());
+
+    hubTarget = Constants.Poses.hub;
   }
 
   private Command pointToHub() {

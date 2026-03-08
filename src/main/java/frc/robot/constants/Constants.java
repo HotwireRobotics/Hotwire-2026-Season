@@ -140,26 +140,27 @@ public final class Constants {
     // }
 
     public static enum Period {
-      AUTONOMOUS,
-      TRANSITION,
-      PRIMARY,
-      SECONDARY,
-      TERTIARY,
-      QUATERNARY,
-      ENDGAME
+      AUTONOMOUS, TRANSITION,
+      PRIMARY, SECONDARY, TERTIARY, 
+      QUATERNARY, ENDGAME
     }
 
     public static Period fromTime(Time t) {
       if (t.lte(Length.autonomous)) return Period.AUTONOMOUS;
-      if (t.lte(Length.autonomous.plus(Length.transition))) return Period.TRANSITION;
-      if (t.lte(Length.autonomous.plus(Length.phase).plus(Length.transition)))
-        return Period.PRIMARY;
-      if (t.lte(Length.autonomous.plus(Length.phase.times(2)).plus(Length.transition)))
-        return Period.SECONDARY;
-      if (t.lte(Length.autonomous.plus(Length.phase.times(3)).plus(Length.transition)))
-        return Period.TERTIARY;
-      if (t.lte(Length.autonomous.plus(Length.phase.times(4)).plus(Length.transition)))
-        return Period.QUATERNARY;
+      if (t.lte(Length.autonomous
+        .plus(Length.transition))) return Period.TRANSITION;
+      if (t.lte(Length.autonomous
+        .plus(Length.phase)
+        .plus(Length.transition))) return Period.PRIMARY;
+      if (t.lte(Length.autonomous
+        .plus(Length.phase.times(2))
+        .plus(Length.transition))) return Period.SECONDARY;
+      if (t.lte(Length.autonomous
+        .plus(Length.phase.times(3))
+        .plus(Length.transition))) return Period.TERTIARY;
+      if (t.lte(Length.autonomous
+        .plus(Length.phase.times(4))
+        .plus(Length.transition))) return Period.QUATERNARY;
       return Period.ENDGAME;
     }
 
@@ -173,7 +174,7 @@ public final class Constants {
           return true;
         case SECONDARY:
         case QUATERNARY:
-          return victoryAuto;
+           return victoryAuto;
         case PRIMARY:
         case TERTIARY:
           return !victoryAuto;
@@ -192,7 +193,7 @@ public final class Constants {
           return true;
         case SECONDARY:
         case QUATERNARY:
-          return victoryAuto;
+           return victoryAuto;
         case PRIMARY:
         case TERTIARY:
           return !victoryAuto;
@@ -212,7 +213,7 @@ public final class Constants {
     public static final Time warning = Seconds.of(7);
 
     public static final Time[] transitions = {
-      Seconds.of(20), Seconds.of(30), Seconds.of(55),
+      Seconds.of(20), Seconds.of(30), Seconds.of(55), 
       Seconds.of(80), Seconds.of(105), Seconds.of(130),
     };
   }
@@ -277,11 +278,10 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1235.92838;
+  public static final double base = 650.92838;
   public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {
-    Logger.recordOutput("Shooter/Distance", distance.in(Inches));
     return RPM.of(base * Math.pow(exponential, distance.in(Inches)));
   }
 
