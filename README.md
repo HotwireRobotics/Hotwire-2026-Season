@@ -1,4 +1,4 @@
-# 2026 Hotwire
+# 2026 Hotwire - DISCONTINUED BRANCH
 
 This repository is **Hotwire Robotics (2990)**'s robot code for the 2026 game, **Rebuilt!** 🟡
 
