@@ -37,7 +37,7 @@ public final class Constants {
     public static final Time kChargeUpTime = Seconds.of(0.25);
     public static final Time kFiringTime = Seconds.of(4.1);
     public static final Time kUntilAggitateTime = Seconds.of(2);
-    public static final AngularVelocity kSpeed = RPM.of(2500);
+    public static       AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
   }
 
@@ -58,17 +58,12 @@ public final class Constants {
   }
 
   public static class Indication {
-    public static SolidColor LEDColor(int r, int g, int b, int w) {
+    public static SolidColor LEDColor(int r, int g, int b) {
       return new SolidColor(0, 67).withColor(new RGBWColor(255, 255, 255));
     }
 
     public static class Autonomous {
       public static final Time[] haptic = {};
-
-      public static final TimeTrigger[] times = {
-        new TimeTrigger(
-            Seconds.of(0), Seconds.of(10), Constants.Indication.LEDColor(255, 255, 255, 255))
-      };
     }
 
     public static class Teloperated {
@@ -80,35 +75,6 @@ public final class Constants {
         Seconds.of(100),
         Seconds.of(125),
       };
-
-      public static final TimeTrigger[] times = {
-        new TimeTrigger(
-            Seconds.of(0), Seconds.of(10), Constants.Indication.LEDColor(255, 255, 255, 255))
-      };
-    }
-  }
-
-  public static class TimeTrigger {
-
-    private Time target;
-    private Time magnitude;
-    private SolidColor color;
-
-    public TimeTrigger(Time time, Time magnitude, SolidColor color) {
-      this.target = time;
-      this.magnitude = magnitude;
-      this.color = color;
-    }
-
-    public boolean isTriggered(Time time) {
-      return true;
-      // double difference = target.minus(time).in(Seconds);
-      // if ((difference < magnitude.in(Seconds)) && (difference >= 0)) return true;
-      // return false;
-    }
-
-    public SolidColor getColor() {
-      return color;
     }
   }
 

@@ -341,11 +341,6 @@ public class RobotContainer {
         .x()
         .whileTrue(Commands.run(() -> regressVelocity()).alongWith(pointToHub()))
         .whileFalse(Commands.run(() -> staticVelocity()));
-
-    // Constants.Joysticks.driver
-    //     .povLeft()
-    //     .whileTrue(
-    //         DriveCommands.pathfind(drive, Constants.Poses.lowerStart, Constants.constraints));
   }
 
   public Command getAutonomousCommand() {
