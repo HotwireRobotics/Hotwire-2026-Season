@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
@@ -27,6 +28,7 @@ import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.indication.LuminalIndicators;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.shooter.ProtoShooter;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -40,7 +42,6 @@ public class RobotContainer {
   public final LuminalIndicators lights;
   public double testVelocity = 0;
   private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
-  private Supplier<AngularVelocity> testing;
 
   public Pose2d hubTarget;
 
@@ -239,7 +240,8 @@ public class RobotContainer {
           Pose2d pointer =
               new Pose2d(robotPose.getMeasureX(), robotPose.getMeasureY(), new Rotation2d(toHub));
           Logger.recordOutput("Hub Pointer", pointer);
-          return new Rotation2d(toHub).rotateBy(Rotation2d.k180deg);
+          drive.setRotationTarget(new Rotation2d(toHub).rotateBy(Rotation2d.k180deg));
+          return drive.getRotationTarget();
         });
   }
 
@@ -317,10 +319,21 @@ public class RobotContainer {
         .onFalse(intake.runIntake(0.0))
         .onTrue(intake.runIntake(Constants.Intake.kSpeed));
 
+    BooleanSupplier aligned =
+        () -> {
+          Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
+          return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
+              .lt(Constants.Shooter.kAlignmentError);
+        };
+
     Constants.Joysticks.operator
         .rightTrigger()
         .onFalse(shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)))
-        .onTrue(regressionShooting().alongWith(hopper.runHopper(Constants.Hopper.kSpeed)));
+        .onTrue(
+            new ConditionalCommand(
+                regressionShooting().alongWith(hopper.runHopper(Constants.Hopper.kSpeed)),
+                shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)),
+                aligned));
 
     Constants.Joysticks.operator
         .x()

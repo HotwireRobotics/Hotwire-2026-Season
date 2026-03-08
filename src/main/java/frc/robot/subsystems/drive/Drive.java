@@ -88,6 +88,8 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
+  private Rotation2d rotationTarget = Rotation2d.kZero;
+
   public Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
@@ -312,6 +314,14 @@ public class Drive extends SubsystemBase {
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {
     return poseEstimator.getEstimatedPosition();
+  }
+
+  public Rotation2d getRotationTarget() {
+    return rotationTarget;
+  }
+
+  public void setRotationTarget(Rotation2d target) {
+    rotationTarget = target;
   }
 
   /** Returns the current odometry rotation. */

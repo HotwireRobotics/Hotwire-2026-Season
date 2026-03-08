@@ -48,16 +48,16 @@
     },
     {
       "anchor": {
-        "x": 6.5014311270125225,
-        "y": 2.8424329159212878
+        "x": 6.306726296958854,
+        "y": 1.479499105545617
       },
       "prevControl": {
-        "x": 6.98819320214669,
-        "y": 4.221592128801431
+        "x": 6.647459749552772,
+        "y": 3.9619856887298743
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Second Bineutral Exo"
     }
   ],
   "rotationTargets": [
@@ -105,7 +105,7 @@
   },
   "goalEndState": {
     "velocity": 5.0,
-    "rotation": 180.0
+    "rotation": -178.89829388479365
   },
   "reversed": false,
   "folder": null,

@@ -37,6 +37,7 @@ public final class Constants {
     public static final Time kFiringTime = Seconds.of(4.1);
     public static final Time kUntilAggitateTime = Seconds.of(2);
     public static final AngularVelocity kSpeed = RPM.of(2500);
+    public static final Angle kAlignmentError = Degrees.of(4);
   }
 
   public static class Intake {

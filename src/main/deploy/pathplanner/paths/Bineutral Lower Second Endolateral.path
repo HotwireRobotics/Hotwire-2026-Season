@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 6.4852057245080506,
-        "y": 2.939785330948122
+        "x": 6.306726296958854,
+        "y": 1.479499105545617
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.225599284440363,
-        "y": 2.1122898032128288
+        "x": 6.247107978715983,
+        "y": 1.1702430038131282
       },
       "isLocked": false,
-      "linkedName": "Bineutral Exo"
+      "linkedName": "Second Bineutral Exo"
     },
     {
       "anchor": {
@@ -20,12 +20,12 @@
         "y": 0.8467084078711979
       },
       "prevControl": {
-        "x": 6.464139982925373,
-        "y": 1.1254006013020064
+        "x": 6.284221285574949,
+        "y": 1.0953347711015495
       },
       "nextControl": {
-        "x": 6.048651315789474,
-        "y": 0.5635416666666664
+        "x": 6.225599284436494,
+        "y": 0.5384257602862248
       },
       "isLocked": false,
       "linkedName": null
@@ -36,8 +36,8 @@
         "y": 0.8467084078711979
       },
       "prevControl": {
-        "x": 3.711907894736842,
-        "y": 0.45776315789473637
+        "x": 3.5159570661896247,
+        "y": 0.48974955277280846
       },
       "nextControl": null,
       "isLocked": false,
@@ -73,7 +73,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -88.26429541107166
+    "rotation": -178.89829388479365
   },
   "useDefaultConstraints": false
 }
