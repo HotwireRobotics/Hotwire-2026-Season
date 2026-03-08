@@ -42,12 +42,7 @@ public class RobotContainer {
   public final LuminalIndicators lights;
   public double testVelocity = 0;
   private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
-  private final BooleanSupplier aligned =
-    () -> {
-        Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
-        return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
-            .lt(Constants.Shooter.kAlignmentError);
-    };
+  private final BooleanSupplier aligned;
 
   public Pose2d hubTarget;
 
@@ -110,6 +105,13 @@ public class RobotContainer {
                 new ModuleIO() {});
         break;
     }
+
+    aligned =
+      () -> {
+        Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
+        return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
+            .lt(Constants.Shooter.kAlignmentError);
+      };
 
     intake = new ProtoIntake();
     shooter = new ProtoShooter();
@@ -324,7 +326,6 @@ public class RobotContainer {
         .leftTrigger()
         .onFalse(intake.runIntake(0.0))
         .onTrue(intake.runIntake(Constants.Intake.kSpeed));
-
 
     Constants.Joysticks.operator
         .rightTrigger()
