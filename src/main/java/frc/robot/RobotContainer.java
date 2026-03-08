@@ -136,7 +136,7 @@ public class RobotContainer {
     configureButtonBindings();
 
     final Command startHopper = hopper.runHopper(Constants.Hopper.kSpeed);
-    final Command startShooter = regressionShooting();
+    final Command startShooter = conditionalShooting();
     final Command startIntake = intake.runIntake(Constants.Intake.kSpeed);
     //// NamedCommands.registerCommand("StartShooter", regressionShooting().repeatedly());
     final Command killHopper = hopper.runHopper(0);
@@ -147,6 +147,7 @@ public class RobotContainer {
         intake.runIntake(Constants.Intake.kSpeed).repeatedly().finallyDo(() -> intake.runIntake(0));
     final Command raiseIntake = intake.raiseArm();
     final Command lowerIntake = intake.lowerArm().andThen(Commands.waitTime(Seconds.of(0.5)));
+    final Command occilateIntake = intake.occilateArm(Constants.Intake.kOccilationFrequency);
     final Command stopDrive = Commands.runOnce(() -> drive.stop());
     final Command runFiringSequence =
         new SequentialCommandGroup(
@@ -155,8 +156,8 @@ public class RobotContainer {
             Commands.waitTime(Constants.Shooter.kChargeUpTime),
             startHopper,
             Commands.waitTime(Constants.Shooter.kFiringTime)
-                .alongWith(
-                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime).andThen(raiseIntake)),
+                .raceWith(
+                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime).andThen(occilateIntake)),
             killShooter,
             killHopper,
             lowerIntake,
@@ -263,7 +264,7 @@ public class RobotContainer {
         });
   }
 
-  private Command regressionShooting() {
+  private Command conditionalShooting() {
     return shooter.runMechanismVelocity(velocity, velocity);
   }
 
@@ -332,7 +333,7 @@ public class RobotContainer {
         .onFalse(shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)))
         .onTrue(
             new ConditionalCommand(
-                regressionShooting().alongWith(hopper.runHopper(Constants.Hopper.kSpeed)),
+                conditionalShooting().alongWith(hopper.runHopper(Constants.Hopper.kSpeed)),
                 shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)),
                 aligned));
 

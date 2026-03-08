@@ -13,6 +13,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -42,6 +43,7 @@ public final class Constants {
 
   public static class Intake {
     public static final double kSpeed = 0.8;
+    public static final Frequency kOccilationFrequency = Hertz.of(2.62);
   }
 
   public static class Hopper {
