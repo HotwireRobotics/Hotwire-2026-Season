@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 6.306726296958854,
-        "y": 1.479499105545617
+        "x": 6.404078711985688,
+        "y": 1.804007155635062
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.247107978715983,
-        "y": 1.1702430038131282
+        "x": 6.344460393742817,
+        "y": 1.4947510539025732
       },
       "isLocked": false,
       "linkedName": "Second Bineutral Exo"
@@ -46,7 +46,7 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.4402515723270447,
+      "waypointRelativePos": 1.1443850267379674,
       "rotationDegrees": 0.0
     },
     {

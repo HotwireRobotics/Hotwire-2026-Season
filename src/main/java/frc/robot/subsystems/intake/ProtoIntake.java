@@ -1,13 +1,13 @@
 package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Hertz;
+import static edu.wpi.first.units.Units.Seconds;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -111,8 +111,10 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
 
   /** Oscillates the arm up and down at a chosen frequency. */
   public Command occilateArm(Frequency frequency) {
+    Time period = Seconds.of(1 / (2 * frequency.in(Hertz)));
     return new SequentialCommandGroup(
-            lowerArm(), Commands.waitSeconds(1 / frequency.in(Hertz)), raiseArm())
+            lowerArm(), Commands.waitTime(period),
+            raiseArm(), Commands.waitTime(period))
         .repeatedly();
   }
 

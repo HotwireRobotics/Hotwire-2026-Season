@@ -180,6 +180,11 @@ public class RobotContainer {
           return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
               .lt(Constants.Shooter.kAlignmentError);
         };
+        () -> {
+          Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
+          return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
+              .lt(Constants.Shooter.kAlignmentError);
+        };
 
     intake = new ProtoIntake(intakeIO);
     shooter = new ProtoShooter(shooterIO);
@@ -251,6 +256,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("Lower Intake", lowerIntake);
     NamedCommands.registerCommand("Drop Arm", dropArm);
     NamedCommands.registerCommand("Stop", stopDrive);
+    NamedCommands.registerCommand("Occilate Intake", occilateIntake);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", buildAutoChooserSafe());
 
