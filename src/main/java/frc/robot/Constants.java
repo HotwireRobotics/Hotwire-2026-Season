@@ -15,7 +15,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -38,7 +37,7 @@ public final class Constants {
     public static final Time kChargeUpTime = Seconds.of(0.25);
     public static final Time kFiringTime = Seconds.of(4.1);
     public static final Time kUntilAggitateTime = Seconds.of(2);
-    public static       AngularVelocity kSpeed = RPM.of(2500);
+    public static AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
   }
 
@@ -53,14 +52,27 @@ public final class Constants {
 
   public static class Control {
     public static final PIDConstants translationPID = new PIDConstants(25.0, 0.0, 0.0);
-    public static final PIDConstants rotationPID = new PIDConstants(15.0, 0.0, 0.0);
+    public static final PIDConstants rotationPID = new PIDConstants(13.0, 0.0, 0.0);
     public static final double ANGLE_KP = rotationPID.kP;
     public static final double ANGLE_KD = rotationPID.kD;
   }
 
   public static class Indication {
     public static SolidColor LEDColor(int r, int g, int b) {
-      return new SolidColor(0, 67).withColor(new RGBWColor(255, 255, 255));
+      return new SolidColor(0, 67).withColor(new RGBWColor(g, r, b));
+    }
+
+    public static boolean autonomousVictory() {
+      String gameData = DriverStation.getGameSpecificMessage();
+      Boolean allianceIsRed = DriverStation.getAlliance().get().equals(Alliance.Red);
+      switch (gameData.charAt(0)) {
+        case 'R':
+          return (allianceIsRed);
+        case 'B':
+          return (!allianceIsRed);
+        default:
+          return true;
+      }
     }
 
     public static class Autonomous {

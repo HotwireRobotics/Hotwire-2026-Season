@@ -10,7 +10,6 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -164,19 +163,6 @@ public class Robot extends LoggedRobot {
     SmartDashboard.putNumberArray("robot-pose", robotpose);
 
     field.setRobotPose(robotContainer.drive.getPose());
-  }
-
-  public boolean autonomousVictory() {
-    String gameData = DriverStation.getGameSpecificMessage();
-    Boolean allianceIsRed = DriverStation.getAlliance().get().equals(Alliance.Red);
-    switch (gameData.charAt(0)) {
-      case 'R':
-        return (allianceIsRed);
-      case 'B':
-        return (!allianceIsRed);
-      default:
-        return true;
-    }
   }
 
   private void processLimelightMeasurements() {

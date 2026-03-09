@@ -2,32 +2,31 @@ package frc.robot.subsystems.indication;
 
 import static edu.wpi.first.units.Units.Seconds;
 
-import java.util.HashMap;
-
 import com.ctre.phoenix6.controls.ControlRequest;
-import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import java.util.HashMap;
 
 public class LuminalIndicators extends SubsystemBase {
 
   private final CANdle candle;
+
   private enum Event {
     AUTONOMOUS,
-    ACTIVE, INACTIVE,
-
+    ACTIVE,
+    INACTIVE,
   }
+
   private final HashMap<Event, ControlRequest> color;
 
   public LuminalIndicators() {
     candle = new CANdle(0);
     color = new HashMap<>();
-    color.put(Event.ACTIVE,   Constants.Indication.LEDColor(180, 255, 180));
-    color.put(Event.INACTIVE, Constants.Indication.LEDColor(255, 190, 180));
+    color.put(Event.ACTIVE, Constants.Indication.LEDColor(0, 255, 0));
+    color.put(Event.INACTIVE, Constants.Indication.LEDColor(255, 0, 0));
     color.put(Event.AUTONOMOUS, Constants.Indication.LEDColor(0, 200, 0));
   }
 
@@ -39,17 +38,28 @@ public class LuminalIndicators extends SubsystemBase {
     // Get period-relative time.
     Time time = (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(0) : length.minus(t);
 
-    indicatorPipeline();
+    indicatorPipeline(time);
   }
 
-  public void indicatorPipeline() {
-    
+  private ControlRequest getRequest(Event event) {
+    return color.get(event);
   }
 
-  public Command updateLEDs(SolidColor color) {
-    return runOnce(
-      () -> {
-        candle.setControl(color);
-      });
+  public void indicatorPipeline(Time time) {
+    Boolean b = (Math.floor(time.in(Seconds)) % 2) == 1;
+
+    if (DriverStation.isAutonomous()) {
+      updateLEDs(getRequest(Event.AUTONOMOUS));
+    } else {
+      if (Constants.Indication.autonomousVictory()) {
+        updateLEDs(getRequest(Event.INACTIVE));
+      } else {
+        updateLEDs(getRequest(Event.ACTIVE));
+      }
+    }
+  }
+
+  private void updateLEDs(ControlRequest color) {
+    candle.setControl(color);
   }
 }

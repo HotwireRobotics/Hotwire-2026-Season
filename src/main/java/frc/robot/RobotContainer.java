@@ -108,11 +108,11 @@ public class RobotContainer {
     }
 
     aligned =
-      () -> {
-        Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
-        return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
-            .lt(Constants.Shooter.kAlignmentError);
-      };
+        () -> {
+          Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
+          return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
+              .lt(Constants.Shooter.kAlignmentError);
+        };
 
     intake = new ProtoIntake();
     shooter = new ProtoShooter();
@@ -163,7 +163,8 @@ public class RobotContainer {
             startHopper,
             Commands.waitTime(Constants.Shooter.kFiringTime)
                 .raceWith(
-                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime).andThen(occilateIntake)),
+                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime)
+                        .andThen(occilateIntake)),
             killShooter,
             killHopper,
             lowerIntake,
@@ -175,6 +176,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("Raise Intake", raiseIntake);
     NamedCommands.registerCommand("Lower Intake", lowerIntake);
     NamedCommands.registerCommand("Stop", stopDrive);
+    NamedCommands.registerCommand("Occilate Intake", occilateIntake);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
@@ -343,10 +345,7 @@ public class RobotContainer {
                 shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)),
                 aligned));
 
-    Constants.Joysticks.operator
-        .povRight()
-        .onFalse(intake.lowerArm())
-        .onTrue(intake.emergency());
+    Constants.Joysticks.operator.povRight().onFalse(intake.lowerArm()).onTrue(intake.emergency());
 
     Constants.Joysticks.operator
         .x()
