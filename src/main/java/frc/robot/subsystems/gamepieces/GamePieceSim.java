@@ -105,12 +105,13 @@ public class GamePieceSim extends SubsystemBase {
 
   private static final double[][] BLUE_TOWER_TAGS_INCHES = {{0.32, 147.47}, {0.32, 164.47}};
   private static final double[][] RED_TOWER_TAGS_INCHES = {{650.90, 170.22}, {650.90, 153.22}};
-  private static final double PIECE_RESTITUTION = 0.45;
-  private static final double WALL_RESTITUTION = 0.6;
-  private static final double STRUCTURE_RESTITUTION = 0.35;
-  private static final double ROBOT_RESTITUTION = 0.25;
-  private static final double GROUND_DAMPING_PER_TICK = 0.98;
-  private static final double AIR_DAMPING_PER_TICK = 0.995;
+  private static final double PIECE_RESTITUTION = 0.35;
+  private static final double WALL_RESTITUTION = 0.5;
+  private static final double STRUCTURE_RESTITUTION = 0.3;
+  private static final double ROBOT_RESTITUTION = 0.2;
+  // Higher damping factors (closer to 1.0) => lower friction and longer rolls.
+  private static final double GROUND_DAMPING_PER_TICK = 0.995;
+  private static final double AIR_DAMPING_PER_TICK = 0.999;
   private static final double GRAVITY_METERS_PER_SEC2 = 9.81;
   private static final double PICKUP_RADIUS_METERS = 0.24;
   private static final double SHOOT_SPEED_METERS_PER_SEC = 8.5;
@@ -213,17 +214,20 @@ public class GamePieceSim extends SubsystemBase {
     final double minX = centerX - boxWidthMeters * 0.5;
     final double minY = centerY - boxDepthMeters * 0.5;
 
-    // 34 x 12 grid => 408 FUEL, matching the manual's "360 to 408" NEUTRAL ZONE range when robots
-    // are not preloaded.
+    // Perfect-packing scenario: fit as many FUEL as possible in a clean grid.
+    // Each FUEL is 5.91in in diameter, so:
+    //  - Along width: floor(206 / 5.91) = 34 columns
+    //  - Along depth: floor(72 / 5.91)  = 12 rows
+    // => 34 x 12 = 408 FUEL capacity, which matches the manual's upper bound for NEUTRAL ZONE FUEL.
     final int cols = 34;
     final int rows = 12;
-    final double cellX = boxWidthMeters / (cols + 1);
-    final double cellY = boxDepthMeters / (rows + 1);
+    final double cellX = boxWidthMeters / cols;
+    final double cellY = boxDepthMeters / rows;
 
     for (int i = 0; i < cols; i++) {
       for (int j = 0; j < rows; j++) {
-        final double x = minX + (i + 1) * cellX;
-        final double y = minY + (j + 1) * cellY;
+        final double x = minX + (i + 0.5) * cellX;
+        final double y = minY + (j + 0.5) * cellY;
         spawnPiece(new Translation2d(x, y));
       }
     }
