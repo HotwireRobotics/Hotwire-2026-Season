@@ -1,44 +1,22 @@
 package frc.robot.subsystems.hopper;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
-import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
-public class HopperSubsystem extends SubsystemBase implements Systerface {
-  private final TalonFX upperFeed;
-  // private final TalonFX lowerFeed;
-  private double upperSpeedtest;
-  private double lowerSpeedtest;
+public class HopperSubsystem extends ModularSubsystem implements Systerface {
+  private final TalonFX hopper;
 
-  // private final SysIdRoutine m_sysIdRoutine;
-  // private final VoltageOut m_voltReq;
-  // private final VelocityVoltage m_velVolt;
+  public enum Device {
+    HOPPER
+  }
 
   public HopperSubsystem() {
-    upperFeed = new TalonFX(Constants.MotorIDs.h_hopperU);
-    // lowerFeed = new TalonFX(Constants.MotorIDs.h_hopperL);
-    upperSpeedtest = SmartDashboard.getNumber("upperSpeed", 0);
-    lowerSpeedtest = SmartDashboard.getNumber("lowerSpeed", 0);
-    SmartDashboard.putNumber("upperSpeed", upperSpeedtest);
-    SmartDashboard.putNumber("lowerSpeed", lowerSpeedtest);
-
-    // m_sysIdRoutine =
-    //     new SysIdRoutine(
-    //         new SysIdRoutine.Config(
-    //         null,
-    //         null,
-    //         null, // Use default config
-    //         (state) -> Logger.recordOutput("Hopper/SysIdTestState", state.toString()),
-    //         new SysIdRoutine.Mechanism(
-    //             null, //change
-    //             null,
-    //             this));
+    hopper = new TalonFX(Constants.MotorIDs.h_hopper);
+    defineDevice(Device.HOPPER, hopper);
   }
 
   private enum State {
@@ -53,50 +31,23 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
 
   @Override
   public void periodic() {
-    // Logger.recordOutput("Hopper/State", state.toString());
-    // Log position (rot), velocity (rpm), voltage, current, temp with unit metadata
     Logger.recordOutput(
-        "Hopper/upperFeed/Position", upperFeed.getPosition().getValueAsDouble(), "rot");
+        "Hopper/upperFeed/Position", hopper.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
-        "Hopper/upperFeed/Velocity", upperFeed.getVelocity().getValueAsDouble() * 60, "rpm");
+        "Hopper/upperFeed/Velocity", hopper.getVelocity().getValueAsDouble() * 60, "rpm");
     Logger.recordOutput(
-        "Hopper/upperFeed/Voltage", upperFeed.getMotorVoltage().getValueAsDouble(), "V");
+        "Hopper/upperFeed/Voltage", hopper.getMotorVoltage().getValueAsDouble(), "V");
     Logger.recordOutput(
-        "Hopper/upperFeed/Current", upperFeed.getSupplyCurrent().getValueAsDouble(), "A");
+        "Hopper/upperFeed/Current", hopper.getSupplyCurrent().getValueAsDouble(), "A");
     Logger.recordOutput(
-        "Hopper/upperFeed/Temperature", upperFeed.getDeviceTemp().getValueAsDouble(), "°C");
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Position", lowerFeed.getPosition().getValueAsDouble(), "rot");
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Velocity", lowerFeed.getVelocity().getValueAsDouble() * 60, "rpm");
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Voltage", lowerFeed.getMotorVoltage().getValueAsDouble(), "V");
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Current", lowerFeed.getSupplyCurrent().getValueAsDouble(), "A");
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Temperature", lowerFeed.getDeviceTemp().getValueAsDouble(), "°C");
+        "Hopper/upperFeed/Temperature", hopper.getDeviceTemp().getValueAsDouble(), "°C");
   }
 
-  public Command runHopper(double speed) {
-    return Commands.runOnce(
-        () -> {
-          upperFeed.set(speed);
-        });
+  public Command runHopper() {
+    return runDevice(Device.HOPPER, Constants.Hopper.kSpeed);
   }
 
-  public Command controlHopper(Supplier<Double> speed) {
-    return Commands.runOnce(
-        () -> {
-          upperFeed.set(speed.get());
-        },
-        this);
+  public Command stopHopper() {
+    return runDevice(Device.HOPPER, 0);
   }
-
-  public void runUpper(double speed) {
-    upperFeed.set(speed);
-  }
-
-  // public void runLower(double speed) {
-  //   lowerFeed.set(speed);
-  // }
 }

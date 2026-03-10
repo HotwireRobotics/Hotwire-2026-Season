@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
@@ -13,7 +14,6 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
@@ -55,14 +55,37 @@ public class RobotContainer {
     TESTING
   }
 
+  public boolean inverse = false;
   public VelocityType velocityType = VelocityType.REGRESSION;
 
-  private void staticVelocity() {
-    velocityType = VelocityType.STATIC;
+  private final Supplier<Boolean> isInverse = () -> inverse;
+
+  private Command staticVelocity() {
+    return Commands.runOnce(
+        () -> {
+          velocityType = VelocityType.STATIC;
+        });
   }
 
-  private void regressVelocity() {
-    velocityType = VelocityType.REGRESSION;
+  private Command regressVelocity() {
+    return Commands.runOnce(
+        () -> {
+          velocityType = VelocityType.REGRESSION;
+        });
+  }
+
+  private Command invertControl() {
+    return Commands.runOnce(
+        () -> {
+          inverse = true;
+        });
+  }
+
+  private Command regularControl() {
+    return Commands.runOnce(
+        () -> {
+          inverse = false;
+        });
   }
 
   private void testVelocity() {
@@ -125,8 +148,12 @@ public class RobotContainer {
             case STATIC:
               return Constants.Shooter.kSpeed;
             case REGRESSION:
-              return Constants.regress(
-                  Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+              if (aligned.getAsBoolean()) {
+                return Constants.regress(
+                    Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+              } else {
+                return RPM.of(0);
+              }
             case TESTING:
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             default:
@@ -136,28 +163,28 @@ public class RobotContainer {
 
     configureButtonBindings();
 
-    final Command startHopper = hopper.runHopper(Constants.Hopper.kSpeed);
+    final Command startHopper = hopper.runHopper();
     final Command startShooter = conditionalShooting();
-    final Command startIntake = intake.runIntake(Constants.Intake.kSpeed);
+    final Command startIntake = intake.runIntake();
     final Command dropArm =
         intake
             .controlArm(ArmState.BACKWARD)
             .andThen(Commands.waitSeconds(0.5))
             .andThen(intake.controlArm(ArmState.ZERO));
     //// NamedCommands.registerCommand("StartShooter", regressionShooting().repeatedly());
-    final Command killHopper = hopper.runHopper(0);
+    final Command killHopper = hopper.stopHopper();
     final Command killShooter = shooter.runMechanism(0, 0);
-    final Command killIntake = intake.runIntake(0);
+    final Command killIntake = intake.stopIntake();
     //// NamedCommands.registerCommand("KillShooter", killShooter);
     final Command periodIntake =
-        intake.runIntake(Constants.Intake.kSpeed).repeatedly().finallyDo(() -> intake.runIntake(0));
+        intake.runIntake().repeatedly().finallyDo(() -> intake.stopIntake());
     final Command raiseIntake = intake.raiseArm();
     final Command lowerIntake = intake.lowerArm().andThen(Commands.waitTime(Seconds.of(0.5)));
     final Command occilateIntake = intake.occilateArm(Constants.Intake.kOccilationFrequency);
     final Command stopDrive = Commands.runOnce(() -> drive.stop());
     final Command runFiringSequence =
         new SequentialCommandGroup(
-            Commands.runOnce(() -> regressVelocity()),
+            regressVelocity(),
             startShooter,
             Commands.waitTime(Constants.Shooter.kChargeUpTime),
             startHopper,
@@ -168,7 +195,7 @@ public class RobotContainer {
             killShooter,
             killHopper,
             lowerIntake,
-            Commands.runOnce(() -> staticVelocity()));
+            staticVelocity());
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
     NamedCommands.registerCommand("Start Intaking", startIntake);
     NamedCommands.registerCommand("Stop Intaking", killIntake);
@@ -234,6 +261,9 @@ public class RobotContainer {
             shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse)));
+
+    autoChooser.addOption("A-Bineutral Right", new PathPlannerAuto("A-Bineutral", false));
+    autoChooser.addOption("A-Bineutral Left", new PathPlannerAuto("A-Bineutral", true));
 
     hubTarget = Constants.Poses.hub;
   }
@@ -328,29 +358,27 @@ public class RobotContainer {
 
     Constants.Joysticks.operator
         .povUp()
-        .onFalse(intake.lowerArm().alongWith(intake.runIntake(0.0)))
-        .onTrue(intake.raiseArm().alongWith(intake.runIntake(Constants.Intake.kSpeed)));
+        .onFalse(intake.lowerArm().alongWith(intake.stopIntake()))
+        .onTrue(intake.raiseArm().alongWith(intake.runIntake()));
 
     Constants.Joysticks.operator
         .leftTrigger()
-        .onFalse(intake.runIntake(0.0))
-        .onTrue(intake.runIntake(Constants.Intake.kSpeed));
+        .onFalse(intake.stopIntake())
+        .onTrue(intake.runIntake());
 
     Constants.Joysticks.operator
         .rightTrigger()
-        .onFalse(shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)))
-        .onTrue(
-            new ConditionalCommand(
-                conditionalShooting().alongWith(hopper.runHopper(Constants.Hopper.kSpeed)),
-                shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)),
-                aligned));
+        .onFalse(shooter.runMechanism(0, 0).alongWith(hopper.stopHopper()))
+        .onTrue(conditionalShooting().alongWith(hopper.runHopper()));
 
     Constants.Joysticks.operator.povRight().onFalse(intake.lowerArm()).onTrue(intake.emergency());
 
+    Constants.Joysticks.operator.povLeft().whileTrue(invertControl()).whileFalse(regularControl());
+
     Constants.Joysticks.operator
         .x()
-        .whileTrue(Commands.run(() -> regressVelocity()).alongWith(pointToHub()))
-        .whileFalse(Commands.run(() -> staticVelocity()));
+        .whileTrue(regressVelocity().alongWith(pointToHub()))
+        .whileFalse(staticVelocity());
   }
 
   public Command getAutonomousCommand() {

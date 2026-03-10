@@ -6,9 +6,11 @@ import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.hardware.CANdle;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import java.util.HashMap;
+import org.littletonrobotics.junction.Logger;
 
 public class LuminalIndicators extends SubsystemBase {
 
@@ -21,13 +23,21 @@ public class LuminalIndicators extends SubsystemBase {
   }
 
   private final HashMap<Event, ControlRequest> color;
+  private final Timer timer = new Timer();
 
   public LuminalIndicators() {
     candle = new CANdle(0);
     color = new HashMap<>();
     color.put(Event.ACTIVE, Constants.Indication.LEDColor(0, 255, 0));
     color.put(Event.INACTIVE, Constants.Indication.LEDColor(255, 0, 0));
-    color.put(Event.AUTONOMOUS, Constants.Indication.LEDColor(0, 200, 0));
+    color.put(Event.AUTONOMOUS, Constants.Indication.LEDColor(100, 100, 100));
+
+    timer.start();
+  }
+
+  public void time() {
+    timer.reset();
+    timer.start();
   }
 
   @Override
@@ -36,7 +46,8 @@ public class LuminalIndicators extends SubsystemBase {
     Time length = (DriverStation.isAutonomous()) ? Constants.autoLength : Constants.teleopLength;
 
     // Get period-relative time.
-    Time time = (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(0) : length.minus(t);
+    Time time = (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(t);
+    Logger.recordOutput("Indicators/time", time);
 
     indicatorPipeline(time);
   }

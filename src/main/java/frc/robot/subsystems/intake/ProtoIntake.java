@@ -89,18 +89,6 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
   }
 
   // Device control methods
-
-  public void runDevice(Device device, double speed) {
-    for (TalonFX d : getDevices(device)) {
-      d.set(speed);
-    }
-
-    if (speed == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
-    }
-  }
   /**
    * Allows you to limit the voltage of the intake rollers
    *
@@ -119,17 +107,12 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     }
   }
 
-  /**
-   * Allows you to limit the speed of the intake rollers
-   *
-   * @param speed
-   * @return
-   */
-  public Command runIntake(double speed) {
-    return Commands.runOnce(
-        () -> {
-          runDevice(Device.ROLLERS, speed);
-        });
+  public Command runIntake() {
+    return runDevice(Device.ROLLERS, Constants.Intake.kSpeed);
+  }
+
+  public Command stopIntake() {
+    return runDevice(Device.ROLLERS, 0);
   }
 
   public Command controlArm(ArmState state) {
