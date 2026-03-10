@@ -162,13 +162,71 @@ public class GamePieceSim extends SubsystemBase {
     heldPiece = null;
     previousShooterState = false;
 
-    // A simple line of spawn points near midfield for testing interactions.
-    spawnPiece(new Translation2d(3.0, 2.0));
-    spawnPiece(new Translation2d(4.0, 2.0));
-    spawnPiece(new Translation2d(5.0, 2.0));
-    spawnPiece(new Translation2d(3.0, 3.2));
-    spawnPiece(new Translation2d(4.2, 3.4));
-    spawnPiece(new Translation2d(5.1, 3.1));
+    // REBUILT 2026 manual, section 6.3.4:
+    // - 24 FUEL in each DEPOT (on carpet)
+    // - Remaining FUEL staged in the NEUTRAL ZONE within a 206in x 72in (~5.23m x 1.83m) box
+    // - Additional FUEL in OUTPOST CHUTES are above the carpet and are not modeled here
+
+    // Spawn DEPOT FUEL: 24 per alliance (2 depots total).
+    spawnDepotFuel(false); // blue depot
+    spawnDepotFuel(true); // red depot
+
+    // Spawn NEUTRAL ZONE FUEL using a simple uniform grid inside the official bounding box.
+    spawnNeutralZoneFuel();
+  }
+
+  /** Spawns a 6x4 grid (24 total) of FUEL in the specified alliance DEPOT footprint. */
+  private void spawnDepotFuel(boolean redAlliance) {
+    final double depotCenterX =
+        redAlliance ? FIELD_LENGTH_METERS - DEPOT_DEPTH_METERS * 0.5 : DEPOT_DEPTH_METERS * 0.5;
+    final double depotCenterY =
+        redAlliance
+            ? FIELD_WIDTH_METERS - DEPOT_CENTER_Y_FROM_SCORING_TABLE_METERS
+            : DEPOT_CENTER_Y_FROM_SCORING_TABLE_METERS;
+    final Translation2d center = new Translation2d(depotCenterX, depotCenterY);
+
+    final int cols = 6;
+    final int rows = 4;
+    final double cellX = DEPOT_DEPTH_METERS / cols;
+    final double cellY = DEPOT_WIDTH_METERS / rows;
+
+    for (int i = 0; i < cols; i++) {
+      for (int j = 0; j < rows; j++) {
+        final double localX = -DEPOT_DEPTH_METERS * 0.5 + (i + 0.5) * cellX;
+        final double localY = -DEPOT_WIDTH_METERS * 0.5 + (j + 0.5) * cellY;
+        spawnPiece(center.plus(new Translation2d(localX, localY)));
+      }
+    }
+  }
+
+  /**
+   * Spawns NEUTRAL ZONE FUEL using a deterministic grid inside the official 206in x 72in bounding
+   * box centered on the field.
+   */
+  private void spawnNeutralZoneFuel() {
+    final double boxWidthMeters = inchesToMeters(206.0);
+    final double boxDepthMeters = inchesToMeters(72.0);
+
+    final double centerX = FIELD_LENGTH_METERS * 0.5;
+    final double centerY = FIELD_WIDTH_METERS * 0.5;
+
+    final double minX = centerX - boxWidthMeters * 0.5;
+    final double minY = centerY - boxDepthMeters * 0.5;
+
+    // 34 x 12 grid => 408 FUEL, matching the manual's "360 to 408" NEUTRAL ZONE range when robots
+    // are not preloaded.
+    final int cols = 34;
+    final int rows = 12;
+    final double cellX = boxWidthMeters / (cols + 1);
+    final double cellY = boxDepthMeters / (rows + 1);
+
+    for (int i = 0; i < cols; i++) {
+      for (int j = 0; j < rows; j++) {
+        final double x = minX + (i + 1) * cellX;
+        final double y = minY + (j + 1) * cellY;
+        spawnPiece(new Translation2d(x, y));
+      }
+    }
   }
 
   /**
@@ -194,26 +252,43 @@ public class GamePieceSim extends SubsystemBase {
     final double dtSeconds = clamp(nowSeconds - lastTimestampSeconds, 0.005, 0.03);
     lastTimestampSeconds = nowSeconds;
 
-    Pose2d robotPose = resolveAndApplyRobotFieldCollisions(robotPoseSupplier.get(), dtSeconds);
+    // Read, but do not modify, the robot pose. All pose authority stays with the drive subsystem.
+    Pose2d robotPose2d = robotPoseSupplier.get();
 
-    // Keep held piece attached to robot.
-    updateHeldPose(robotPose);
+    // Update vertical robot dynamics (gravity, suspension, simple "air time") using the
+    // drive-provided planar pose as the base.
+    final double robotPlanarSpeedMetersPerSec =
+        estimateRobotPlanarSpeedMetersPerSec(robotPose2d, dtSeconds);
+    final double supportHeightMeters = getRobotSupportHeightMeters(robotPose2d);
+    updateRobotVerticalDynamics(supportHeightMeters, robotPlanarSpeedMetersPerSec, dtSeconds);
+
+    // Compose a Pose3d for visualization and any 3D consumers.
+    Pose3d robotPose =
+        new Pose3d(
+            new Translation3d(
+                robotPose2d.getTranslation().getX(),
+                robotPose2d.getTranslation().getY(),
+                robotZMeters),
+            new Rotation3d(0.0, 0.0, robotPose2d.getRotation().getRadians()));
+
+    // Keep held piece attached to robot (planar pose is sufficient for XY intake/muzzle offsets).
+    updateHeldPose(robotPose2d);
 
     // Intake captures a nearby piece if robot has none held.
     if (heldPiece == null && intakeActiveSupplier.getAsBoolean()) {
-      attemptPickup(robotPose);
+      attemptPickup(robotPose2d);
     }
 
     // Fire held piece on rising edge of shooter "firing" state.
     final boolean shooterNow = shooterFiringSupplier.getAsBoolean();
     if (heldPiece != null && shooterNow && !previousShooterState) {
-      launchHeldPiece(robotPose);
+      launchHeldPiece(robotPose2d);
     }
     previousShooterState = shooterNow;
 
     integratePieceMotion(dtSeconds);
     resolvePieceCollisions();
-    resolveRobotCollision(robotPose);
+    resolveRobotCollision(robotPose2d);
     resolveFieldStructureCollisions();
     clampPiecesToField();
     resolveScoring();
@@ -503,41 +578,6 @@ public class GamePieceSim extends SubsystemBase {
     }
   }
 
-  /**
-   * Resolves robot-vs-field penetration and applies pose correction back into drive sim when
-   * needed.
-   */
-  private Pose2d resolveAndApplyRobotFieldCollisions(Pose2d inputPose, double dtSeconds) {
-    final double robotPlanarSpeedMetersPerSec =
-        estimateRobotPlanarSpeedMetersPerSec(inputPose, dtSeconds);
-    Pose2d correctedPose = inputPose;
-    for (int pass = 0; pass < ROBOT_COLLISION_SOLVER_PASSES; pass++) {
-      Translation2d push = new Translation2d();
-      for (FieldCollider collider : fieldColliders) {
-        final Translation2d mtv = computeRobotAabbMtv(correctedPose, collider);
-        if (mtv.getNorm() > 0.0) {
-          if (collider.robotCollisionBehavior == RobotCollisionBehavior.TRAVERSABLE_SURFACE) {
-            continue;
-          }
-          push = push.plus(mtv);
-        }
-      }
-      if (push.getNorm() < ROBOT_COLLISION_EPSILON_METERS) {
-        break;
-      }
-      correctedPose =
-          new Pose2d(correctedPose.getTranslation().plus(push), correctedPose.getRotation());
-    }
-
-    if (correctedPose.getTranslation().getDistance(inputPose.getTranslation())
-        > ROBOT_COLLISION_EPSILON_METERS) {
-      robotPoseSetter.accept(correctedPose);
-    }
-    final double supportHeightMeters = getRobotSupportHeightMeters(correctedPose);
-    updateRobotVerticalDynamics(supportHeightMeters, robotPlanarSpeedMetersPerSec, dtSeconds);
-    return correctedPose;
-  }
-
   /** Estimates robot planar speed from successive poses. */
   private double estimateRobotPlanarSpeedMetersPerSec(Pose2d currentPose, double dtSeconds) {
     final double speed;
@@ -776,12 +816,9 @@ public class GamePieceSim extends SubsystemBase {
             RobotCollisionBehavior.BLOCKING));
   }
 
-  /** Emits 3D piece poses and counts for AdvantageScope visual replay/debugging. */
+  /** Emits 3D robot and piece poses plus counts for AdvantageScope visual replay/debugging. */
   private void logOutputs() {
-    final List<Pose3d> ground = new ArrayList<>();
-    final List<Pose3d> airborne = new ArrayList<>();
-    Pose3d held = new Pose3d();
-    boolean hasHeld = false;
+    final List<Pose3d> activePieces = new ArrayList<>();
     int scoredCount = 0;
 
     for (PieceState piece : pieces) {
@@ -789,23 +826,18 @@ public class GamePieceSim extends SubsystemBase {
         scoredCount++;
         continue;
       }
-      final Pose3d pose = toPose3d(piece);
-      if (piece.held) {
-        held = pose;
-        hasHeld = true;
-      } else if (piece.zMeters > 0.04) {
-        airborne.add(pose);
-      } else {
-        ground.add(pose);
-      }
+      activePieces.add(toPose3d(piece));
     }
 
-    Logger.recordOutput("GamePieceSim/GroundPieces", ground.toArray(new Pose3d[0]));
-    Logger.recordOutput("GamePieceSim/AirbornePieces", airborne.toArray(new Pose3d[0]));
-    Logger.recordOutput("GamePieceSim/HasHeldPiece", hasHeld);
-    if (hasHeld) {
-      Logger.recordOutput("GamePieceSim/HeldPiece", held);
-    }
+    // Log robot Pose3d for combined robot + game piece visualization.
+    Pose2d basePose = robotPoseSupplier.get();
+    Logger.recordOutput(
+        "GamePieceSim/RobotPose",
+        new Pose3d(
+            new Translation3d(basePose.getX(), basePose.getY(), robotZMeters),
+            new Rotation3d(0.0, 0.0, basePose.getRotation().getRadians())));
+
+    Logger.recordOutput("GamePieceSim/Pieces", activePieces.toArray(new Pose3d[0]));
     Logger.recordOutput("GamePieceSim/ScoredCount", scoredCount);
     Logger.recordOutput("GamePieceSim/TotalCount", pieces.size());
   }
