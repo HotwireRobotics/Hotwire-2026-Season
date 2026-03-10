@@ -28,6 +28,9 @@ public class LuminalIndicators extends SubsystemBase {
     AUTONOMOUS,
     ACTIVE,
     INACTIVE,
+    DISABLED,
+    ENABLED,
+    EMERGENCY,
   }
 
   private final HashMap<Event, Supplier<SolidColor>> color;
@@ -48,8 +51,18 @@ public class LuminalIndicators extends SubsystemBase {
     candle.getConfigurator().apply(config);
 
     color = new HashMap<>();
-    color.put(Event.ACTIVE, toggle(Constants.Indication.LEDColor(0, 255, 0), Constants.Indication.LEDColor(0, 0, 0), Hertz.of(0.667)));
-    color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(255, 0, 0));
+    color.put(Event.DISABLED, toggle(
+      Constants.Indication.LEDColor(0, 255, 0), 
+      Constants.Indication.LEDColor(0,  0,  0), 
+      Hertz.of(0.5)
+    ));
+    color.put(Event.ENABLED, toggle(
+      Constants.Indication.LEDColor(0, 255, 0), 
+      Constants.Indication.LEDColor(0,  0,  0), 
+      Hertz.of(0.5)
+    ));
+    color.put(Event.INACTIVE,   () -> Constants.Indication.LEDColor(180, 0, 0));
+    color.put(Event.EMERGENCY,  () -> Constants.Indication.LEDColor(255, 0, 0));
     color.put(Event.AUTONOMOUS, () -> Constants.Indication.LEDColor(20, 20, 150));
 
     timer.start();
@@ -79,13 +92,22 @@ public class LuminalIndicators extends SubsystemBase {
   public void indicatorPipeline(Time time, boolean toggle) {
     Logger.recordOutput("Indicators/time", time);
 
+    if (DriverStation.isEStopped()) {
+      updateLEDs(getRequest(Event.EMERGENCY).get());
+    }
+
     if (DriverStation.isAutonomous()) {
       updateLEDs(getRequest(Event.AUTONOMOUS).get());
     } else {
-      if (Constants.Indication.autonomousVictory()) {
-        updateLEDs(getRequest(Event.INACTIVE).get());
+      // if (Constants.Indication.autonomousVictory()) {
+      //   updateLEDs(getRequest(Event.INACTIVE).get());
+      // } else {
+      //   updateLEDs(getRequest(Event.ACTIVE).get());
+      // }
+      if (DriverStation.isEnabled()) {
+        updateLEDs(getRequest(Event.ENABLED).get());
       } else {
-        updateLEDs(getRequest(Event.ACTIVE).get());
+        updateLEDs(getRequest(Event.DISABLED).get());
       }
     }
   }
