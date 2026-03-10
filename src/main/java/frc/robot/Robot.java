@@ -80,6 +80,13 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
+    // In sim/replay, silence repeated "joystick not available" warnings when no controller is
+    // plugged in
+    if (Constants.currentMode == Constants.Mode.SIM
+        || Constants.currentMode == Constants.Mode.REPLAY) {
+      DriverStation.silenceJoystickConnectionWarning(true);
+    }
+
     robotContainer = new RobotContainer();
     switch (Constants.currentMode) {
       case REAL:

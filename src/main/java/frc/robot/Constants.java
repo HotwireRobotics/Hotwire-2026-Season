@@ -112,14 +112,16 @@ public final class Constants {
   public static final Translation2d middle = new Translation2d(Meters.of(8.27), Meters.of(4.01));
 
   public static Pose2d flipAlliance(Pose2d pose) {
-    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    if (alliance.equals(Alliance.Red)) {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
   }
 
   public static Angle flipAlliance(Angle angle) {
-    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    if (alliance.equals(Alliance.Red)) {
       return angle.plus(Degrees.of(180));
     }
     return angle;
