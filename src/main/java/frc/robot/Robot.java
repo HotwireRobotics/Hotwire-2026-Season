@@ -146,6 +146,10 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
+    // Log driver and operator controller state to debug axis/button mappings.
+    Constants.Joysticks.driver.log("Driver");
+    Constants.Joysticks.operator.log("Operator");
+
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
     CommandScheduler.getInstance().run();

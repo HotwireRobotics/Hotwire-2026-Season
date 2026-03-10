@@ -186,15 +186,19 @@ public class GamePieceSim extends SubsystemBase {
             : DEPOT_CENTER_Y_FROM_SCORING_TABLE_METERS;
     final Translation2d center = new Translation2d(depotCenterX, depotCenterY);
 
-    final int cols = 6;
-    final int rows = 4;
-    final double cellX = DEPOT_DEPTH_METERS / cols;
-    final double cellY = DEPOT_WIDTH_METERS / rows;
+    // Leave a one-radius margin from the steel rails so FUEL clearly appear inside the DEPOT.
+    final double usableDepth = Math.max(0.0, DEPOT_DEPTH_METERS - 2.0 * PIECE_RADIUS_METERS);
+    final double usableWidth = Math.max(0.0, DEPOT_WIDTH_METERS - 2.0 * PIECE_RADIUS_METERS);
+
+    final int cols = 6; // along depth (x)
+    final int rows = 4; // along width (y)
+    final double cellX = usableDepth / cols;
+    final double cellY = usableWidth / rows;
 
     for (int i = 0; i < cols; i++) {
       for (int j = 0; j < rows; j++) {
-        final double localX = -DEPOT_DEPTH_METERS * 0.5 + (i + 0.5) * cellX;
-        final double localY = -DEPOT_WIDTH_METERS * 0.5 + (j + 0.5) * cellY;
+        final double localX = -usableDepth * 0.5 + (i + 0.5) * cellX;
+        final double localY = -usableWidth * 0.5 + (j + 0.5) * cellY;
         spawnPiece(center.plus(new Translation2d(localX, localY)));
       }
     }
@@ -205,29 +209,30 @@ public class GamePieceSim extends SubsystemBase {
    * box centered on the field.
    */
   private void spawnNeutralZoneFuel() {
-    final double boxWidthMeters = inchesToMeters(206.0);
-    final double boxDepthMeters = inchesToMeters(72.0);
+    // Manual: bounding box is 206in wide and 72in deep around the CENTER LINE.
+    // Interpret 72in as field-length (x) depth, 206in as field-width (y) span.
+    final double boxDepthX = inchesToMeters(72.0);
+    final double boxWidthY = inchesToMeters(206.0);
 
     final double centerX = FIELD_LENGTH_METERS * 0.5;
     final double centerY = FIELD_WIDTH_METERS * 0.5;
 
-    final double minX = centerX - boxWidthMeters * 0.5;
-    final double minY = centerY - boxDepthMeters * 0.5;
+    final double minX = centerX - boxDepthX * 0.5;
+    final double minY = centerY - boxWidthY * 0.5;
 
-    // Perfect-packing scenario: fit as many FUEL as possible in a clean grid.
-    // Each FUEL is 5.91in in diameter, so:
-    //  - Along width: floor(206 / 5.91) = 34 columns
-    //  - Along depth: floor(72 / 5.91)  = 12 rows
-    // => 34 x 12 = 408 FUEL capacity, which matches the manual's upper bound for NEUTRAL ZONE FUEL.
-    final int cols = 34;
-    final int rows = 12;
-    final double cellX = boxWidthMeters / cols;
-    final double cellY = boxDepthMeters / rows;
+    // Perfect-packing scenario with FUEL of 5.91in diameter:
+    //  - Along x (depth): floor(72 / 5.91)  = 12 rows
+    //  - Along y (width): floor(206 / 5.91) = 34 columns
+    // => 12 x 34 = 408 FUEL capacity, matching the manual's upper bound.
+    final int rowsX = 12;
+    final int colsY = 34;
+    final double cellX = boxDepthX / rowsX;
+    final double cellY = boxWidthY / colsY;
 
-    for (int i = 0; i < cols; i++) {
-      for (int j = 0; j < rows; j++) {
-        final double x = minX + (i + 0.5) * cellX;
-        final double y = minY + (j + 0.5) * cellY;
+    for (int ix = 0; ix < rowsX; ix++) {
+      for (int iy = 0; iy < colsY; iy++) {
+        final double x = minX + (ix + 0.5) * cellX;
+        final double y = minY + (iy + 0.5) * cellY;
         spawnPiece(new Translation2d(x, y));
       }
     }
