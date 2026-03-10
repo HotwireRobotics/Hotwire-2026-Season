@@ -188,6 +188,7 @@ public class RobotContainer {
     gamePieceSim =
         new GamePieceSim(
             drive::getPose,
+            drive::setPose,
             () -> String.valueOf(intake.getState()).equals("INTAKING"),
             () -> String.valueOf(shooter.getState()).equals("FIRING"),
             () -> Constants.currentMode == Constants.Mode.SIM);

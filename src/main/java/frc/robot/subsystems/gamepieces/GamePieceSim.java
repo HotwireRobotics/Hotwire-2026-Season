@@ -13,6 +13,7 @@ import frc.robot.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -30,33 +31,80 @@ import org.littletonrobotics.junction.Logger;
  * </ul>
  */
 public class GamePieceSim extends SubsystemBase {
-  private static final double FIELD_LENGTH_METERS = 16.54;
-  private static final double FIELD_WIDTH_METERS = 8.21;
-  // REBUILT (2026) FUEL is 5.91 in (15.0 cm) diameter => 2.955 in radius.
-  private static final double PIECE_RADIUS_METERS = 0.075057;
+  // REBUILT manual dimensions (section 5), expressed from exact inches.
+  private static final double FIELD_LENGTH_METERS = inchesToMeters(651.2);
+  private static final double FIELD_WIDTH_METERS = inchesToMeters(317.7);
+  // REBUILT (2026) FUEL is 5.91 in diameter => 2.955 in radius.
+  private static final double PIECE_RADIUS_METERS = inchesToMeters(2.955);
   // User-provided robot footprint: 33 in x 33 in.
-  private static final double ROBOT_HALF_LENGTH_METERS = 0.4191;
-  private static final double ROBOT_HALF_WIDTH_METERS = 0.4191;
+  private static final double ROBOT_HALF_LENGTH_METERS = inchesToMeters(16.5);
+  private static final double ROBOT_HALF_WIDTH_METERS = inchesToMeters(16.5);
   private static final double ROBOT_COLLISION_HEIGHT_METERS = 0.35;
 
   // REBUILT element dimensions (manual section 5.x), modeled as simple 2D blockers with height.
-  private static final double HUB_SIZE_METERS = 1.1938; // 47 in
-  private static final double HUB_HEIGHT_METERS = 1.20; // Approximate rigid body height
-  private static final double BUMP_WIDTH_METERS = 1.8542; // 73.0 in
-  private static final double BUMP_DEPTH_METERS = 1.1280; // 44.4 in
-  private static final double BUMP_HEIGHT_METERS = 0.1654; // 6.513 in
-  private static final double TOWER_WIDTH_METERS = 1.2510; // 49.25 in
-  private static final double TOWER_DEPTH_METERS = 1.1430; // 45.0 in
-  private static final double TOWER_HEIGHT_METERS = 1.9880; // 78.25 in
-  private static final double TRENCH_WIDTH_METERS = 1.6680; // 65.65 in
-  private static final double TRENCH_DEPTH_METERS = 1.1940; // 47.0 in
-  private static final double TRENCH_HEIGHT_METERS = 1.0220; // 40.25 in
-  private static final double DEPOT_WIDTH_METERS = 1.0700; // 42.0 in
-  private static final double DEPOT_DEPTH_METERS = 0.6860; // 27.0 in
-  private static final double DEPOT_HEIGHT_METERS = 0.0286; // 1.125 in
-  private static final double OUTPOST_WIDTH_METERS = 0.9080; // 35.8 in corral width
-  private static final double OUTPOST_DEPTH_METERS = 0.9550; // 37.6 in corral depth
-  private static final double OUTPOST_HEIGHT_METERS = 0.2060; // 8.13 in
+  private static final double HUB_SIZE_METERS = inchesToMeters(47.0);
+  private static final double HUB_HEIGHT_METERS = inchesToMeters(72.0); // opening front edge height
+  private static final double HUB_TO_BUMP_CENTER_OFFSET_Y_METERS = inchesToMeters(58.41);
+  private static final double BUMP_WIDTH_METERS = inchesToMeters(73.0);
+  private static final double BUMP_DEPTH_METERS = inchesToMeters(44.4);
+  private static final double BUMP_HEIGHT_METERS = inchesToMeters(6.513);
+  private static final double TOWER_WIDTH_METERS = inchesToMeters(49.25);
+  private static final double TOWER_DEPTH_METERS = inchesToMeters(45.0);
+  private static final double TOWER_HEIGHT_METERS = inchesToMeters(78.25);
+  private static final double TRENCH_WIDTH_METERS = inchesToMeters(65.65);
+  private static final double TRENCH_DEPTH_METERS = inchesToMeters(47.0);
+  private static final double TRENCH_HEIGHT_METERS = inchesToMeters(40.25);
+  private static final double DEPOT_WIDTH_METERS = inchesToMeters(42.0);
+  private static final double DEPOT_DEPTH_METERS = inchesToMeters(27.0);
+  private static final double DEPOT_HEIGHT_METERS = inchesToMeters(1.125);
+  private static final double DEPOT_CENTER_Y_FROM_SCORING_TABLE_METERS = inchesToMeters(87.38);
+  private static final double OUTPOST_WIDTH_METERS = inchesToMeters(35.8); // corral width
+  private static final double OUTPOST_DEPTH_METERS = inchesToMeters(37.6); // corral depth
+  private static final double OUTPOST_HEIGHT_METERS = inchesToMeters(8.13);
+  private static final double PERIMETER_WALL_THICKNESS_METERS = inchesToMeters(2.0);
+  private static final double PERIMETER_WALL_HEIGHT_METERS = inchesToMeters(72.0);
+  private static final double ROBOT_COLLISION_EPSILON_METERS = 1e-4;
+  private static final int ROBOT_COLLISION_SOLVER_PASSES = 4;
+  private static final double ROBOT_Z_SPRING_GAIN = 120.0;
+  private static final double ROBOT_Z_DAMPING_GAIN = 18.0;
+  private static final double ROBOT_AIR_LAUNCH_SPEED_THRESHOLD_METERS_PER_SEC = 1.2;
+  private static final double ROBOT_EDGE_LAUNCH_GAIN = 0.15;
+  // Official FE-2026 field drawing (sheet 11) AprilTag coordinate anchors, welded perimeter.
+  private static final double[][] BLUE_HUB_TAGS_INCHES = {
+    {182.11, 135.09},
+    {205.87, 144.84},
+    {205.87, 158.84},
+    {182.11, 182.60},
+    {168.11, 182.60},
+    {158.34, 172.84},
+    {158.34, 158.84},
+    {168.11, 135.09}
+  };
+  private static final double[][] RED_HUB_TAGS_INCHES = {
+    {469.11, 182.60},
+    {445.35, 172.84},
+    {445.35, 158.84},
+    {469.11, 135.09},
+    {483.11, 135.09},
+    {492.88, 144.84},
+    {492.88, 158.84},
+    {483.11, 182.60}
+  };
+
+  private static final double[][] BLUE_TRENCH_LOW_TAGS_INCHES = {{183.59, 25.37}, {180.64, 25.37}};
+  private static final double[][] BLUE_TRENCH_HIGH_TAGS_INCHES = {
+    {183.59, 292.31}, {180.64, 292.31}
+  };
+  private static final double[][] RED_TRENCH_LOW_TAGS_INCHES = {{467.64, 25.37}, {470.59, 25.37}};
+  private static final double[][] RED_TRENCH_HIGH_TAGS_INCHES = {
+    {467.64, 292.31}, {470.59, 292.31}
+  };
+
+  private static final double[][] BLUE_OUTPOST_TAGS_INCHES = {{0.30, 26.22}, {0.30, 43.22}};
+  private static final double[][] RED_OUTPOST_TAGS_INCHES = {{650.92, 291.47}, {650.92, 274.47}};
+
+  private static final double[][] BLUE_TOWER_TAGS_INCHES = {{0.32, 147.47}, {0.32, 164.47}};
+  private static final double[][] RED_TOWER_TAGS_INCHES = {{650.90, 170.22}, {650.90, 153.22}};
   private static final double PIECE_RESTITUTION = 0.45;
   private static final double WALL_RESTITUTION = 0.6;
   private static final double STRUCTURE_RESTITUTION = 0.35;
@@ -69,6 +117,7 @@ public class GamePieceSim extends SubsystemBase {
   private static final double SHOOT_UP_SPEED_METERS_PER_SEC = 2.75;
 
   private final Supplier<Pose2d> robotPoseSupplier;
+  private final Consumer<Pose2d> robotPoseSetter;
   private final BooleanSupplier intakeActiveSupplier;
   private final BooleanSupplier shooterFiringSupplier;
   private final BooleanSupplier simEnabledSupplier;
@@ -78,21 +127,28 @@ public class GamePieceSim extends SubsystemBase {
   private PieceState heldPiece = null;
   private boolean previousShooterState = false;
   private double lastTimestampSeconds = 0.0;
+  private double robotZMeters = 0.0;
+  private double robotVzMetersPerSec = 0.0;
+  private double lastRobotSupportHeightMeters = 0.0;
+  private Pose2d previousRobotPose = null;
 
   /**
    * Creates the game piece simulation model.
    *
    * @param robotPoseSupplier current robot pose supplier
+   * @param robotPoseSetter robot pose override callback (used to push robot out of field colliders)
    * @param intakeActiveSupplier true when intake should pick up pieces
    * @param shooterFiringSupplier true when shooter should launch held piece
    * @param simEnabledSupplier true when simulation updates should run
    */
   public GamePieceSim(
       Supplier<Pose2d> robotPoseSupplier,
+      Consumer<Pose2d> robotPoseSetter,
       BooleanSupplier intakeActiveSupplier,
       BooleanSupplier shooterFiringSupplier,
       BooleanSupplier simEnabledSupplier) {
     this.robotPoseSupplier = robotPoseSupplier;
+    this.robotPoseSetter = robotPoseSetter;
     this.intakeActiveSupplier = intakeActiveSupplier;
     this.shooterFiringSupplier = shooterFiringSupplier;
     this.simEnabledSupplier = simEnabledSupplier;
@@ -138,7 +194,7 @@ public class GamePieceSim extends SubsystemBase {
     final double dtSeconds = clamp(nowSeconds - lastTimestampSeconds, 0.005, 0.03);
     lastTimestampSeconds = nowSeconds;
 
-    final Pose2d robotPose = robotPoseSupplier.get();
+    Pose2d robotPose = resolveAndApplyRobotFieldCollisions(robotPoseSupplier.get(), dtSeconds);
 
     // Keep held piece attached to robot.
     updateHeldPose(robotPose);
@@ -447,6 +503,111 @@ public class GamePieceSim extends SubsystemBase {
     }
   }
 
+  /**
+   * Resolves robot-vs-field penetration and applies pose correction back into drive sim when
+   * needed.
+   */
+  private Pose2d resolveAndApplyRobotFieldCollisions(Pose2d inputPose, double dtSeconds) {
+    final double robotPlanarSpeedMetersPerSec =
+        estimateRobotPlanarSpeedMetersPerSec(inputPose, dtSeconds);
+    Pose2d correctedPose = inputPose;
+    for (int pass = 0; pass < ROBOT_COLLISION_SOLVER_PASSES; pass++) {
+      Translation2d push = new Translation2d();
+      for (FieldCollider collider : fieldColliders) {
+        final Translation2d mtv = computeRobotAabbMtv(correctedPose, collider);
+        if (mtv.getNorm() > 0.0) {
+          if (collider.robotCollisionBehavior == RobotCollisionBehavior.TRAVERSABLE_SURFACE) {
+            continue;
+          }
+          push = push.plus(mtv);
+        }
+      }
+      if (push.getNorm() < ROBOT_COLLISION_EPSILON_METERS) {
+        break;
+      }
+      correctedPose =
+          new Pose2d(correctedPose.getTranslation().plus(push), correctedPose.getRotation());
+    }
+
+    if (correctedPose.getTranslation().getDistance(inputPose.getTranslation())
+        > ROBOT_COLLISION_EPSILON_METERS) {
+      robotPoseSetter.accept(correctedPose);
+    }
+    final double supportHeightMeters = getRobotSupportHeightMeters(correctedPose);
+    updateRobotVerticalDynamics(supportHeightMeters, robotPlanarSpeedMetersPerSec, dtSeconds);
+    return correctedPose;
+  }
+
+  /** Estimates robot planar speed from successive poses. */
+  private double estimateRobotPlanarSpeedMetersPerSec(Pose2d currentPose, double dtSeconds) {
+    final double speed;
+    if (previousRobotPose == null || dtSeconds <= 1e-5) {
+      speed = 0.0;
+    } else {
+      speed =
+          currentPose.getTranslation().getDistance(previousRobotPose.getTranslation()) / dtSeconds;
+    }
+    previousRobotPose = currentPose;
+    return speed;
+  }
+
+  /** Returns top surface height of any traversable collider under robot footprint overlap. */
+  private double getRobotSupportHeightMeters(Pose2d robotPose) {
+    double support = 0.0;
+    for (FieldCollider collider : fieldColliders) {
+      if (collider.robotCollisionBehavior != RobotCollisionBehavior.TRAVERSABLE_SURFACE) {
+        continue;
+      }
+      if (computeRobotAabbMtv(robotPose, collider).getNorm() > 0.0) {
+        support = Math.max(support, collider.heightMeters);
+      }
+    }
+    return support;
+  }
+
+  /**
+   * Integrates a simple vertical suspension model so traversing obstacles can produce brief
+   * airborne behavior instead of always pinning to z=0.
+   */
+  private void updateRobotVerticalDynamics(
+      double supportHeightMeters, double planarSpeedMetersPerSec, double dtSeconds) {
+    if (dtSeconds <= 1e-5) {
+      return;
+    }
+
+    final double supportDropMeters = lastRobotSupportHeightMeters - supportHeightMeters;
+    if (supportDropMeters > 0.0
+        && planarSpeedMetersPerSec > ROBOT_AIR_LAUNCH_SPEED_THRESHOLD_METERS_PER_SEC) {
+      final double launchVz = (supportDropMeters / dtSeconds) * ROBOT_EDGE_LAUNCH_GAIN;
+      robotVzMetersPerSec = Math.max(robotVzMetersPerSec, launchVz);
+    }
+    lastRobotSupportHeightMeters = supportHeightMeters;
+
+    final double springForce = ROBOT_Z_SPRING_GAIN * (supportHeightMeters - robotZMeters);
+    final double dampingForce = ROBOT_Z_DAMPING_GAIN * robotVzMetersPerSec;
+    final double az = springForce - dampingForce - GRAVITY_METERS_PER_SEC2;
+    robotVzMetersPerSec += az * dtSeconds;
+    robotZMeters += robotVzMetersPerSec * dtSeconds;
+
+    // Contact constraint: traversable surfaces and floor are non-penetrating supports.
+    if (robotZMeters < supportHeightMeters) {
+      robotZMeters = supportHeightMeters;
+      if (robotVzMetersPerSec < 0.0) {
+        robotVzMetersPerSec = 0.0;
+      }
+    }
+    if (robotZMeters < 0.0) {
+      robotZMeters = 0.0;
+      if (robotVzMetersPerSec < 0.0) {
+        robotVzMetersPerSec = 0.0;
+      }
+    }
+
+    Logger.recordOutput("GamePieceSim/RobotZMeters", robotZMeters);
+    Logger.recordOutput("GamePieceSim/RobotVzMetersPerSec", robotVzMetersPerSec);
+    Logger.recordOutput("GamePieceSim/RobotSupportHeightMeters", supportHeightMeters);
+  }
+
   /** Marks projectile pieces as scored when they pass through the hub/tower area. */
   private void resolveScoring() {
     final Translation2d hubLocation = Constants.Poses.hub.getTranslation();
@@ -466,97 +627,153 @@ public class GamePieceSim extends SubsystemBase {
   /** Builds a set of simplified static colliders for major field objects on both alliances. */
   private void buildFieldColliders() {
     fieldColliders.clear();
+    addPerimeterWallColliders();
     addAllianceFieldColliders(false); // blue side
     addAllianceFieldColliders(true); // red side
+  }
+
+  /** Adds four perimeter wall colliders so field borders are physical objects too. */
+  private void addPerimeterWallColliders() {
+    final double wallHalfThickness = PERIMETER_WALL_THICKNESS_METERS * 0.5;
+
+    // Blue alliance wall (x = 0 side)
+    fieldColliders.add(
+        new FieldCollider(
+            new Translation2d(-wallHalfThickness, FIELD_WIDTH_METERS * 0.5),
+            wallHalfThickness,
+            FIELD_WIDTH_METERS * 0.5,
+            PERIMETER_WALL_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
+    // Red alliance wall (x = field length side)
+    fieldColliders.add(
+        new FieldCollider(
+            new Translation2d(FIELD_LENGTH_METERS + wallHalfThickness, FIELD_WIDTH_METERS * 0.5),
+            wallHalfThickness,
+            FIELD_WIDTH_METERS * 0.5,
+            PERIMETER_WALL_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
+    // Scoring table side guardrail (y = 0 side)
+    fieldColliders.add(
+        new FieldCollider(
+            new Translation2d(FIELD_LENGTH_METERS * 0.5, -wallHalfThickness),
+            FIELD_LENGTH_METERS * 0.5,
+            wallHalfThickness,
+            PERIMETER_WALL_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
+    // Audience side guardrail (y = field width side)
+    fieldColliders.add(
+        new FieldCollider(
+            new Translation2d(FIELD_LENGTH_METERS * 0.5, FIELD_WIDTH_METERS + wallHalfThickness),
+            FIELD_LENGTH_METERS * 0.5,
+            wallHalfThickness,
+            PERIMETER_WALL_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
   }
 
   /**
    * Adds one alliance's structures using known/derived locations.
    *
-   * <p>Positions are approximations based on 2026 manual dimensions and current field constants.
+   * <p>Dimensions are from 2026 manual section 5. Positions use known manual anchors and current
+   * field constants where full global dimension chains are not text-extracted.
    */
   private void addAllianceFieldColliders(boolean redAlliance) {
-    final Pose2d hubPose =
-        redAlliance
-            ? Constants.flipAlliance(new Pose2d(4.625594, 3.965, Rotation2d.k180deg))
-            : new Pose2d(4.625594, 3.965, Rotation2d.k180deg);
-    final Pose2d towerPose =
-        redAlliance
-            ? Constants.flipAlliance(new Pose2d(1.5653, 4.146, Rotation2d.k180deg))
-            : new Pose2d(1.5653, 4.146, Rotation2d.k180deg);
+    final Translation2d hubCenter =
+        averageTagCoordinateInches(redAlliance ? RED_HUB_TAGS_INCHES : BLUE_HUB_TAGS_INCHES);
+    final Translation2d towerCenter =
+        averageTagCoordinateInches(redAlliance ? RED_TOWER_TAGS_INCHES : BLUE_TOWER_TAGS_INCHES);
+    final Translation2d outpostCenter =
+        averageTagCoordinateInches(
+            redAlliance ? RED_OUTPOST_TAGS_INCHES : BLUE_OUTPOST_TAGS_INCHES);
+    final Translation2d trenchLowCenter =
+        averageTagCoordinateInches(
+            redAlliance ? RED_TRENCH_LOW_TAGS_INCHES : BLUE_TRENCH_LOW_TAGS_INCHES);
+    final Translation2d trenchHighCenter =
+        averageTagCoordinateInches(
+            redAlliance ? RED_TRENCH_HIGH_TAGS_INCHES : BLUE_TRENCH_HIGH_TAGS_INCHES);
 
     // HUB body
     fieldColliders.add(
         new FieldCollider(
-            hubPose.getTranslation(),
+            hubCenter,
             HUB_SIZE_METERS * 0.5,
             HUB_SIZE_METERS * 0.5,
-            HUB_HEIGHT_METERS));
+            HUB_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
 
-    // Two BUMPs around each HUB (modeled as axis-aligned rectangles offset in Y).
-    final double bumpYOffset = HUB_SIZE_METERS * 0.5 + BUMP_WIDTH_METERS * 0.5;
+    // Two BUMPs around each HUB using the drawing reference offset (58.41 in center-to-center).
+    final double bumpYOffset = HUB_TO_BUMP_CENTER_OFFSET_Y_METERS;
     fieldColliders.add(
         new FieldCollider(
-            hubPose.getTranslation().plus(new Translation2d(0.0, bumpYOffset)),
+            hubCenter.plus(new Translation2d(0.0, bumpYOffset)),
             BUMP_DEPTH_METERS * 0.5,
             BUMP_WIDTH_METERS * 0.5,
-            BUMP_HEIGHT_METERS));
+            BUMP_HEIGHT_METERS,
+            RobotCollisionBehavior.TRAVERSABLE_SURFACE));
     fieldColliders.add(
         new FieldCollider(
-            hubPose.getTranslation().plus(new Translation2d(0.0, -bumpYOffset)),
+            hubCenter.plus(new Translation2d(0.0, -bumpYOffset)),
             BUMP_DEPTH_METERS * 0.5,
             BUMP_WIDTH_METERS * 0.5,
-            BUMP_HEIGHT_METERS));
+            BUMP_HEIGHT_METERS,
+            RobotCollisionBehavior.TRAVERSABLE_SURFACE));
 
     // TOWER base/body
     fieldColliders.add(
         new FieldCollider(
-            towerPose.getTranslation(),
+            towerCenter,
             TOWER_DEPTH_METERS * 0.5,
             TOWER_WIDTH_METERS * 0.5,
-            TOWER_HEIGHT_METERS));
+            TOWER_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
 
-    // DEPOT along alliance wall (approximate center: near tower side).
+    // DEPOT along alliance wall using official reference Y chain from drawing sheet 3.
     final double depotCenterX =
         redAlliance ? FIELD_LENGTH_METERS - DEPOT_DEPTH_METERS * 0.5 : DEPOT_DEPTH_METERS * 0.5;
-    final double depotCenterY = towerPose.getY() + 1.0;
+    final double depotCenterY =
+        redAlliance
+            ? FIELD_WIDTH_METERS - DEPOT_CENTER_Y_FROM_SCORING_TABLE_METERS
+            : DEPOT_CENTER_Y_FROM_SCORING_TABLE_METERS;
     fieldColliders.add(
         new FieldCollider(
             new Translation2d(depotCenterX, depotCenterY),
             DEPOT_DEPTH_METERS * 0.5,
             DEPOT_WIDTH_METERS * 0.5,
-            DEPOT_HEIGHT_METERS));
+            DEPOT_HEIGHT_METERS,
+            RobotCollisionBehavior.TRAVERSABLE_SURFACE));
 
-    // OUTPOST corral at both field side edges for this alliance end.
-    final double outpostCenterX =
-        redAlliance ? FIELD_LENGTH_METERS - OUTPOST_DEPTH_METERS * 0.5 : OUTPOST_DEPTH_METERS * 0.5;
+    // OUTPOST corral at both field side edges for this alliance end, anchored by official tag
+    // coordinates.
+    final double outpostCenterX = outpostCenter.getX();
     fieldColliders.add(
         new FieldCollider(
-            new Translation2d(outpostCenterX, OUTPOST_WIDTH_METERS * 0.5),
+            new Translation2d(outpostCenterX, outpostCenter.getY()),
             OUTPOST_DEPTH_METERS * 0.5,
             OUTPOST_WIDTH_METERS * 0.5,
-            OUTPOST_HEIGHT_METERS));
+            OUTPOST_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
     fieldColliders.add(
         new FieldCollider(
-            new Translation2d(outpostCenterX, FIELD_WIDTH_METERS - OUTPOST_WIDTH_METERS * 0.5),
+            new Translation2d(outpostCenterX, FIELD_WIDTH_METERS - outpostCenter.getY()),
             OUTPOST_DEPTH_METERS * 0.5,
             OUTPOST_WIDTH_METERS * 0.5,
-            OUTPOST_HEIGHT_METERS));
+            OUTPOST_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
 
-    // TRENCH arms near guardrails around the neutral-zone depth near HUB.
-    final double trenchCenterX = redAlliance ? FIELD_LENGTH_METERS - 4.50 : 4.50;
+    // TRENCH arms anchored by official tag coordinates.
     fieldColliders.add(
         new FieldCollider(
-            new Translation2d(trenchCenterX, TRENCH_DEPTH_METERS * 0.5),
+            trenchLowCenter,
             TRENCH_WIDTH_METERS * 0.5,
             TRENCH_DEPTH_METERS * 0.5,
-            TRENCH_HEIGHT_METERS));
+            TRENCH_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
     fieldColliders.add(
         new FieldCollider(
-            new Translation2d(trenchCenterX, FIELD_WIDTH_METERS - TRENCH_DEPTH_METERS * 0.5),
+            trenchHighCenter,
             TRENCH_WIDTH_METERS * 0.5,
             TRENCH_DEPTH_METERS * 0.5,
-            TRENCH_HEIGHT_METERS));
+            TRENCH_HEIGHT_METERS,
+            RobotCollisionBehavior.BLOCKING));
   }
 
   /** Emits 3D piece poses and counts for AdvantageScope visual replay/debugging. */
@@ -605,6 +822,104 @@ public class GamePieceSim extends SubsystemBase {
     return Math.max(min, Math.min(max, value));
   }
 
+  /** Converts inches to meters using exact SI scale factor. */
+  private static double inchesToMeters(double inches) {
+    return inches * 0.0254;
+  }
+
+  /** Computes minimum translation vector to separate robot OBB from one field AABB collider. */
+  private static Translation2d computeRobotAabbMtv(Pose2d robotPose, FieldCollider collider) {
+    final Translation2d[] robotPoints = buildRobotCorners(robotPose);
+    final Translation2d[] boxPoints = buildAxisAlignedBoxCorners(collider);
+
+    final Rotation2d robotRotation = robotPose.getRotation();
+    final Translation2d[] axes =
+        new Translation2d[] {
+          new Translation2d(robotRotation.getCos(), robotRotation.getSin()),
+          new Translation2d(-robotRotation.getSin(), robotRotation.getCos()),
+          new Translation2d(1.0, 0.0),
+          new Translation2d(0.0, 1.0)
+        };
+
+    double minOverlap = Double.POSITIVE_INFINITY;
+    Translation2d minAxis = new Translation2d();
+    for (Translation2d axis : axes) {
+      final Projection robotProj = projectOntoAxis(robotPoints, axis);
+      final Projection boxProj = projectOntoAxis(boxPoints, axis);
+      final double overlap =
+          Math.min(robotProj.max, boxProj.max) - Math.max(robotProj.min, boxProj.min);
+      if (overlap <= 0.0) {
+        return new Translation2d();
+      }
+      if (overlap < minOverlap) {
+        minOverlap = overlap;
+        minAxis = axis;
+      }
+    }
+
+    final Translation2d direction = robotPose.getTranslation().minus(collider.center);
+    final double axisSign =
+        direction.getX() * minAxis.getX() + direction.getY() * minAxis.getY() >= 0.0 ? 1.0 : -1.0;
+    return minAxis.times((minOverlap + ROBOT_COLLISION_EPSILON_METERS) * axisSign);
+  }
+
+  /** Builds oriented robot rectangle corners in field coordinates. */
+  private static Translation2d[] buildRobotCorners(Pose2d robotPose) {
+    final double cos = Math.cos(robotPose.getRotation().getRadians());
+    final double sin = Math.sin(robotPose.getRotation().getRadians());
+    final Translation2d center = robotPose.getTranslation();
+    final double hx = ROBOT_HALF_LENGTH_METERS;
+    final double hy = ROBOT_HALF_WIDTH_METERS;
+
+    return new Translation2d[] {
+      center.plus(new Translation2d(hx * cos - hy * sin, hx * sin + hy * cos)),
+      center.plus(new Translation2d(hx * cos + hy * sin, hx * sin - hy * cos)),
+      center.plus(new Translation2d(-hx * cos + hy * sin, -hx * sin - hy * cos)),
+      center.plus(new Translation2d(-hx * cos - hy * sin, -hx * sin + hy * cos))
+    };
+  }
+
+  /** Builds axis-aligned field collider corners in field coordinates. */
+  private static Translation2d[] buildAxisAlignedBoxCorners(FieldCollider collider) {
+    final double minX = collider.center.getX() - collider.halfX;
+    final double maxX = collider.center.getX() + collider.halfX;
+    final double minY = collider.center.getY() - collider.halfY;
+    final double maxY = collider.center.getY() + collider.halfY;
+    return new Translation2d[] {
+      new Translation2d(minX, minY),
+      new Translation2d(maxX, minY),
+      new Translation2d(maxX, maxY),
+      new Translation2d(minX, maxY)
+    };
+  }
+
+  /** Projects polygon points onto a normalized axis. */
+  private static Projection projectOntoAxis(Translation2d[] points, Translation2d axis) {
+    double min = Double.POSITIVE_INFINITY;
+    double max = Double.NEGATIVE_INFINITY;
+    for (Translation2d point : points) {
+      final double dot = point.getX() * axis.getX() + point.getY() * axis.getY();
+      min = Math.min(min, dot);
+      max = Math.max(max, dot);
+    }
+    return new Projection(min, max);
+  }
+
+  /**
+   * Averages XY tag coordinates provided in inches and converts to a field-space Translation2d in
+   * meters.
+   */
+  private static Translation2d averageTagCoordinateInches(double[][] xyInches) {
+    double sumX = 0.0;
+    double sumY = 0.0;
+    for (double[] xy : xyInches) {
+      sumX += xy[0];
+      sumY += xy[1];
+    }
+    return new Translation2d(
+        inchesToMeters(sumX / xyInches.length), inchesToMeters(sumY / xyInches.length));
+  }
+
   /** Internal mutable game piece physics state. */
   private static class PieceState {
     private Translation2d xyMeters;
@@ -626,13 +941,38 @@ public class GamePieceSim extends SubsystemBase {
     private final double halfX;
     private final double halfY;
     private final double heightMeters;
+    private final RobotCollisionBehavior robotCollisionBehavior;
 
     /** Creates a rectangular field collider. */
-    private FieldCollider(Translation2d center, double halfX, double halfY, double heightMeters) {
+    private FieldCollider(
+        Translation2d center,
+        double halfX,
+        double halfY,
+        double heightMeters,
+        RobotCollisionBehavior robotCollisionBehavior) {
       this.center = center;
       this.halfX = halfX;
       this.halfY = halfY;
       this.heightMeters = heightMeters;
+      this.robotCollisionBehavior = robotCollisionBehavior;
+    }
+  }
+
+  /** Controls whether a field collider blocks robot XY or acts as a traversable support surface. */
+  private enum RobotCollisionBehavior {
+    BLOCKING,
+    TRAVERSABLE_SURFACE
+  }
+
+  /** Scalar projection range on one SAT axis. */
+  private static class Projection {
+    private final double min;
+    private final double max;
+
+    /** Creates a projection interval. */
+    private Projection(double min, double max) {
+      this.min = min;
+      this.max = max;
     }
   }
 }
