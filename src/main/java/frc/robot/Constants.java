@@ -60,7 +60,7 @@ public final class Constants {
 
   public static class Indication {
     public static SolidColor LEDColor(int r, int g, int b) {
-      return new SolidColor(0, 67).withColor(new RGBWColor(g, r, b));
+      return new SolidColor(0, 67).withColor(new RGBWColor(r, g, b));
     }
 
     public static boolean autonomousVictory() {

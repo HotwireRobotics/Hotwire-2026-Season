@@ -2,7 +2,10 @@ package frc.robot.subsystems.indication;
 
 import static edu.wpi.first.units.Units.Seconds;
 
+import com.ctre.phoenix6.configs.CANdleConfiguration;
 import com.ctre.phoenix6.controls.ControlRequest;
+import com.ctre.phoenix6.hardware.CANdle;
+import com.ctre.phoenix6.signals.StripTypeValue;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -31,10 +34,15 @@ public class LuminalIndicators extends SubsystemBase {
   /** Constructs indicators with selected IO implementation. */
   public LuminalIndicators(IndicatorsIO io) {
     this.io = io;
+
+    // Configuration
+    CANdleConfiguration config = new CANdleConfiguration();
+    config.LED.StripType = StripTypeValue.GRB;
+
     color = new HashMap<>();
     color.put(Event.ACTIVE, Constants.Indication.LEDColor(0, 255, 0));
     color.put(Event.INACTIVE, Constants.Indication.LEDColor(255, 0, 0));
-    color.put(Event.AUTONOMOUS, Constants.Indication.LEDColor(100, 100, 100));
+    color.put(Event.AUTONOMOUS, Constants.Indication.LEDColor(20, 20, 150));
 
     timer.start();
   }
@@ -65,6 +73,7 @@ public class LuminalIndicators extends SubsystemBase {
 
   public void indicatorPipeline(Time time) {
     Boolean b = (Math.floor(time.in(Seconds)) % 2) == 1;
+    Logger.recordOutput("Indicatiors/b", b);
 
     if (DriverStation.isAutonomous()) {
       updateLEDs(getRequest(Event.AUTONOMOUS));
