@@ -27,6 +27,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.gamepieces.GamePieceSim;
 import frc.robot.subsystems.hopper.HopperIO;
 import frc.robot.subsystems.hopper.HopperIOSim;
 import frc.robot.subsystems.hopper.HopperIOTalonFX;
@@ -56,6 +57,7 @@ public class RobotContainer {
   public final Shooter shooter;
   public final HopperSubsystem hopper;
   public final LuminalIndicators lights;
+  public final GamePieceSim gamePieceSim;
   public double testVelocity = 0;
   private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
   public final BooleanSupplier aligned;
@@ -183,6 +185,12 @@ public class RobotContainer {
     shooter = new Shooter(shooterIO);
     hopper = new HopperSubsystem(hopperIO);
     lights = new LuminalIndicators(indicatorsIO);
+    gamePieceSim =
+        new GamePieceSim(
+            drive::getPose,
+            () -> String.valueOf(intake.getState()).equals("INTAKING"),
+            () -> String.valueOf(shooter.getState()).equals("FIRING"),
+            () -> Constants.currentMode == Constants.Mode.SIM);
 
     velocity =
         () -> {
