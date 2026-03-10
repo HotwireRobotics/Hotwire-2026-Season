@@ -24,11 +24,23 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.hopper.HopperIO;
+import frc.robot.subsystems.hopper.HopperIOSim;
+import frc.robot.subsystems.hopper.HopperIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
+import frc.robot.subsystems.indication.IndicatorsIO;
+import frc.robot.subsystems.indication.IndicatorsIOCANdle;
+import frc.robot.subsystems.indication.IndicatorsIOSim;
 import frc.robot.subsystems.indication.LuminalIndicators;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.Intake.ArmState;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterIO;
+import frc.robot.subsystems.shooter.ShooterIOSim;
+import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -75,6 +87,11 @@ public class RobotContainer {
   Orchestra music = new Orchestra(Filesystem.getDeployDirectory() + "/orchestra/output.chirp");
 
   public RobotContainer() {
+    final IntakeIO intakeIO;
+    final ShooterIO shooterIO;
+    final HopperIO hopperIO;
+    final IndicatorsIO indicatorsIO;
+
     switch (Constants.currentMode) {
       case REAL:
         drive =
@@ -84,6 +101,10 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.FrontRight),
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
+        intakeIO = new IntakeIOTalonFX();
+        shooterIO = new ShooterIOTalonFX();
+        hopperIO = new HopperIOTalonFX();
+        indicatorsIO = new IndicatorsIOCANdle();
         break;
 
       case SIM:
@@ -94,6 +115,10 @@ public class RobotContainer {
                 new ModuleIOSim(TunerConstants.FrontRight),
                 new ModuleIOSim(TunerConstants.BackLeft),
                 new ModuleIOSim(TunerConstants.BackRight));
+        intakeIO = new IntakeIOSim();
+        shooterIO = new ShooterIOSim();
+        hopperIO = new HopperIOSim();
+        indicatorsIO = new IndicatorsIOSim();
         break;
 
       default:
@@ -104,6 +129,10 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+        intakeIO = new IntakeIO() {};
+        shooterIO = new ShooterIO() {};
+        hopperIO = new HopperIO() {};
+        indicatorsIO = new IndicatorsIO() {};
         break;
     }
 
@@ -114,10 +143,10 @@ public class RobotContainer {
               .lt(Constants.Shooter.kAlignmentError);
         };
 
-    intake = new Intake();
-    shooter = new Shooter();
-    hopper = new HopperSubsystem();
-    lights = new LuminalIndicators();
+    intake = new Intake(intakeIO);
+    shooter = new Shooter(shooterIO);
+    hopper = new HopperSubsystem(hopperIO);
+    lights = new LuminalIndicators(indicatorsIO);
 
     velocity =
         () -> {
