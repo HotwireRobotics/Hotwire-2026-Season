@@ -52,7 +52,7 @@ public class LuminalIndicators extends SubsystemBase {
 
     color = new HashMap<>();
     color.put(Event.DISABLED, toggle(
-      Constants.Indication.LEDColor(0, 255, 0), 
+      Constants.Indication.LEDColor(180, 0, 0), 
       Constants.Indication.LEDColor(0,  0,  0), 
       Hertz.of(0.5)
     ));
