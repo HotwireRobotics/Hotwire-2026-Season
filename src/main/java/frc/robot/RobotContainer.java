@@ -152,12 +152,12 @@ public class RobotContainer {
                 return Constants.regress(
                     Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
               } else {
-                return RPM.of(0);
+                return Constants.Shooter.kSpeed;
               }
             case TESTING:
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             default:
-              return RPM.of(0);
+              return Constants.Shooter.kSpeed;
           }
         };
 
