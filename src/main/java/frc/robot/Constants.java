@@ -66,6 +66,7 @@ public final class Constants {
     public static boolean autonomousVictory() {
       String gameData = DriverStation.getGameSpecificMessage();
       Boolean allianceIsRed = DriverStation.getAlliance().get().equals(Alliance.Red);
+      if (gameData.length() < 1) return true;
       switch (gameData.charAt(0)) {
         case 'R':
           return (allianceIsRed);
@@ -149,7 +150,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1480.92838;
+  public static final double base = 1420.92838;
   public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {
