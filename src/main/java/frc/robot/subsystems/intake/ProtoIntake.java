@@ -99,9 +99,12 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
     }
   }
 
-  /** Command for running intake rollers at open-loop speed. */
-  public Command runIntake(double speed) {
-    return Commands.runOnce(() -> runDevice(Device.ROLLERS, speed));
+  public Command runIntake() {
+    return runDevice(Device.ROLLERS, Constants.Intake.kSpeed);
+  }
+
+  public Command stopIntake() {
+    return runDevice(Device.ROLLERS, 0);
   }
 
   /** Command to set arm manual voltage state. */

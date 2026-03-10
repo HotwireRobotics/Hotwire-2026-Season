@@ -4,39 +4,27 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+
 import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 
-public class HopperSubsystem extends SubsystemBase implements Systerface {
+import com.ctre.phoenix6.hardware.TalonFX;
+
+public class HopperSubsystem extends ModularSubsystem implements Systerface {
   private final HopperIO io;
   private final HopperIOInputsAutoLogged inputs = new HopperIOInputsAutoLogged();
-  private double upperSpeedtest;
-  private double lowerSpeedtest;
 
-  // private final SysIdRoutine m_sysIdRoutine;
-  // private final VoltageOut m_voltReq;
-  // private final VelocityVoltage m_velVolt;
+  public enum Device {
+    HOPPER
+  }
 
   /** Constructs hopper with chosen IO implementation. */
   public HopperSubsystem(HopperIO io) {
     this.io = io;
-    upperSpeedtest = SmartDashboard.getNumber("upperSpeed", 0);
-    lowerSpeedtest = SmartDashboard.getNumber("lowerSpeed", 0);
-    SmartDashboard.putNumber("upperSpeed", upperSpeedtest);
-    SmartDashboard.putNumber("lowerSpeed", lowerSpeedtest);
-
-    // m_sysIdRoutine =
-    //     new SysIdRoutine(
-    //         new SysIdRoutine.Config(
-    //         null,
-    //         null,
-    //         null, // Use default config
-    //         (state) -> Logger.recordOutput("Hopper/SysIdTestState", state.toString()),
-    //         new SysIdRoutine.Mechanism(
-    //             null, //change
-    //             null,
-    //             this));
   }
 
   private enum State {
@@ -79,7 +67,7 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
     io.setUpperOpenLoop(speed);
   }
 
-  // public void runLower(double speed) {
-  //   lowerFeed.set(speed);
-  // }
+  public Command stopHopper() {
+    return runDevice(Device.HOPPER, 0);
+  }
 }

@@ -33,10 +33,10 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(0.25);
-    public static final Time kFiringTime = Seconds.of(4.1);
-    public static final Time kUntilAggitateTime = Seconds.of(2);
-    public static AngularVelocity kSpeed = RPM.of(2500);
+    public static final Time kChargeUpTime = Seconds.of(0.05);
+    public static final Time kFiringTime = Seconds.of(3.5);
+    public static final Time kUntilAggitateTime = Seconds.of(1.1);
+    public static final AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
   }
 
@@ -110,7 +110,7 @@ public final class Constants {
     public static final Integer s_feeder = 11;
     public static final Integer s_shooterR = 12;
     public static final Integer s_shooterL = 13;
-    public static final Integer h_hopperU = 14;
+    public static final Integer h_hopper = 14;
     public static final Integer i_arm = 15;
   }
 
