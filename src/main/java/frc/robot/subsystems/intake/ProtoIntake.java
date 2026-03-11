@@ -39,23 +39,6 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
 
   private ArmState armState = ArmState.ZERO;
 
-  public ProtoIntake() {
-    rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    arm = new TalonFX(Constants.MotorIDs.i_arm);
-    defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
-
-    m_PositionVoltage = new PositionVoltage(Degrees.of(0));
-
-    slot = new Slot0Configs();
-    configureProportional(18.0);
-
-    // Configuration
-    arm.setControl(m_PositionVoltage);
-    arm.getConfigurator().apply(slot);
-  }
-
-  public void configureProportional(double kP) {
-    slot.withKP(kP);
   /** Constructs intake with the selected IO implementation. */
   public ProtoIntake(IntakeIO io) {
     this.io = io;
@@ -79,34 +62,12 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
     io.updateInputs(inputs);
     Logger.processInputs("Intake", inputs);
 
-    Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Intake/Rollers/Voltage", rollers.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
-
     if (isActiveDevice(Device.ROLLERS)) {
       state = State.INTAKING;
     } else {
       state = State.STOPPED;
     }
-  }
 
-  // Device control methods
-  /**
-   * Allows you to limit the voltage of the intake rollers
-   *
-   * @param device
-   * @param volts
-   */
-  public void runDeviceVoltage(Device device, double volts) {
-    for (TalonFX d : getDevices(device)) {
-      d.setVoltage(volts);
-    }
     state = rollersActive ? State.INTAKING : State.STOPPED;
     Logger.recordOutput("Intake/State", state.toString());
 
@@ -131,7 +92,13 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
     }
   }
 
-  /** Device voltage control helper. */
+    // Device control methods
+  /**
+   * Allows you to limit the voltage of the intake rollers
+   *
+   * @param device
+   * @param volts
+   */
   public void runDeviceVoltage(Device device, double volts) {
     switch (device) {
       case ROLLERS -> {
@@ -168,8 +135,8 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
   public Command raiseArm() {
     return Commands.runOnce(
         () -> {
-          configureProportional(18.0);
-          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(60)));
+          io.configureArmPositionKp(18.0);
+          io.setArmPositionDegrees(60.0);
         });
   }
 
@@ -177,8 +144,8 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
   public Command lowerArm() {
     return Commands.runOnce(
         () -> {
-          configureProportional(18.0);
-          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
+          io.configureArmPositionKp(18.0);
+          io.setArmPositionDegrees(0.0);
         });
   }
 
@@ -186,8 +153,8 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
   public Command emergency() {
     return Commands.runOnce(
         () -> {
-          configureProportional(28.0);
-          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
+          io.configureArmPositionKp(28.0);
+          io.setArmPositionDegrees(90.0);
         });
   }
 
