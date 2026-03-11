@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ModularSubsystem extends SubsystemBase {
   private final HashMap<Object, Object> devices = new HashMap<Object, Object>();
@@ -47,6 +48,20 @@ public class ModularSubsystem extends SubsystemBase {
             d.set(speed);
           }
           if (speed == 0) {
+            specifyInactiveDevice(device);
+          } else {
+            specifyActiveDevice(device);
+          }
+        });
+  }
+
+  public Command runDevice(Object device, Supplier<Double> speed) {
+    return Commands.runOnce(
+        () -> {
+          for (TalonFX d : getDevices(device)) {
+            d.set(speed.get());
+          }
+          if (speed.get() == 0) {
             specifyInactiveDevice(device);
           } else {
             specifyActiveDevice(device);

@@ -55,16 +55,8 @@ public class HopperSubsystem extends ModularSubsystem implements Systerface {
     //     "Hopper/lowerFeed/Temperature", lowerFeed.getDeviceTemp().getValueAsDouble(), "°C");
   }
 
-  public Command runHopper(double speed) {
-    return Commands.runOnce(() -> io.setUpperOpenLoop(speed));
-  }
-
-  public Command controlHopper(Supplier<Double> speed) {
-    return Commands.runOnce(() -> io.setUpperOpenLoop(speed.get()), this);
-  }
-
-  public void runUpper(double speed) {
-    io.setUpperOpenLoop(speed);
+  public Command runHopper() {
+    return runDevice(Device.HOPPER, Constants.Hopper.kSpeed);
   }
 
   public Command stopHopper() {

@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
 import frc.robot.Systerface;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 /** Intake subsystem with rollers and arm. Implements Systerface for device/sysid integration. */
@@ -101,6 +102,10 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
 
   public Command runIntake() {
     return runDevice(Device.ROLLERS, Constants.Intake.kSpeed);
+  }
+
+  public Command runIntake(Supplier<Boolean> inverse) {
+    return runDevice(Device.ROLLERS, () -> (Constants.Hopper.kSpeed * (inverse.get() ? -1 : 1)));
   }
 
   public Command stopIntake() {
