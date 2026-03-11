@@ -1,8 +1,13 @@
 package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Hertz;
+import static edu.wpi.first.units.Units.Seconds;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Frequency;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -13,6 +18,10 @@ import org.littletonrobotics.junction.Logger;
 /** Intake subsystem with rollers and arm. Implements Systerface for device/sysid integration. */
 public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase implements Systerface {
 
+  public final TalonFX rollers;
+  public final TalonFX arm;
+  private final PositionVoltage m_PositionVoltage;
+  private final Slot0Configs slot;
   private final IntakeIO io;
   private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
   private boolean rollersActive = false;
@@ -53,6 +62,12 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
     io.updateInputs(inputs);
     Logger.processInputs("Intake", inputs);
 
+    if (isActiveDevice(Device.ROLLERS)) {
+      state = State.INTAKING;
+    } else {
+      state = State.STOPPED;
+    }
+
     state = rollersActive ? State.INTAKING : State.STOPPED;
     Logger.recordOutput("Intake/State", state.toString());
 
@@ -77,7 +92,13 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
     }
   }
 
-  /** Device voltage control helper. */
+    // Device control methods
+  /**
+   * Allows you to limit the voltage of the intake rollers
+   *
+   * @param device
+   * @param volts
+   */
   public void runDeviceVoltage(Device device, double volts) {
     switch (device) {
       case ROLLERS -> {
@@ -88,9 +109,12 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
     }
   }
 
-  /** Command for running intake rollers at open-loop speed. */
-  public Command runIntake(double speed) {
-    return Commands.runOnce(() -> runDevice(Device.ROLLERS, speed));
+  public Command runIntake() {
+    return runDevice(Device.ROLLERS, Constants.Intake.kSpeed);
+  }
+
+  public Command stopIntake() {
+    return runDevice(Device.ROLLERS, 0);
   }
 
   /** Command to set arm manual voltage state. */
@@ -100,8 +124,10 @@ public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase im
 
   /** Oscillates the arm up and down at a chosen frequency. */
   public Command occilateArm(Frequency frequency) {
+    Time period = Seconds.of(1 / (2 * frequency.in(Hertz)));
     return new SequentialCommandGroup(
-            lowerArm(), Commands.waitSeconds(1 / frequency.in(Hertz)), raiseArm())
+            lowerArm(), Commands.waitTime(period),
+            raiseArm(), Commands.waitTime(period))
         .repeatedly();
   }
 
