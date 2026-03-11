@@ -11,7 +11,7 @@ import frc.robot.Systerface;
 import org.littletonrobotics.junction.Logger;
 
 /** Intake subsystem with rollers and arm. Implements Systerface for device/sysid integration. */
-public class Intake extends edu.wpi.first.wpilibj2.command.SubsystemBase implements Systerface {
+public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase implements Systerface {
 
   private final IntakeIO io;
   private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
@@ -31,7 +31,7 @@ public class Intake extends edu.wpi.first.wpilibj2.command.SubsystemBase impleme
   private ArmState armState = ArmState.ZERO;
 
   /** Constructs intake with the selected IO implementation. */
-  public Intake(IntakeIO io) {
+  public ProtoIntake(IntakeIO io) {
     this.io = io;
     io.configureArmPositionKp(18.0);
   }

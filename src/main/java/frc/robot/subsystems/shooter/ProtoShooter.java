@@ -19,7 +19,7 @@ import org.littletonrobotics.junction.Logger;
  * (RPS), and voltage control. runShooter runs both wheels; runLeftShooter/runRightShooter run one
  * side for tuning or backup.
  */
-public class Shooter extends edu.wpi.first.wpilibj2.command.SubsystemBase implements Systerface {
+public class ProtoShooter extends edu.wpi.first.wpilibj2.command.SubsystemBase implements Systerface {
   private final ShooterIO io;
   private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
   private final EnumSet<Device> activeDevices = EnumSet.noneOf(Device.class);
@@ -35,7 +35,7 @@ public class Shooter extends edu.wpi.first.wpilibj2.command.SubsystemBase implem
   }
 
   /** Constructs shooter with the selected IO implementation. */
-  public Shooter(ShooterIO io) {
+  public ProtoShooter(ShooterIO io) {
     this.io = io;
 
     m_sysIdRoutineRight =

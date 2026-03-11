@@ -36,12 +36,12 @@ import frc.robot.subsystems.indication.IndicatorsIO;
 import frc.robot.subsystems.indication.IndicatorsIOCANdle;
 import frc.robot.subsystems.indication.IndicatorsIOSim;
 import frc.robot.subsystems.indication.LuminalIndicators;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.Intake.ArmState;
+import frc.robot.subsystems.intake.ProtoIntake;
+import frc.robot.subsystems.intake.ProtoIntake.ArmState;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOTalonFX;
-import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ProtoShooter;
 import frc.robot.subsystems.shooter.ShooterIO;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooter.ShooterIOTalonFX;
@@ -53,8 +53,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   public final Drive drive;
-  public final Intake intake;
-  public final Shooter shooter;
+  public final ProtoIntake intake;
+  public final ProtoShooter shooter;
   public final HopperSubsystem hopper;
   public final LuminalIndicators lights;
   public final GamePieceSim gamePieceSim;
@@ -181,8 +181,8 @@ public class RobotContainer {
               .lt(Constants.Shooter.kAlignmentError);
         };
 
-    intake = new Intake(intakeIO);
-    shooter = new Shooter(shooterIO);
+    intake = new ProtoIntake(intakeIO);
+    shooter = new ProtoShooter(shooterIO);
     hopper = new HopperSubsystem(hopperIO);
     lights = new LuminalIndicators(indicatorsIO);
     gamePieceSim =
