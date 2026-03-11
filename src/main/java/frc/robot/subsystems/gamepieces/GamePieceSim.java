@@ -1,5 +1,7 @@
 package frc.robot.subsystems.gamepieces;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -7,9 +9,13 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -108,10 +114,11 @@ public class GamePieceSim extends SubsystemBase {
   private static final double PIECE_RESTITUTION = 0.35;
   private static final double WALL_RESTITUTION = 0.5;
   private static final double STRUCTURE_RESTITUTION = 0.3;
-  private static final double ROBOT_RESTITUTION = 0.2;
-  // Higher damping factors (closer to 1.0) => lower friction and longer rolls.
-  private static final double GROUND_DAMPING_PER_TICK = 0.995;
-  private static final double AIR_DAMPING_PER_TICK = 0.999;
+  // Higher than before so fuel bounces off robot more aggressively.
+  private static final double ROBOT_RESTITUTION = 0.7;
+  // Less friction so fuel rolls longer.
+  private static final double GROUND_DAMPING_PER_TICK = 0.998;
+  private static final double AIR_DAMPING_PER_TICK = 0.9995;
   private static final double GRAVITY_METERS_PER_SEC2 = 9.81;
   private static final double PICKUP_RADIUS_METERS = 0.24;
   private static final double SHOOT_SPEED_METERS_PER_SEC = 8.5;
@@ -125,6 +132,7 @@ public class GamePieceSim extends SubsystemBase {
 
   private final List<PieceState> pieces = new ArrayList<>();
   private final List<FieldCollider> fieldColliders = new ArrayList<>();
+  private final List<ModelObject> modelObjects = new ArrayList<>();
   private PieceState heldPiece = null;
   private boolean previousShooterState = false;
   private double lastTimestampSeconds = 0.0;
@@ -132,6 +140,11 @@ public class GamePieceSim extends SubsystemBase {
   private double robotVzMetersPerSec = 0.0;
   private double lastRobotSupportHeightMeters = 0.0;
   private Pose2d previousRobotPose = null;
+  private double modelFloorZMeters = 0.0;
+  private double fieldMinXMeters = 0.0;
+  private double fieldMaxXMeters = FIELD_LENGTH_METERS;
+  private double fieldMinYMeters = 0.0;
+  private double fieldMaxYMeters = FIELD_WIDTH_METERS;
 
   /**
    * Creates the game piece simulation model.
@@ -178,8 +191,9 @@ public class GamePieceSim extends SubsystemBase {
 
   /** Spawns a 6x4 grid (24 total) of FUEL in the specified alliance DEPOT footprint. */
   private void spawnDepotFuel(boolean redAlliance) {
+    // Mirror depot placement so each alliance DEPOT sits correctly against its ALLIANCE WALL.
     final double depotCenterX =
-        redAlliance ? FIELD_LENGTH_METERS - DEPOT_DEPTH_METERS * 0.5 : DEPOT_DEPTH_METERS * 0.5;
+        redAlliance ? DEPOT_DEPTH_METERS * 0.5 : FIELD_LENGTH_METERS - DEPOT_DEPTH_METERS * 0.5;
     final double depotCenterY =
         redAlliance
             ? FIELD_WIDTH_METERS - DEPOT_CENTER_Y_FROM_SCORING_TABLE_METERS
@@ -190,15 +204,17 @@ public class GamePieceSim extends SubsystemBase {
     final double usableDepth = Math.max(0.0, DEPOT_DEPTH_METERS - 2.0 * PIECE_RADIUS_METERS);
     final double usableWidth = Math.max(0.0, DEPOT_WIDTH_METERS - 2.0 * PIECE_RADIUS_METERS);
 
-    final int cols = 6; // along depth (x)
-    final int rows = 4; // along width (y)
-    final double cellX = usableDepth / cols;
-    final double cellY = usableWidth / rows;
+    // Rotate the packing 90 degrees so that we get 4 balls along depth (x) and 6 along width (y),
+    // making the visual rectangle align with the DEPOT footprint orientation.
+    final int rowsDepth = 4; // along depth (x)
+    final int colsWidth = 6; // along width (y)
+    final double cellX = usableDepth / rowsDepth;
+    final double cellY = usableWidth / colsWidth;
 
-    for (int i = 0; i < cols; i++) {
-      for (int j = 0; j < rows; j++) {
-        final double localX = -usableDepth * 0.5 + (i + 0.5) * cellX;
-        final double localY = -usableWidth * 0.5 + (j + 0.5) * cellY;
+    for (int ix = 0; ix < rowsDepth; ix++) {
+      for (int iy = 0; iy < colsWidth; iy++) {
+        final double localX = -usableDepth * 0.5 + (ix + 0.5) * cellX;
+        final double localY = -usableWidth * 0.5 + (iy + 0.5) * cellY;
         spawnPiece(center.plus(new Translation2d(localX, localY)));
       }
     }
@@ -261,43 +277,24 @@ public class GamePieceSim extends SubsystemBase {
     final double dtSeconds = clamp(nowSeconds - lastTimestampSeconds, 0.005, 0.03);
     lastTimestampSeconds = nowSeconds;
 
-    // Read, but do not modify, the robot pose. All pose authority stays with the drive subsystem.
+    // Robot has no simulation physics here (no field collision correction / friction / suspension).
+    // Fuel remains fully simulated and can collide against the robot footprint.
     Pose2d robotPose2d = robotPoseSupplier.get();
+    Translation2d robotVelocityMetersPerSec = estimateRobotPlanarVelocity(robotPose2d, dtSeconds);
+    robotZMeters = 0.0;
+    robotVzMetersPerSec = 0.0;
+    lastRobotSupportHeightMeters = 0.0;
 
-    // Update vertical robot dynamics (gravity, suspension, simple "air time") using the
-    // drive-provided planar pose as the base.
-    final double robotPlanarSpeedMetersPerSec =
-        estimateRobotPlanarSpeedMetersPerSec(robotPose2d, dtSeconds);
-    final double supportHeightMeters = getRobotSupportHeightMeters(robotPose2d);
-    updateRobotVerticalDynamics(supportHeightMeters, robotPlanarSpeedMetersPerSec, dtSeconds);
+    // For now, do not attach or launch pieces from the robot; keep all fuel free on the field.
+    heldPiece = null;
 
-    // Compose a Pose3d for visualization and any 3D consumers.
-    Pose3d robotPose =
-        new Pose3d(
-            new Translation3d(
-                robotPose2d.getTranslation().getX(),
-                robotPose2d.getTranslation().getY(),
-                robotZMeters),
-            new Rotation3d(0.0, 0.0, robotPose2d.getRotation().getRadians()));
-
-    // Keep held piece attached to robot (planar pose is sufficient for XY intake/muzzle offsets).
-    updateHeldPose(robotPose2d);
-
-    // Intake captures a nearby piece if robot has none held.
-    if (heldPiece == null && intakeActiveSupplier.getAsBoolean()) {
-      attemptPickup(robotPose2d);
-    }
-
-    // Fire held piece on rising edge of shooter "firing" state.
+    // Track shooter state but do not use it to launch game pieces yet.
     final boolean shooterNow = shooterFiringSupplier.getAsBoolean();
-    if (heldPiece != null && shooterNow && !previousShooterState) {
-      launchHeldPiece(robotPose2d);
-    }
     previousShooterState = shooterNow;
 
     integratePieceMotion(dtSeconds);
     resolvePieceCollisions();
-    resolveRobotCollision(robotPose2d);
+    resolveRobotCollision(robotPose2d, robotVelocityMetersPerSec);
     resolveFieldStructureCollisions();
     clampPiecesToField();
     resolveScoring();
@@ -435,7 +432,7 @@ public class GamePieceSim extends SubsystemBase {
   }
 
   /** Resolves collisions against the robot's oriented 33x33in rectangular footprint. */
-  private void resolveRobotCollision(Pose2d robotPose) {
+  private void resolveRobotCollision(Pose2d robotPose, Translation2d robotVelocityMetersPerSec) {
     final Rotation2d robotRotation = robotPose.getRotation();
     final double cos = Math.cos(robotRotation.getRadians());
     final double sin = Math.sin(robotRotation.getRadians());
@@ -485,14 +482,29 @@ public class GamePieceSim extends SubsystemBase {
       final double overlap = PIECE_RADIUS_METERS - distance;
       piece.xyMeters = piece.xyMeters.plus(normalWorld.times(overlap + 1e-4));
 
+      // Use relative normal velocity so robot motion transfers momentum into the fuel.
+      final Translation2d relativeVelocity =
+          piece.velocityMetersPerSec.minus(robotVelocityMetersPerSec);
       final double vn =
-          piece.velocityMetersPerSec.getX() * normalWorld.getX()
-              + piece.velocityMetersPerSec.getY() * normalWorld.getY();
+          relativeVelocity.getX() * normalWorld.getX()
+              + relativeVelocity.getY() * normalWorld.getY();
       if (vn < 0.0) {
         piece.velocityMetersPerSec =
             piece.velocityMetersPerSec.minus(normalWorld.times((1.0 + ROBOT_RESTITUTION) * vn));
       }
     }
+  }
+
+  /** Estimates planar robot velocity from successive pose samples. */
+  private Translation2d estimateRobotPlanarVelocity(Pose2d currentPose, double dtSeconds) {
+    Translation2d velocity = new Translation2d();
+    if (previousRobotPose != null && dtSeconds > 1e-5) {
+      final Translation2d delta =
+          currentPose.getTranslation().minus(previousRobotPose.getTranslation());
+      velocity = delta.div(dtSeconds);
+    }
+    previousRobotPose = currentPose;
+    return velocity;
   }
 
   /** Resolves collisions against major field structures (HUB/BUMP/TOWER/TRENCH/DEPOT/OUTPOST). */
@@ -502,6 +514,10 @@ public class GamePieceSim extends SubsystemBase {
         continue;
       }
       for (FieldCollider collider : fieldColliders) {
+        // Let fuel pass under the trench assembly. Trench still exists as a robot collider.
+        if (isTrenchCollider(collider)) {
+          continue;
+        }
         if (piece.zMeters > collider.heightMeters) {
           continue; // Airborne over this structure, no collision
         }
@@ -555,6 +571,17 @@ public class GamePieceSim extends SubsystemBase {
     }
   }
 
+  /** True when collider dimensions match the trench blockers used for robot collision. */
+  private static boolean isTrenchCollider(FieldCollider collider) {
+    return approximatelyEqual(collider.halfX, TRENCH_WIDTH_METERS * 0.5, 1e-6)
+        && approximatelyEqual(collider.halfY, TRENCH_DEPTH_METERS * 0.5, 1e-6);
+  }
+
+  /** Small tolerance comparator for floating-point size checks. */
+  private static boolean approximatelyEqual(double a, double b, double eps) {
+    return Math.abs(a - b) <= eps;
+  }
+
   /** Keeps pieces inside field bounds and applies bounce on wall impact. */
   private void clampPiecesToField() {
     for (PieceState piece : pieces) {
@@ -585,6 +612,41 @@ public class GamePieceSim extends SubsystemBase {
       piece.xyMeters = new Translation2d(x, y);
       piece.velocityMetersPerSec = new Translation2d(vx, vy);
     }
+  }
+
+  /**
+   * Resolves robot-vs-field penetration using a separating-axis test against all colliders and
+   * pushes the robot out of walls/structures. The corrected pose is written back via
+   * robotPoseSetter so the drive sim stays in sync.
+   */
+  private Pose2d resolveRobotFieldCollisions(Pose2d inputPose) {
+    Pose2d correctedPose = inputPose;
+    for (int pass = 0; pass < ROBOT_COLLISION_SOLVER_PASSES; pass++) {
+      Translation2d push = new Translation2d();
+      for (FieldCollider collider : fieldColliders) {
+        // Only BLOCKING colliders constrain robot XY motion; traversable surfaces are handled
+        // separately by vertical dynamics.
+        if (collider.robotCollisionBehavior != RobotCollisionBehavior.BLOCKING) {
+          continue;
+        }
+        final Translation2d mtv = computeRobotAabbMtv(correctedPose, collider);
+        if (mtv.getNorm() > 0.0) {
+          push = push.plus(mtv);
+        }
+      }
+      if (push.getNorm() < ROBOT_COLLISION_EPSILON_METERS) {
+        break;
+      }
+      correctedPose =
+          new Pose2d(correctedPose.getTranslation().plus(push), correctedPose.getRotation());
+    }
+
+    // Only write back if we actually moved the robot.
+    if (correctedPose.getTranslation().getDistance(inputPose.getTranslation())
+        > ROBOT_COLLISION_EPSILON_METERS) {
+      robotPoseSetter.accept(correctedPose);
+    }
+    return correctedPose;
   }
 
   /** Estimates robot planar speed from successive poses. */
@@ -679,6 +741,139 @@ public class GamePieceSim extends SubsystemBase {
     addPerimeterWallColliders();
     addAllianceFieldColliders(false); // blue side
     addAllianceFieldColliders(true); // red side
+  }
+
+  /**
+   * Loads model objects from generated JSON so field geometry and fuel positions are data-driven.
+   */
+  private void loadModelObjects() {
+    final List<Path> candidates = new ArrayList<>();
+    candidates.add(Path.of("assets", "field-reference", "model-objects.json"));
+    candidates.add(
+        Path.of(
+            Filesystem.getDeployDirectory().getAbsolutePath(),
+            "field-reference",
+            "model-objects.json"));
+
+    Path jsonPath = null;
+    for (Path candidate : candidates) {
+      if (Files.exists(candidate)) {
+        jsonPath = candidate;
+        break;
+      }
+    }
+
+    if (jsonPath == null) {
+      Logger.recordOutput("GamePieceSim/ModelObjectsLoaded", false);
+      return;
+    }
+
+    final ObjectMapper mapper = new ObjectMapper();
+    try {
+      JsonNode root = mapper.readTree(Files.readString(jsonPath));
+      if (!root.isArray()) {
+        Logger.recordOutput("GamePieceSim/ModelObjectsLoaded", false);
+        return;
+      }
+
+      double minX = Double.POSITIVE_INFINITY;
+      double maxX = Double.NEGATIVE_INFINITY;
+      double minY = Double.POSITIVE_INFINITY;
+      double maxY = Double.NEGATIVE_INFINITY;
+      double minZ = Double.POSITIVE_INFINITY;
+
+      for (JsonNode node : root) {
+        final String name = node.path("name").asText("");
+        JsonNode center = node.path("center");
+        JsonNode minBounds = node.path("min_bounds");
+        JsonNode maxBounds = node.path("max_bounds");
+        if (!center.isArray()
+            || center.size() < 3
+            || !minBounds.isArray()
+            || !maxBounds.isArray()) {
+          continue;
+        }
+
+        final ModelObject obj =
+            new ModelObject(
+                name,
+                center.get(0).asDouble(),
+                center.get(1).asDouble(),
+                center.get(2).asDouble(),
+                minBounds.get(0).asDouble(),
+                minBounds.get(1).asDouble(),
+                minBounds.get(2).asDouble(),
+                maxBounds.get(0).asDouble(),
+                maxBounds.get(1).asDouble(),
+                maxBounds.get(2).asDouble());
+        modelObjects.add(obj);
+
+        minX = Math.min(minX, obj.minX);
+        maxX = Math.max(maxX, obj.maxX);
+        minY = Math.min(minY, obj.minY);
+        maxY = Math.max(maxY, obj.maxY);
+        minZ = Math.min(minZ, obj.minZ);
+      }
+
+      if (!modelObjects.isEmpty()) {
+        modelFloorZMeters = minZ;
+        fieldMinXMeters = minX;
+        fieldMaxXMeters = maxX;
+        fieldMinYMeters = minY;
+        fieldMaxYMeters = maxY;
+      }
+
+      Logger.recordOutput("GamePieceSim/ModelObjectsLoaded", !modelObjects.isEmpty());
+      Logger.recordOutput("GamePieceSim/ModelObjectCount", modelObjects.size());
+      Logger.recordOutput("GamePieceSim/ModelFieldMinX", fieldMinXMeters);
+      Logger.recordOutput("GamePieceSim/ModelFieldMaxX", fieldMaxXMeters);
+      Logger.recordOutput("GamePieceSim/ModelFieldMinY", fieldMinYMeters);
+      Logger.recordOutput("GamePieceSim/ModelFieldMaxY", fieldMaxYMeters);
+    } catch (IOException e) {
+      Logger.recordOutput("GamePieceSim/ModelObjectsLoaded", false);
+      Logger.recordOutput("GamePieceSim/ModelLoadError", e.toString());
+    }
+  }
+
+  /** Spawns FUEL exactly at the positions extracted from the field GLB JSON. */
+  private void spawnFuelFromModel() {
+    for (ModelObject obj : modelObjects) {
+      if (!obj.name.toLowerCase().contains("fuel")) {
+        continue;
+      }
+      final PieceState piece = new PieceState(new Translation2d(obj.centerX, obj.centerY));
+      // Keep fuel resting on floor at startup regardless of GLB origin offset.
+      piece.zMeters = Math.max(0.0, obj.minZ - modelFloorZMeters);
+      pieces.add(piece);
+    }
+  }
+
+  /** Builds robot/piece colliders from every non-fuel object in model-objects.json. */
+  private void buildCollidersFromModel() {
+    for (ModelObject obj : modelObjects) {
+      if (obj.name.toLowerCase().contains("fuel")) {
+        continue;
+      }
+      final double halfX = (obj.maxX - obj.minX) * 0.5;
+      final double halfY = (obj.maxY - obj.minY) * 0.5;
+      if (halfX < 1e-4 || halfY < 1e-4) {
+        continue;
+      }
+
+      final double topHeightFromFloor = Math.max(0.0, obj.maxZ - modelFloorZMeters);
+      final RobotCollisionBehavior behavior =
+          topHeightFromFloor <= 0.20
+              ? RobotCollisionBehavior.TRAVERSABLE_SURFACE
+              : RobotCollisionBehavior.BLOCKING;
+
+      fieldColliders.add(
+          new FieldCollider(
+              new Translation2d((obj.minX + obj.maxX) * 0.5, (obj.minY + obj.maxY) * 0.5),
+              halfX,
+              halfY,
+              topHeightFromFloor,
+              behavior));
+    }
   }
 
   /** Adds four perimeter wall colliders so field borders are physical objects too. */
@@ -854,7 +1049,10 @@ public class GamePieceSim extends SubsystemBase {
   /** Converts a piece state to a field Pose3d for AdvantageScope rendering. */
   private static Pose3d toPose3d(PieceState piece) {
     return new Pose3d(
-        new Translation3d(piece.xyMeters.getX(), piece.xyMeters.getY(), piece.zMeters),
+        // Raise by piece radius so spheres appear to sit on the carpet instead of halfway through
+        // it.
+        new Translation3d(
+            piece.xyMeters.getX(), piece.xyMeters.getY(), piece.zMeters + PIECE_RADIUS_METERS),
         new Rotation3d());
   }
 
@@ -996,6 +1194,43 @@ public class GamePieceSim extends SubsystemBase {
       this.halfY = halfY;
       this.heightMeters = heightMeters;
       this.robotCollisionBehavior = robotCollisionBehavior;
+    }
+  }
+
+  /** One object extracted from model-objects.json. */
+  private static class ModelObject {
+    private final String name;
+    private final double centerX;
+    private final double centerY;
+    private final double centerZ;
+    private final double minX;
+    private final double minY;
+    private final double minZ;
+    private final double maxX;
+    private final double maxY;
+    private final double maxZ;
+
+    private ModelObject(
+        String name,
+        double centerX,
+        double centerY,
+        double centerZ,
+        double minX,
+        double minY,
+        double minZ,
+        double maxX,
+        double maxY,
+        double maxZ) {
+      this.name = name;
+      this.centerX = centerX;
+      this.centerY = centerY;
+      this.centerZ = centerZ;
+      this.minX = minX;
+      this.minY = minY;
+      this.minZ = minZ;
+      this.maxX = maxX;
+      this.maxY = maxY;
+      this.maxZ = maxZ;
     }
   }
 
