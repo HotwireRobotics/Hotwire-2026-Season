@@ -163,9 +163,9 @@ public class RobotContainer {
 
     configureButtonBindings();
 
-    final Command startHopper = hopper.runHopper();
+    final Command startHopper = hopper.runHopper(isInverse);
     final Command startShooter = conditionalShooting();
-    final Command startIntake = intake.runIntake();
+    final Command startIntake = intake.runIntake(isInverse);
     final Command dropArm =
         intake
             .controlArm(ArmState.BACKWARD)
@@ -177,7 +177,7 @@ public class RobotContainer {
     final Command killIntake = intake.stopIntake();
     //// NamedCommands.registerCommand("KillShooter", killShooter);
     final Command periodIntake =
-        intake.runIntake().repeatedly().finallyDo(() -> intake.stopIntake());
+        intake.runIntake(isInverse).repeatedly().finallyDo(() -> intake.stopIntake());
     final Command raiseIntake = intake.raiseArm();
     final Command lowerIntake = intake.lowerArm().andThen(Commands.waitTime(Seconds.of(0.5)));
     final Command occilateIntake = intake.occilateArm(Constants.Intake.kOccilationFrequency);
@@ -359,17 +359,17 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .povUp()
         .onFalse(intake.lowerArm().alongWith(intake.stopIntake()))
-        .onTrue(intake.raiseArm().alongWith(intake.runIntake()));
+        .onTrue(intake.raiseArm().alongWith(intake.runIntake(isInverse)));
 
     Constants.Joysticks.operator
         .leftTrigger()
         .onFalse(intake.stopIntake())
-        .onTrue(intake.runIntake());
+        .onTrue(intake.runIntake(isInverse));
 
     Constants.Joysticks.operator
         .rightTrigger()
         .onFalse(shooter.runMechanism(0, 0).alongWith(hopper.stopHopper()))
-        .onTrue(conditionalShooting().alongWith(hopper.runHopper()));
+        .onTrue(conditionalShooting().alongWith(hopper.runHopper(isInverse)));
 
     Constants.Joysticks.operator.povRight().onFalse(intake.lowerArm()).onTrue(intake.emergency());
 
@@ -385,3 +385,5 @@ public class RobotContainer {
     return autoChooser.get();
   }
 }
+
+// ./gradlew deploy --no-daemon

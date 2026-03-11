@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class ProtoIntake extends ModularSubsystem implements Systerface {
@@ -109,6 +110,10 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public Command runIntake() {
     return runDevice(Device.ROLLERS, Constants.Intake.kSpeed);
+  }
+
+  public Command runIntake(Supplier<Boolean> inverse) {
+    return runDevice(Device.ROLLERS, () -> (Constants.Hopper.kSpeed * (inverse.get() ? -1 : 1)));
   }
 
   public Command stopIntake() {
