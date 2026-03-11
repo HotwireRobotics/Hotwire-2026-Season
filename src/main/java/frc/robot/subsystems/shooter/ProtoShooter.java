@@ -3,18 +3,14 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.VelocityVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants;
-import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import java.util.EnumSet;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -23,16 +19,12 @@ import org.littletonrobotics.junction.Logger;
  * (RPS), and voltage control. runShooter runs both wheels; runLeftShooter/runRightShooter run one
  * side for tuning or backup.
  */
-public class ProtoShooter extends ModularSubsystem implements Systerface {
+public class ProtoShooter extends edu.wpi.first.wpilibj2.command.SubsystemBase implements Systerface {
+  private final ShooterIO io;
+  private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+  private final EnumSet<Device> activeDevices = EnumSet.noneOf(Device.class);
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;
-  private final VoltageOut m_voltReq;
-  private final VelocityVoltage m_velVolt;
-  public final TalonFX m_feeder;
-  public final TalonFX m_leftShooter;
-  public final TalonFX m_rightShooter;
-  private final Slot0Configs rightRPSControl;
-  private final Slot0Configs leftRPSControl;
 
   /** Logical devices for percent/velocity/voltage control and active-state tracking. */
   public enum Device {
@@ -42,38 +34,16 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     FEEDER
   }
 
-  public ProtoShooter() {
-    m_feeder = new TalonFX(Constants.MotorIDs.s_feeder);
-    m_leftShooter = new TalonFX(Constants.MotorIDs.s_shooterL);
-    m_rightShooter = new TalonFX(Constants.MotorIDs.s_shooterR);
-
-    rightRPSControl = new Slot0Configs();
-    rightRPSControl.withKV(0.11965);
-    rightRPSControl.withKS(0.3422);
-    rightRPSControl.withKP(0.8);
-
-    leftRPSControl = new Slot0Configs();
-    leftRPSControl.withKV(0.12009);
-    leftRPSControl.withKS(0.24998);
-    leftRPSControl.withKP(0.8);
-
-    final TalonFX[] bothShooters = {m_leftShooter, m_rightShooter};
-
-    defineDevice(
-        new DevicePointer(Device.RIGHT_SHOOTER, m_rightShooter),
-        new DevicePointer(Device.LEFT_SHOOTER, m_leftShooter),
-        new DevicePointer(Device.BOTH_SHOOTER, bothShooters),
-        new DevicePointer(Device.FEEDER, m_feeder));
-
-    m_voltReq = new VoltageOut(0.0);
-    m_velVolt = new VelocityVoltage(0.0);
+  /** Constructs shooter with the selected IO implementation. */
+  public ProtoShooter(ShooterIO io) {
+    this.io = io;
 
     m_sysIdRoutineRight =
         new SysIdRoutine(
             new SysIdRoutine.Config(
                 null,
                 null,
-                null, // Use default config
+                null,
                 (state) -> Logger.recordOutput("Shooter/SysIdState/Right", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.RIGHT_SHOOTER, voltage), null, this));
@@ -82,151 +52,137 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
             new SysIdRoutine.Config(
                 null,
                 null,
-                null, // Use default config
+                null,
                 (state) -> Logger.recordOutput("Shooter/SysIdState/Left", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runDeviceVoltage(Device.LEFT_SHOOTER, voltage), null, this));
-
-    configureControl();
   }
 
   private enum State {
     STOPPED,
-    SPINNING, // Running shooter
-    FIRING // Running shooter & feeder
+    SPINNING,
+    FIRING
   }
 
-  State state = State.STOPPED;
+  private State state = State.STOPPED;
 
   @Override
   public void periodic() {
-    Logger.recordOutput("Shooter/State", state.toString());
+    io.updateInputs(inputs);
+    Logger.processInputs("Shooter", inputs);
 
-    // Active device flags (what is currently being driven)
-    Logger.recordOutput("Shooter/Active/BothShooter", isActiveDevice(Device.BOTH_SHOOTER));
-    Logger.recordOutput("Shooter/Active/LeftShooter", isActiveDevice(Device.LEFT_SHOOTER));
-    Logger.recordOutput("Shooter/Active/RightShooter", isActiveDevice(Device.RIGHT_SHOOTER));
-    Logger.recordOutput("Shooter/Active/Feeder", isActiveDevice(Device.FEEDER));
+    Logger.recordOutput("Shooter/Active/BothShooter", activeDevices.contains(Device.BOTH_SHOOTER));
+    Logger.recordOutput("Shooter/Active/LeftShooter", activeDevices.contains(Device.LEFT_SHOOTER));
+    Logger.recordOutput(
+        "Shooter/Active/RightShooter", activeDevices.contains(Device.RIGHT_SHOOTER));
+    Logger.recordOutput("Shooter/Active/Feeder", activeDevices.contains(Device.FEEDER));
 
-    // Left shooter: position, velocity (rpm + rps), voltage, supply/stator current, temp
-    Logger.recordOutput(
-        "Shooter/Left/Position", m_leftShooter.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Shooter/Left/VelocityRPM", m_leftShooter.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Shooter/Left/VelocityRPS", m_leftShooter.getVelocity().getValueAsDouble(), "rps");
-    Logger.recordOutput(
-        "Shooter/Left/Voltage", m_leftShooter.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Shooter/Left/SupplyCurrent", m_leftShooter.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Shooter/Left/StatorCurrent", m_leftShooter.getStatorCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Shooter/Left/Temperature", m_leftShooter.getDeviceTemp().getValueAsDouble(), "°C");
-
-    // Right shooter
-    Logger.recordOutput(
-        "Shooter/Right/Position", m_rightShooter.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Shooter/Right/VelocityRPM", m_rightShooter.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Shooter/Right/VelocityRPS", m_rightShooter.getVelocity().getValueAsDouble(), "rps");
-    Logger.recordOutput(
-        "Shooter/Right/Voltage", m_rightShooter.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Shooter/Right/SupplyCurrent", m_rightShooter.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Shooter/Right/StatorCurrent", m_rightShooter.getStatorCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Shooter/Right/Temperature", m_rightShooter.getDeviceTemp().getValueAsDouble(), "°C");
-
-    // Feeder
-    Logger.recordOutput(
-        "Shooter/Feeder/Position", m_feeder.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Shooter/Feeder/VelocityRPM", m_feeder.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Shooter/Feeder/VelocityRPS", m_feeder.getVelocity().getValueAsDouble(), "rps");
-    Logger.recordOutput(
-        "Shooter/Feeder/Voltage", m_feeder.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Shooter/Feeder/SupplyCurrent", m_feeder.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Shooter/Feeder/StatorCurrent", m_feeder.getStatorCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Shooter/Feeder/Temperature", m_feeder.getDeviceTemp().getValueAsDouble(), "°C");
-
-    if (isActiveDevice(Device.BOTH_SHOOTER)) {
-      state = isActiveDevice(Device.FEEDER) ? State.FIRING : State.SPINNING;
+    if (activeDevices.contains(Device.BOTH_SHOOTER)) {
+      state = activeDevices.contains(Device.FEEDER) ? State.FIRING : State.SPINNING;
     } else {
       state = State.STOPPED;
     }
+    Logger.recordOutput("Shooter/State", state.toString());
   }
 
+  @Override
   public Object getState() {
     return state;
   }
 
-  // Device control methods
+  /** Runs a selected logical device open-loop. */
   public void runDevice(Device device, double speed) {
-    for (TalonFX d : getDevices(device)) {
-      d.set(speed);
+    switch (device) {
+      case RIGHT_SHOOTER -> io.setRightShooterOpenLoop(speed);
+      case LEFT_SHOOTER -> io.setLeftShooterOpenLoop(speed);
+      case BOTH_SHOOTER -> {
+        io.setLeftShooterOpenLoop(speed);
+        io.setRightShooterOpenLoop(speed);
+      }
+      case FEEDER -> io.setFeederOpenLoop(speed);
     }
-
-    if (speed == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
-    }
+    setDeviceActivity(device, speed != 0.0);
   }
-  // Velocity control
+
+  /** Runs a selected logical device at velocity. */
   public void runDeviceVelocity(Device device, AngularVelocity velocity) {
-    for (TalonFX d : getDevices(device)) {
-      d.setControl(m_velVolt.withVelocity(velocity));
+    final double velocityRadPerSec = Units.rotationsToRadians(velocity.in(RotationsPerSecond));
+    switch (device) {
+      case RIGHT_SHOOTER -> io.setRightShooterVelocity(velocityRadPerSec);
+      case LEFT_SHOOTER -> io.setLeftShooterVelocity(velocityRadPerSec);
+      case BOTH_SHOOTER -> {
+        io.setLeftShooterVelocity(velocityRadPerSec);
+        io.setRightShooterVelocity(velocityRadPerSec);
+      }
+      case FEEDER -> io.setFeederVelocity(velocityRadPerSec);
     }
-
-    if (velocity.in(RotationsPerSecond) == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
-    }
+    setDeviceActivity(device, velocity.in(RotationsPerSecond) != 0.0);
   }
-  // Voltage control
+
+  /** Runs a selected logical device at a voltage setpoint. */
   public void runDeviceVoltage(Device device, Voltage voltage) {
-    for (TalonFX d : getDevices(device)) {
-      d.setControl(m_voltReq.withOutput(voltage.in(Volts)));
+    final double volts = voltage.in(Volts);
+    switch (device) {
+      case RIGHT_SHOOTER -> io.setRightShooterVoltage(volts);
+      case LEFT_SHOOTER -> io.setLeftShooterVoltage(volts);
+      case BOTH_SHOOTER -> {
+        io.setLeftShooterVoltage(volts);
+        io.setRightShooterVoltage(volts);
+      }
+      case FEEDER -> io.setFeederVoltage(volts);
     }
+    setDeviceActivity(device, volts != 0.0);
+  }
 
-    if (voltage.in(Volts) == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
+  /** Tracks active logical devices for state and replay logs. */
+  private void setDeviceActivity(Device device, boolean active) {
+    if (device == Device.BOTH_SHOOTER) {
+      setSingleDevice(Device.LEFT_SHOOTER, active);
+      setSingleDevice(Device.RIGHT_SHOOTER, active);
+      setSingleDevice(Device.BOTH_SHOOTER, active);
+      return;
+    }
+    setSingleDevice(device, active);
+    if (!active
+        && !activeDevices.contains(Device.LEFT_SHOOTER)
+        && !activeDevices.contains(Device.RIGHT_SHOOTER)) {
+      activeDevices.remove(Device.BOTH_SHOOTER);
+    }
+    if (active && (device == Device.LEFT_SHOOTER || device == Device.RIGHT_SHOOTER)) {
+      activeDevices.add(Device.BOTH_SHOOTER);
     }
   }
 
-  // --- Main control: both shooters + feeder ---
+  /** Adds or removes one device from the active set. */
+  private void setSingleDevice(Device device, boolean active) {
+    if (active) {
+      activeDevices.add(device);
+    } else {
+      activeDevices.remove(device);
+    }
+  }
 
   /** Runs both shooter wheels at the given percent output. */
   public void runShooter(double speed) {
     runDevice(Device.BOTH_SHOOTER, speed);
   }
 
-  /** Runs the left shooter only (e.g. for tuning or single-side). */
+  /** Runs the left shooter only. */
   public void runLeftShooter(double speed) {
     runDevice(Device.LEFT_SHOOTER, speed);
   }
 
-  /** Runs the right shooter only (e.g. for tuning or single-side). */
+  /** Runs the right shooter only. */
   public void runRightShooter(double speed) {
     runDevice(Device.RIGHT_SHOOTER, speed);
   }
 
-  /** Runs the single feeder at the given percent output. */
+  /** Runs the feeder at the given percent output. */
   public void runFeeder(double speed) {
     runDevice(Device.FEEDER, speed);
   }
 
-  /** Command: run both shooters and feeder at given percent. Main mechanism control. */
+  /** Command: run both shooters and feeder at given percent. */
   public Command runMechanism(double feederSpeed, double shooterSpeed) {
     return Commands.runOnce(
         () -> {
@@ -254,30 +210,27 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
         });
   }
 
-  public void configureProportional(double Kp) {
-    leftRPSControl.withKP(Kp);
-    rightRPSControl.withKP(Kp);
-    configureControl();
+  /** Updates shooter proportional gains in IO implementation. */
+  public void configureProportional(double kP) {
+    io.configureSlot0Kp(kP);
   }
 
-  private void configureControl() {
-    m_leftShooter.getConfigurator().apply(leftRPSControl);
-    m_rightShooter.getConfigurator().apply(rightRPSControl);
-    m_feeder.getConfigurator().apply(leftRPSControl);
-  }
-  // Mechanism commands
+  /** SysId command for right shooter quasistatic tests. */
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);
   }
 
+  /** SysId command for right shooter dynamic tests. */
   public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.dynamic(direction);
   }
 
+  /** SysId command for left shooter quasistatic tests. */
   public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.quasistatic(direction);
   }
 
+  /** SysId command for left shooter dynamic tests. */
   public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineLeft.dynamic(direction);
   }

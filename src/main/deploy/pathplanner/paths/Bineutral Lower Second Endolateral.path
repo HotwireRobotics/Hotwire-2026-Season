@@ -50,10 +50,11 @@
       "rotationDegrees": 0.0
     },
     {
-      "waypointRelativePos": 1.8333333333333335,
+      "waypointRelativePos": 1.0,
       "rotationDegrees": 0.0
     }
   ],
+  "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {

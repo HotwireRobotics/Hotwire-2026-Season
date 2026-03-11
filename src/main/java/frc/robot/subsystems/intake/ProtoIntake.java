@@ -1,25 +1,21 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Hertz;
 
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
-import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoIntake extends ModularSubsystem implements Systerface {
+/** Intake subsystem with rollers and arm. Implements Systerface for device/sysid integration. */
+public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase implements Systerface {
 
-  public final TalonFX rollers;
-  public final TalonFX arm;
+  private final IntakeIO io;
+  private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
+  private boolean rollersActive = false;
 
   public enum Device {
     ROLLERS,
@@ -34,144 +30,106 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private ArmState armState = ArmState.ZERO;
 
-  public ProtoIntake() {
-    rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    arm = new TalonFX(Constants.MotorIDs.i_arm);
-    // CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
-    // currentLimits.withSupplyCurrentLimit(40);
-    // arm.getConfigurator().apply(currentLimits);
-    defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
-
-    m_PositionVoltage = new PositionVoltage(Degrees.of(0));
-
-    slot = new Slot0Configs();
-    configureProportional(18.0);
-
-    // Configuration
-    arm.setControl(m_PositionVoltage);
-    arm.getConfigurator().apply(slot);
-  }
-
-  public void configureProportional(double kP) {
-    slot.withKP(kP);
+  /** Constructs intake with the selected IO implementation. */
+  public ProtoIntake(IntakeIO io) {
+    this.io = io;
+    io.configureArmPositionKp(18.0);
   }
 
   private enum State {
     STOPPED,
-    INTAKING // Running rollers
+    INTAKING
   }
 
-  State state = State.STOPPED;
+  private State state = State.STOPPED;
 
+  @Override
   public Object getState() {
     return state;
   }
 
   @Override
   public void periodic() {
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake", inputs);
+
+    state = rollersActive ? State.INTAKING : State.STOPPED;
     Logger.recordOutput("Intake/State", state.toString());
 
-    Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Intake/Rollers/Voltage", rollers.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
-
-    if (isActiveDevice(Device.ROLLERS)) {
-      state = State.INTAKING;
-    } else {
-      state = State.STOPPED;
-    }
-
-    arm.setControl(
-        new VoltageOut(
-            armState.equals(ArmState.FORWARD)
-                ? Constants.Intake.kArmVolts
-                : (armState.equals(ArmState.BACKWARD)
-                    ? Constants.Intake.kArmVolts.times(-1)
-                    : Volts.of(0))));
+    final double armVolts =
+        armState.equals(ArmState.FORWARD)
+            ? Constants.Intake.kArmVolts.in(edu.wpi.first.units.Units.Volts)
+            : (armState.equals(ArmState.BACKWARD)
+                ? -Constants.Intake.kArmVolts.in(edu.wpi.first.units.Units.Volts)
+                : 0.0);
+    io.setArmVoltage(armVolts);
   }
 
-  // Device control methods
-
+  /** Device open-loop control helper. */
   public void runDevice(Device device, double speed) {
-    for (TalonFX d : getDevices(device)) {
-      d.set(speed);
-    }
-
-    if (speed == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
+    switch (device) {
+      case ROLLERS -> {
+        io.setRollersOpenLoop(speed);
+        rollersActive = speed != 0.0;
+      }
+      case ARM -> io.setArmVoltage(
+          speed * Constants.Intake.kArmVolts.in(edu.wpi.first.units.Units.Volts));
     }
   }
-  /**
-   * Allows you to limit the voltage of the intake rollers
-   *
-   * @param device
-   * @param volts
-   */
+
+  /** Device voltage control helper. */
   public void runDeviceVoltage(Device device, double volts) {
-    for (TalonFX d : getDevices(device)) {
-      d.setVoltage(volts);
-    }
-
-    if (volts == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
+    switch (device) {
+      case ROLLERS -> {
+        io.setRollersOpenLoop(volts / 12.0);
+        rollersActive = volts != 0.0;
+      }
+      case ARM -> io.setArmVoltage(volts);
     }
   }
 
-  /**
-   * Allows you to limit the speed of the intake rollers
-   *
-   * @param speed
-   * @return
-   */
+  /** Command for running intake rollers at open-loop speed. */
   public Command runIntake(double speed) {
-    return Commands.runOnce(
-        () -> {
-          runDevice(Device.ROLLERS, speed);
-        });
+    return Commands.runOnce(() -> runDevice(Device.ROLLERS, speed));
   }
 
+  /** Command to set arm manual voltage state. */
   public Command controlArm(ArmState state) {
-    return Commands.runOnce(
-        () -> {
-          armState = state;
-        });
+    return Commands.runOnce(() -> armState = state);
   }
 
+  /** Oscillates the arm up and down at a chosen frequency. */
   public Command occilateArm(Frequency frequency) {
     return new SequentialCommandGroup(
-        lowerArm(), Commands.waitSeconds(1 / frequency.in(Hertz)), raiseArm())
+            lowerArm(), Commands.waitSeconds(1 / frequency.in(Hertz)), raiseArm())
         .repeatedly();
   }
 
+  /** Position command for arm-up. */
   public Command raiseArm() {
-    return Commands.runOnce(() -> {
-      configureProportional(18.0);
-      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(60)));
-    });
+    return Commands.runOnce(
+        () -> {
+          io.configureArmPositionKp(18.0);
+          io.setArmPositionDegrees(60.0);
+        });
   }
 
+  /** Position command for arm-down. */
   public Command lowerArm() {
-    return Commands.runOnce(() -> {
-      configureProportional(18.0);
-      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
-    });
+    return Commands.runOnce(
+        () -> {
+          io.configureArmPositionKp(18.0);
+          io.setArmPositionDegrees(0.0);
+        });
   }
 
+  /** Position command for emergency arm-up. */
   public Command emergency() {
-    return Commands.runOnce(() -> {
-      configureProportional(28.0);
-      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
-    });
+    return Commands.runOnce(
+        () -> {
+          io.configureArmPositionKp(28.0);
+          io.setArmPositionDegrees(90.0);
+        });
   }
 
   /**
