@@ -51,19 +51,15 @@ public class LuminalIndicators extends SubsystemBase {
     candle.getConfigurator().apply(config);
 
     color = new HashMap<>();
+    color.put(Event.AUTONOMOUS, () -> Constants.Indication.LEDColor(20, 20, 150));
+    color.put(Event.EMERGENCY,  () -> Constants.Indication.LEDColor(255, 0, 0));
     color.put(Event.DISABLED, toggle(
       Constants.Indication.LEDColor(180, 0, 0), 
       Constants.Indication.LEDColor(0,  0,  0), 
-      Hertz.of(0.5)
+      Hertz.of(3)
     ));
-    color.put(Event.ENABLED, toggle(
-      Constants.Indication.LEDColor(0, 255, 0), 
-      Constants.Indication.LEDColor(0,  0,  0), 
-      Hertz.of(0.5)
-    ));
+    color.put(Event.ACTIVE,     () -> Constants.Indication.LEDColor(0, 180, 0));
     color.put(Event.INACTIVE,   () -> Constants.Indication.LEDColor(180, 0, 0));
-    color.put(Event.EMERGENCY,  () -> Constants.Indication.LEDColor(255, 0, 0));
-    color.put(Event.AUTONOMOUS, () -> Constants.Indication.LEDColor(20, 20, 150));
 
     timer.start();
   }
@@ -76,20 +72,19 @@ public class LuminalIndicators extends SubsystemBase {
   @Override
   public void periodic() {
     Time t = Seconds.of(DriverStation.getMatchTime());
-    Time length = (DriverStation.isAutonomous()) ? Constants.autoLength : Constants.teleopLength;
+    Time length = (DriverStation.isAutonomous()) ? Constants.Length.autonomous : Constants.Length.teleoperated;
 
     // Get period-relative time.
     time = (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(t);
-    Boolean b = (Math.floor(time.in(Seconds)) % 2) == 1;
 
-    indicatorPipeline(time, b);
+    indicatorPipeline(time);
   }
 
   private Supplier<SolidColor> getRequest(Event event) {
     return color.get(event);
   }
 
-  public void indicatorPipeline(Time time, boolean toggle) {
+  public void indicatorPipeline(Time time) {
     Logger.recordOutput("Indicators/time", time);
 
     if (DriverStation.isEStopped()) {
@@ -99,13 +94,14 @@ public class LuminalIndicators extends SubsystemBase {
     if (DriverStation.isAutonomous()) {
       updateLEDs(getRequest(Event.AUTONOMOUS).get());
     } else {
-      // if (Constants.Indication.autonomousVictory()) {
-      //   updateLEDs(getRequest(Event.INACTIVE).get());
-      // } else {
-      //   updateLEDs(getRequest(Event.ACTIVE).get());
-      // }
       if (DriverStation.isEnabled()) {
-        updateLEDs(getRequest(Event.ENABLED).get());
+
+        if (Constants.Indication.autonomousVictory()) {
+          updateLEDs(getRequest(Event.INACTIVE).get());
+        } else {
+          updateLEDs(getRequest(Event.ACTIVE).get());
+        }
+
       } else {
         updateLEDs(getRequest(Event.DISABLED).get());
       }

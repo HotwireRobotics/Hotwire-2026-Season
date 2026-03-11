@@ -133,7 +133,7 @@ public class Robot extends LoggedRobot {
     // Tracking
     Time time = Seconds.of(DriverStation.getMatchTime());
     Boolean isAutonomous = DriverStation.isAutonomous();
-    Time length = (isAutonomous) ? Constants.autoLength : Constants.teleopLength;
+    Time length = (isAutonomous) ? Constants.Length.autonomous : Constants.Length.teleoperated;
     time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(bitimer.get()) : length.minus(time);
 
     // Controller haptic indicators

@@ -76,6 +76,10 @@ public final class Constants {
       }
     }
 
+    public static boolean isActive() {
+      return autonomousVictory();
+    }
+
     public static class Autonomous {
       public static final Time[] haptic = {};
     }
@@ -102,8 +106,15 @@ public final class Constants {
     public static final Distance maxDistance = Meters.of(2.8);
   }
 
-  public static final Time autoLength = Seconds.of(20);
-  public static final Time teleopLength = Seconds.of(140);
+  public static class Length {
+    public static final Time autonomous   = Seconds.of(20);
+    public static final Time transition   = Seconds.of(10);
+    public static final Time period       = Seconds.of(25); // x4
+    public static final Time endgame      = Seconds.of(30);
+
+    public static final Time teleoperated = Seconds.of(140);
+  }
+
 
   public static class MotorIDs {
     public static final Integer i_rollers = 17;
