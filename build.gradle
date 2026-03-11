@@ -131,7 +131,11 @@ tasks.withType(JavaCompile) {
 }
 
 // Create version file
-project.compileJava.dependsOn(createVersionFile)
+// Running this on every compile forces recompilation due to timestamp changes.
+// Restrict it to deploy-related tasks where fresh build metadata is actually needed.
+tasks.matching { it.name.toLowerCase().contains("deploy") }.configureEach {
+    dependsOn(createVersionFile)
+}
 gversion {
     srcDir       = "src/main/java/"
     classPackage = "frc.robot"
@@ -175,12 +179,12 @@ task(eventDeploy) {
 createVersionFile.dependsOn(eventDeploy)
 
 // Spotless formatting
-project.compileJava.dependsOn(spotlessApply)
+// Keep formatting explicit instead of forcing it for every compile/build invocation.
 spotless {
     java {
         target fileTree(".") {
             include "**/*.java"
-            exclude "**/build/**", "**/build-*/**"
+            exclude "**/build/**", "**/build-*/**", "**/BuildConstants.java"
         }
         toggleOffOn()
         googleJavaFormat()
