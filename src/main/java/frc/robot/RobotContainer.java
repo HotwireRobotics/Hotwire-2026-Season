@@ -6,6 +6,7 @@ import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
@@ -73,6 +74,7 @@ public class RobotContainer {
   }
 
   public boolean inverse = false;
+  public boolean inverse = false;
   public VelocityType velocityType = VelocityType.REGRESSION;
 
   private final Supplier<Boolean> isInverse = () -> inverse;
@@ -84,6 +86,25 @@ public class RobotContainer {
         });
   }
 
+  private Command regressVelocity() {
+    return Commands.runOnce(
+        () -> {
+          velocityType = VelocityType.REGRESSION;
+        });
+  }
+
+  private Command invertControl() {
+    return Commands.runOnce(
+        () -> {
+          inverse = true;
+        });
+  }
+
+  private Command regularControl() {
+    return Commands.runOnce(
+        () -> {
+          inverse = false;
+        });
   private Command regressVelocity() {
     return Commands.runOnce(
         () -> {
@@ -233,9 +254,16 @@ public class RobotContainer {
               } else {
                 return Constants.Shooter.kSpeed;
               }
+              if (aligned.getAsBoolean()) {
+                return Constants.regress(
+                    Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+              } else {
+                return Constants.Shooter.kSpeed;
+              }
             case TESTING:
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             default:
+              return Constants.Shooter.kSpeed;
               return Constants.Shooter.kSpeed;
           }
         };
@@ -243,7 +271,9 @@ public class RobotContainer {
     configureButtonBindings();
 
     final Command startHopper = hopper.runHopper(isInverse);
+    final Command startHopper = hopper.runHopper(isInverse);
     final Command startShooter = conditionalShooting();
+    final Command startIntake = intake.runIntake(isInverse);
     final Command startIntake = intake.runIntake(isInverse);
     final Command dropArm =
         intake
@@ -252,10 +282,13 @@ public class RobotContainer {
             .andThen(intake.controlArm(ArmState.ZERO));
     //// NamedCommands.registerCommand("StartShooter", regressionShooting().repeatedly());
     final Command killHopper = hopper.stopHopper();
+    final Command killHopper = hopper.stopHopper();
     final Command killShooter = shooter.runMechanism(0, 0);
+    final Command killIntake = intake.stopIntake();
     final Command killIntake = intake.stopIntake();
     //// NamedCommands.registerCommand("KillShooter", killShooter);
     final Command periodIntake =
+        intake.runIntake(isInverse).repeatedly().finallyDo(() -> intake.stopIntake());
         intake.runIntake(isInverse).repeatedly().finallyDo(() -> intake.stopIntake());
     final Command raiseIntake = intake.raiseArm();
     final Command lowerIntake = intake.lowerArm().andThen(Commands.waitTime(Seconds.of(0.5)));
@@ -264,6 +297,7 @@ public class RobotContainer {
     final Command runFiringSequence =
         new SequentialCommandGroup(
             regressVelocity(),
+            regressVelocity(),
             startShooter,
             Commands.waitTime(Constants.Shooter.kChargeUpTime),
             startHopper,
@@ -271,9 +305,12 @@ public class RobotContainer {
                 .raceWith(
                     Commands.waitTime(Constants.Shooter.kUntilAggitateTime)
                         .andThen(occilateIntake)),
+                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime)
+                        .andThen(occilateIntake)),
             killShooter,
             killHopper,
             lowerIntake,
+            staticVelocity());
             staticVelocity());
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
     NamedCommands.registerCommand("Start Intaking", startIntake);
@@ -283,6 +320,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("Lower Intake", lowerIntake);
     NamedCommands.registerCommand("Drop Arm", dropArm);
     NamedCommands.registerCommand("Stop", stopDrive);
+    NamedCommands.registerCommand("Occilate Intake", occilateIntake);
     NamedCommands.registerCommand("Occilate Intake", occilateIntake);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", buildAutoChooserSafe());
@@ -341,6 +379,9 @@ public class RobotContainer {
             shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
             shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse)));
+
+    autoChooser.addOption("A-Bineutral Right", new PathPlannerAuto("A-Bineutral", false));
+    autoChooser.addOption("A-Bineutral Left", new PathPlannerAuto("A-Bineutral", true));
 
     autoChooser.addOption("A-Bineutral Right", new PathPlannerAuto("A-Bineutral", false));
     autoChooser.addOption("A-Bineutral Left", new PathPlannerAuto("A-Bineutral", true));
@@ -469,5 +510,7 @@ public class RobotContainer {
     return autoChooser.get();
   }
 }
+
+// ./gradlew deploy --no-daemon
 
 // ./gradlew deploy --no-daemon
