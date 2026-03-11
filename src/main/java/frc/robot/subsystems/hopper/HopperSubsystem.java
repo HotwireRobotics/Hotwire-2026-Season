@@ -60,6 +60,10 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
 
   @Override
   public void periodic() {
+    io.updateInputs(inputs);
+    Logger.processInputs("Hopper", inputs);
+    Logger.recordOutput("Hopper/State", state.toString());
+    
     Logger.recordOutput(
         "Hopper/upperFeed/Position", hopper.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
@@ -78,20 +82,6 @@ public class HopperSubsystem extends SubsystemBase implements Systerface {
 
   public Command stopHopper() {
     return runDevice(Device.HOPPER, 0);
-  }
-    io.updateInputs(inputs);
-    Logger.processInputs("Hopper", inputs);
-    Logger.recordOutput("Hopper/State", state.toString());
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Position", lowerFeed.getPosition().getValueAsDouble(), "rot");
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Velocity", lowerFeed.getVelocity().getValueAsDouble() * 60, "rpm");
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Voltage", lowerFeed.getMotorVoltage().getValueAsDouble(), "V");
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Current", lowerFeed.getSupplyCurrent().getValueAsDouble(), "A");
-    // Logger.recordOutput(
-    //     "Hopper/lowerFeed/Temperature", lowerFeed.getDeviceTemp().getValueAsDouble(), "°C");
   }
 
   public Command runHopper(double speed) {
