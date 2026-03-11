@@ -215,11 +215,3 @@ spotless {
         endWithNewline()
     }
 }
-
-// Unambiguous task for VS Code / command palette (otherwise simulateExternalJava matches both Debug and Release)
-tasks.register("simulateExternalJava") {
-    dependsOn tasks.named("simulateExternalJavaRelease")
-}
-
-// Use simulateJava* to run the robot in-process (terminal shows "Robot program starting").
-// Use simulateExternalJava* for external/Sim GUI; if that doesn't launch the robot, use simulateJavaRelease.
