@@ -132,10 +132,10 @@ src/main/java/frc/robot/
 ├── commands/               # e.g. DriveCommands
 ├── subsystems/
 │   ├── drive/              # Swerve (Drive, Module, Gyro/Module IO)
-│   ├── intake/             # ProtoIntake
-│   ├── shooter/            # ProtoShooter
+│   ├── intake/             # Intake
+│   ├── shooter/            # Shooter
 │   ├── hopper/             # HopperSubsystem
-│   └── climber/            # ProtoClimber (stub)
+│   └── climber/            # Climber (stub)
 ├── util/                   # e.g. PhoenixUtil, LocalADStarAK
 └── generated/              # e.g. TunerConstants (SysId/characterization)
 ```

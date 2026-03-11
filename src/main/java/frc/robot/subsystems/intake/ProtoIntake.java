@@ -1,6 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Seconds;
 
@@ -13,16 +12,19 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
-import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoIntake extends ModularSubsystem implements Systerface {
+/** Intake subsystem with rollers and arm. Implements Systerface for device/sysid integration. */
+public class ProtoIntake extends edu.wpi.first.wpilibj2.command.SubsystemBase implements Systerface {
 
   public final TalonFX rollers;
   public final TalonFX arm;
   private final PositionVoltage m_PositionVoltage;
   private final Slot0Configs slot;
+  private final IntakeIO io;
+  private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
+  private boolean rollersActive = false;
 
   public enum Device {
     ROLLERS,
@@ -54,22 +56,28 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   public void configureProportional(double kP) {
     slot.withKP(kP);
+  /** Constructs intake with the selected IO implementation. */
+  public ProtoIntake(IntakeIO io) {
+    this.io = io;
+    io.configureArmPositionKp(18.0);
   }
 
   private enum State {
     STOPPED,
-    INTAKING // Running rollers
+    INTAKING
   }
 
-  State state = State.STOPPED;
+  private State state = State.STOPPED;
 
+  @Override
   public Object getState() {
     return state;
   }
 
   @Override
   public void periodic() {
-    Logger.recordOutput("Intake/State", state.toString());
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake", inputs);
 
     Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
     Logger.recordOutput(
@@ -99,11 +107,38 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     for (TalonFX d : getDevices(device)) {
       d.setVoltage(volts);
     }
+    state = rollersActive ? State.INTAKING : State.STOPPED;
+    Logger.recordOutput("Intake/State", state.toString());
 
-    if (volts == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
+    final double armVolts =
+        armState.equals(ArmState.FORWARD)
+            ? Constants.Intake.kArmVolts.in(edu.wpi.first.units.Units.Volts)
+            : (armState.equals(ArmState.BACKWARD)
+                ? -Constants.Intake.kArmVolts.in(edu.wpi.first.units.Units.Volts)
+                : 0.0);
+    io.setArmVoltage(armVolts);
+  }
+
+  /** Device open-loop control helper. */
+  public void runDevice(Device device, double speed) {
+    switch (device) {
+      case ROLLERS -> {
+        io.setRollersOpenLoop(speed);
+        rollersActive = speed != 0.0;
+      }
+      case ARM -> io.setArmVoltage(
+          speed * Constants.Intake.kArmVolts.in(edu.wpi.first.units.Units.Volts));
+    }
+  }
+
+  /** Device voltage control helper. */
+  public void runDeviceVoltage(Device device, double volts) {
+    switch (device) {
+      case ROLLERS -> {
+        io.setRollersOpenLoop(volts / 12.0);
+        rollersActive = volts != 0.0;
+      }
+      case ARM -> io.setArmVoltage(volts);
     }
   }
 
@@ -115,13 +150,12 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     return runDevice(Device.ROLLERS, 0);
   }
 
+  /** Command to set arm manual voltage state. */
   public Command controlArm(ArmState state) {
-    return Commands.runOnce(
-        () -> {
-          armState = state;
-        });
+    return Commands.runOnce(() -> armState = state);
   }
 
+  /** Oscillates the arm up and down at a chosen frequency. */
   public Command occilateArm(Frequency frequency) {
     Time period = Seconds.of(1 / (2 * frequency.in(Hertz)));
     return new SequentialCommandGroup(
@@ -130,6 +164,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         .repeatedly();
   }
 
+  /** Position command for arm-up. */
   public Command raiseArm() {
     return Commands.runOnce(
         () -> {
@@ -138,6 +173,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
+  /** Position command for arm-down. */
   public Command lowerArm() {
     return Commands.runOnce(
         () -> {
@@ -146,6 +182,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
+  /** Position command for emergency arm-up. */
   public Command emergency() {
     return Commands.runOnce(
         () -> {

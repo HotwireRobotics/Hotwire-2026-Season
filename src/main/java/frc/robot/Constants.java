@@ -18,7 +18,6 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
@@ -29,8 +28,8 @@ public final class Constants {
   }
 
   public static class Joysticks {
-    public static final CommandXboxController driver = new CommandXboxController(0);
-    public static final CommandXboxController operator = new CommandXboxController(1);
+    public static final HybridGamepad driver = new HybridGamepad(0);
+    public static final HybridGamepad operator = new HybridGamepad(1);
   }
 
   public static class Shooter {
@@ -44,6 +43,8 @@ public final class Constants {
   public static class Intake {
     public static final double kSpeed = 0.8;
     public static final Frequency kOccilationFrequency = Hertz.of(2.62);
+    /** Voltage applied to the intake arm when moving forward/backward. */
+    public static final Voltage kArmVolts = Volts.of(4.0);
   }
 
   public static class Hopper {
@@ -123,14 +124,16 @@ public final class Constants {
   public static final Translation2d middle = new Translation2d(Meters.of(8.27), Meters.of(4.01));
 
   public static Pose2d flipAlliance(Pose2d pose) {
-    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    if (alliance.equals(Alliance.Red)) {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
   }
 
   public static Angle flipAlliance(Angle angle) {
-    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    if (alliance.equals(Alliance.Red)) {
       return angle.plus(Degrees.of(180));
     }
     return angle;
