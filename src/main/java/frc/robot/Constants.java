@@ -18,11 +18,13 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+  public static final Timer timer = new Timer();
 
   public static class Mathematics {
     public static final double TAU = 6.283185307179586;
@@ -57,6 +59,18 @@ public final class Constants {
     public static final double ANGLE_KD = rotationPID.kD;
   }
 
+  public static void startTime() {
+    timer.reset();
+    timer.start();
+  }
+
+  public static Time getTime() {
+    Time t = Seconds.of(DriverStation.getMatchTime());
+    Time length = (DriverStation.isAutonomous()) ? Constants.Length.autonomous : Constants.Length.teleoperated;
+
+    return (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(t);
+  }
+
   public static class Indication {
     public static SolidColor LEDColor(int r, int g, int b) {
       return new SolidColor(0, 67).withColor(new RGBWColor(r, g, b));
@@ -74,6 +88,13 @@ public final class Constants {
         default:
           return true;
       }
+    }
+
+    public static boolean visionRegister() {
+      for (String limelight : Limelight.localization) {
+        return true;
+      }
+      return false;
     }
 
     public static boolean isActive() {
@@ -158,7 +179,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1420.92838;
+  public static final double base = 1455.92838;
   public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {

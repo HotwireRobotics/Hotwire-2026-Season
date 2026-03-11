@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class HopperSubsystem extends ModularSubsystem implements Systerface {
@@ -45,6 +46,10 @@ public class HopperSubsystem extends ModularSubsystem implements Systerface {
 
   public Command runHopper() {
     return runDevice(Device.HOPPER, Constants.Hopper.kSpeed);
+  }
+
+  public Command runHopper(Supplier<Boolean> inverse) {
+    return runDevice(Device.HOPPER, () -> (Constants.Hopper.kSpeed * (inverse.get() ? -1 : 1)));
   }
 
   public Command stopHopper() {

@@ -8,7 +8,6 @@ import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.StripTypeValue;
-
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -17,20 +16,21 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import java.util.HashMap;
 import java.util.function.Supplier;
-
 import org.littletonrobotics.junction.Logger;
 
-public class LuminalIndicators extends SubsystemBase {
+public class LEDIndication extends SubsystemBase {
 
   private final CANdle candle;
 
   private enum Event {
-    AUTONOMOUS,
+    AUTOENABLED,
     ACTIVE,
+    VISION,
     INACTIVE,
-    DISABLED,
-    ENABLED,
+    TELEDISABLED,
+    TELEENABLED,
     EMERGENCY,
+    AUTODISABLED
   }
 
   private final HashMap<Event, Supplier<SolidColor>> color;
@@ -41,7 +41,7 @@ public class LuminalIndicators extends SubsystemBase {
     return () -> (((Math.floor(time.in(Seconds) * frequency.in(Hertz)) % 2) == 1) ? t : f);
   }
 
-  public LuminalIndicators() {
+  public LEDIndication() {
     candle = new CANdle(0);
 
     // Configuration
@@ -51,15 +51,41 @@ public class LuminalIndicators extends SubsystemBase {
     candle.getConfigurator().apply(config);
 
     color = new HashMap<>();
-    color.put(Event.AUTONOMOUS, () -> Constants.Indication.LEDColor(20, 20, 150));
     color.put(Event.EMERGENCY,  () -> Constants.Indication.LEDColor(255, 0, 0));
-    color.put(Event.DISABLED, toggle(
-      Constants.Indication.LEDColor(180, 0, 0), 
-      Constants.Indication.LEDColor(0,  0,  0), 
-      Hertz.of(3)
-    ));
     color.put(Event.ACTIVE,     () -> Constants.Indication.LEDColor(0, 180, 0));
     color.put(Event.INACTIVE,   () -> Constants.Indication.LEDColor(180, 0, 0));
+    color.put(
+        Event.TELEDISABLED,
+        toggle(
+            Constants.Indication.LEDColor(180, 0, 0),
+            Constants.Indication.LEDColor(0, 0, 0),
+            Hertz.of(0.5)));
+    color.put(
+        Event.TELEENABLED,
+        toggle(
+            Constants.Indication.LEDColor(0, 255, 0),
+            Constants.Indication.LEDColor(0, 0, 0),
+            Hertz.of(3)));
+    color.put(
+        Event.VISION,
+        toggle(
+            Constants.Indication.LEDColor(100, 230, 100),
+            Constants.Indication.LEDColor(0, 0, 0),
+            Hertz.of(3)));
+    color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(180, 0, 0));
+    color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(255, 0, 0));
+    color.put(
+        Event.AUTODISABLED,
+        toggle(
+            Constants.Indication.LEDColor(20, 20, 150),
+            Constants.Indication.LEDColor(0, 0, 0),
+            Hertz.of(0.5)));
+    color.put(
+        Event.AUTOENABLED,
+        toggle(
+            Constants.Indication.LEDColor(20, 20, 150),
+            Constants.Indication.LEDColor(0, 0, 0),
+            Hertz.of(3)));
 
     timer.start();
   }
@@ -92,18 +118,21 @@ public class LuminalIndicators extends SubsystemBase {
     }
 
     if (DriverStation.isAutonomous()) {
-      updateLEDs(getRequest(Event.AUTONOMOUS).get());
+      if (DriverStation.isEnabled()) {
+        updateLEDs(getRequest(Event.AUTOENABLED).get());
+      } else {
+        updateLEDs(getRequest(Event.AUTODISABLED).get());
+      }
     } else {
       if (DriverStation.isEnabled()) {
-
-        if (Constants.Indication.autonomousVictory()) {
-          updateLEDs(getRequest(Event.INACTIVE).get());
-        } else {
-          updateLEDs(getRequest(Event.ACTIVE).get());
-        }
-
+        // if (Constants.Indication.autonomousVictory()) {
+        //   updateLEDs(getRequest(Event.INACTIVE).get());
+        // } else {
+        //   updateLEDs(getRequest(Event.ACTIVE).get());
+        // }
+        updateLEDs(getRequest(Event.TELEENABLED).get());
       } else {
-        updateLEDs(getRequest(Event.DISABLED).get());
+        updateLEDs(getRequest(Event.TELEDISABLED).get());
       }
     }
   }
