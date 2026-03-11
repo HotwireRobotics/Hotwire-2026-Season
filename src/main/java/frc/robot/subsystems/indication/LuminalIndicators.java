@@ -130,7 +130,10 @@ public class LuminalIndicators extends SubsystemBase {
     }
   }
 
-  private void updateLEDs(ControlRequest color) {
-    candle.setControl(color);
+  public Command updateLEDs(SolidColor color) {
+    return runOnce(
+        () -> {
+          io.setControl(color);
+        });
   }
 }
