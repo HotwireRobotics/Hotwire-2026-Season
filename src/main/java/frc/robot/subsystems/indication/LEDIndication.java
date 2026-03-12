@@ -51,9 +51,9 @@ public class LEDIndication extends SubsystemBase {
     candle.getConfigurator().apply(config);
 
     color = new HashMap<>();
-    color.put(Event.EMERGENCY,  () -> Constants.Indication.LEDColor(255, 0, 0));
-    color.put(Event.ACTIVE,     () -> Constants.Indication.LEDColor(0, 180, 0));
-    color.put(Event.INACTIVE,   () -> Constants.Indication.LEDColor(180, 0, 0));
+    color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(180, 0, 0));
+    color.put(Event.ACTIVE, () -> Constants.Indication.LEDColor(0, 180, 0));
+    color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(180, 0, 0));
     color.put(
         Event.TELEDISABLED,
         toggle(
@@ -98,7 +98,10 @@ public class LEDIndication extends SubsystemBase {
   @Override
   public void periodic() {
     Time t = Seconds.of(DriverStation.getMatchTime());
-    Time length = (DriverStation.isAutonomous()) ? Constants.Length.autonomous : Constants.Length.teleoperated;
+    Time length =
+        (DriverStation.isAutonomous())
+            ? Constants.Length.autonomous
+            : Constants.Length.teleoperated;
 
     // Get period-relative time.
     time = (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(t);

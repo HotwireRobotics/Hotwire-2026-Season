@@ -265,6 +265,9 @@ public class RobotContainer {
     autoChooser.addOption("A-Bineutral Right", new PathPlannerAuto("A-Bineutral", false));
     autoChooser.addOption("A-Bineutral Left", new PathPlannerAuto("A-Bineutral", true));
 
+    autoChooser.addOption("A-Unineutral Right", new PathPlannerAuto("A-Unineutral", false));
+    autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
+
     hubTarget = Constants.Poses.hub;
   }
 

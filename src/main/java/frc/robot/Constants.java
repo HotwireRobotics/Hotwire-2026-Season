@@ -36,8 +36,8 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(0.05);
-    public static final Time kFiringTime = Seconds.of(3.5);
+    public static final Time kChargeUpTime = Seconds.of(0.1);
+    public static final Time kFiringTime = Seconds.of(5);
     public static final Time kUntilAggitateTime = Seconds.of(1.1);
     public static final AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
@@ -66,7 +66,10 @@ public final class Constants {
 
   public static Time getTime() {
     Time t = Seconds.of(DriverStation.getMatchTime());
-    Time length = (DriverStation.isAutonomous()) ? Constants.Length.autonomous : Constants.Length.teleoperated;
+    Time length =
+        (DriverStation.isAutonomous())
+            ? Constants.Length.autonomous
+            : Constants.Length.teleoperated;
 
     return (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(t);
   }
@@ -128,14 +131,13 @@ public final class Constants {
   }
 
   public static class Length {
-    public static final Time autonomous   = Seconds.of(20);
-    public static final Time transition   = Seconds.of(10);
-    public static final Time period       = Seconds.of(25); // x4
-    public static final Time endgame      = Seconds.of(30);
+    public static final Time autonomous = Seconds.of(20);
+    public static final Time transition = Seconds.of(10);
+    public static final Time period = Seconds.of(25); // x4
+    public static final Time endgame = Seconds.of(30);
 
     public static final Time teleoperated = Seconds.of(140);
   }
-
 
   public static class MotorIDs {
     public static final Integer i_rollers = 17;

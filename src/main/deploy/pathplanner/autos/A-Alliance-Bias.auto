@@ -5,9 +5,27 @@
     "data": {
       "commands": [
         {
+          "type": "path",
+          "data": {
+            "pathName": "Collect from Outpost"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.5
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Shoot from Outpost"
+          }
+        },
+        {
           "type": "named",
           "data": {
-            "name": "Lower Intake"
+            "name": "Firing Sequence"
           }
         },
         {
@@ -19,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Unineutral Lower Exolateral"
+            "pathName": "Abias Outpost to Depot"
           }
         },
         {
@@ -31,19 +49,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Unineutral Lower Endolateral"
+            "pathName": "Shoot from Depot"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Firing Sequence"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Unineutral Second Lower Endolateral"
           }
         }
       ]
