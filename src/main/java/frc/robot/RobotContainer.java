@@ -387,6 +387,20 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return autoChooser.get();
   }
+
+  public void seedAutonomousPose(Command autonomousCommand) {
+    if (!(autonomousCommand instanceof PathPlannerAuto selectedAuto)) {
+      return;
+    }
+
+    Pose2d startingPose = selectedAuto.getStartingPose();
+    if (startingPose == null) {
+      return;
+    }
+
+    drive.setPose(startingPose);
+    Logger.recordOutput("Robot/AutoSeedPose", startingPose);
+  }
 }
 
 // ./gradlew deploy --no-daemon

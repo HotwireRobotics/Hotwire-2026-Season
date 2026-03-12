@@ -38,7 +38,7 @@ public final class Constants {
   public static class Shooter {
     public static final Time kChargeUpTime = Seconds.of(0.1);
     public static final Time kFiringTime = Seconds.of(5);
-    public static final Time kUntilAggitateTime = Seconds.of(1.1);
+    public static final Time kUntilAggitateTime = Seconds.of(2.6);
     public static final AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
   }
@@ -127,7 +127,7 @@ public final class Constants {
       "limelight-gamma", "limelight-alpha", "limelight-two"
     };
     public static final String[] limelights = {"limelight-gamma", "limelight-alpha"};
-    public static final Distance maxDistance = Meters.of(2.8);
+    public static final Distance maxDistance = Inches.of(191);
   }
 
   public static class Length {

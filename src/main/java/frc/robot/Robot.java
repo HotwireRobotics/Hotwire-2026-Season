@@ -174,7 +174,7 @@ public class Robot extends LoggedRobot {
       Pose2d robotPose = robotContainer.drive.getPose();
       double headingDeg = robotPose.getRotation().getDegrees();
 
-      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.005);
+      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.001);
 
       // Get pose estimate from limelight
       PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
@@ -218,6 +218,7 @@ public class Robot extends LoggedRobot {
   public void autonomousInit() {
     Logger.recordOutput("Robot/Mode", "Autonomous");
     autonomousCommand = robotContainer.getAutonomousCommand();
+    robotContainer.seedAutonomousPose(autonomousCommand);
 
     if (autonomousCommand != null) {
       Logger.recordOutput("Robot/AutonomousCommand", autonomousCommand.getName());
