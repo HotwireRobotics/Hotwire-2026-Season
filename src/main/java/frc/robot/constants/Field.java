@@ -13,7 +13,7 @@ import edu.wpi.first.math.util.Units;
  * <p>NOTE: All constants are defined relative to the field coordinate system, and from the
  * perspective of the blue alliance station
  */
-public class FieldConstants {
+public class Field {
 
   public static final FieldType fieldType = FieldType.WELDED;
 

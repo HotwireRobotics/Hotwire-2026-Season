@@ -1,6 +1,8 @@
-package frc.robot;
+package frc.robot.constants;
 
 import static edu.wpi.first.units.Units.*;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.signals.RGBWColor;
@@ -66,12 +68,14 @@ public final class Constants {
 
   public static Time getTime() {
     Time t = Seconds.of(DriverStation.getMatchTime());
-    Time length =
-        (DriverStation.isAutonomous())
-            ? Constants.Length.autonomous
-            : Constants.Length.teleoperated;
+    Time time = (t.isEquivalent(Seconds.of(-1))) 
+        ? Seconds.of(timer.get()) 
+        : (DriverStation.isAutonomous())
+          ? Constants.Length.autonomous
+          : Constants.Length.teleoperated.minus(t);
+    Logger.recordOutput("Time", time.in(Seconds));
 
-    return (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(t);
+    return time;
   }
 
   public static class Indication {
@@ -123,11 +127,9 @@ public final class Constants {
   public static final double lerp = 1.7; // 1.7
 
   public static class Limelight {
-    public static final String[] localization = {
-      "limelight-gamma", "limelight-alpha", "limelight-two"
-    };
-    public static final String[] limelights = {"limelight-gamma", "limelight-alpha"};
-    public static final Distance maxDistance = Inches.of(191);
+    public static final String[] localization = {"limelight-gamma", "limelight-alpha"};
+    public static final String[] limelights   = {"limelight-gamma", "limelight-alpha"};
+    public static final Distance maxDistance = Inches.of(100);
   }
 
   public static class Length {

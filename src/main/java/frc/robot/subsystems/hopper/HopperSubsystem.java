@@ -2,9 +2,10 @@ package frc.robot.subsystems.hopper;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import frc.robot.constants.Constants;
+
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 

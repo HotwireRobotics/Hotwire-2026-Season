@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.LimelightHelpers.PoseEstimate;
+import frc.robot.constants.Constants;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -184,17 +186,19 @@ public class Robot extends LoggedRobot {
           && (measurement.avgTagDist <= Constants.Limelight.maxDistance.in(Meters))) {
         measurements.add(measurement);
         // Log pose estimate and limelight status
-        Logger.recordOutput(limelight + " detecting", true);
+        Logger.recordOutput(limelight + " Detecting", true);
         poseEstimate = measurement.pose;
         Logger.recordOutput("Pose Estimate", poseEstimate);
 
         // Define standard deviation
-        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.001, 0.001, Math.toRadians(0.01));
-        Logger.recordOutput("limelight estimated pose", measurement.pose);
+        Matrix<N3, N1> stdDevs =
+            VecBuilder.fill(0.3, 0.3, Math.toRadians(20));
+        
+        Logger.recordOutput("limelight Estimate", measurement.pose);
         robotContainer.drive.addVisionMeasurement(
             measurement.pose, measurement.timestampSeconds, stdDevs);
       } else {
-        Logger.recordOutput(limelight + " detecting", false);
+        Logger.recordOutput(limelight + " Detecting", false);
       }
       LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
     }
