@@ -61,22 +61,34 @@ public final class Constants {
     public static final double ANGLE_KD = rotationPID.kD;
   }
 
-  public static void startTime() {
-    timer.reset();
-    timer.start();
+  public static class Tempo {
+    private static double timerOffset = 0;
+    private static Time time = Seconds.of(0);
+    public static void startTime() {
+      timer.reset();
+      timer.start();
+    }
+
+    public static void startTime(Time offset) {
+      timer.reset();
+      timer.start();
+      timerOffset = offset.in(Seconds);
+    }
+  
+    public static Time getTime() {
+      Time t = Seconds.of(DriverStation.getMatchTime());
+      time = (t.isEquivalent(Seconds.of(-1))) 
+          ? Seconds.of(timer.get() + timerOffset) 
+          : ((DriverStation.isAutonomous())
+            ? Constants.Length.autonomous
+            : Constants.Length.teleoperated).minus(t);
+      Logger.recordOutput("Time", time.in(Seconds));
+  
+      return time;
+    }
   }
 
-  public static Time getTime() {
-    Time t = Seconds.of(DriverStation.getMatchTime());
-    Time time = (t.isEquivalent(Seconds.of(-1))) 
-        ? Seconds.of(timer.get()) 
-        : (DriverStation.isAutonomous())
-          ? Constants.Length.autonomous
-          : Constants.Length.teleoperated.minus(t);
-    Logger.recordOutput("Time", time.in(Seconds));
-
-    return time;
-  }
+  
 
   public static class Indication {
     public static SolidColor LEDColor(int r, int g, int b) {

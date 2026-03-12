@@ -232,14 +232,14 @@ public class Robot extends LoggedRobot {
     }
 
     bitimer.start();
-    Constants.startTime();
+    Constants.Tempo.startTime();
   }
 
   @Override
   public void autonomousPeriodic() {
     processLimelightMeasurements();
     indicateLimelight(Indicate.AUTO);
-    if (Constants.getTime().gte(Seconds.of(20))) {
+    if (Constants.Tempo.getTime().gte(Seconds.of(20))) {
       autonomousCommand.cancel();
     }
   }
@@ -252,6 +252,7 @@ public class Robot extends LoggedRobot {
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
+    Constants.Tempo.startTime(Seconds.of(20));
   }
 
   @Override
