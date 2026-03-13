@@ -69,9 +69,9 @@ public class LEDIndication extends SubsystemBase {
     color.put(
         Event.VISION,
         toggle(
-            Constants.Indication.LEDColor(100, 230, 100),
+            Constants.Indication.LEDColor(0, 100, 0),
             Constants.Indication.LEDColor(0, 0, 0),
-            Hertz.of(3)));
+            Hertz.of(0.5)));
     color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(180, 0, 0));
     color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(255, 0, 0));
 
@@ -134,7 +134,11 @@ public class LEDIndication extends SubsystemBase {
       if (DriverStation.isEnabled()) {
         updateLEDs(getRequest(Event.AUTOENABLED).get());
       } else {
-        updateLEDs(getRequest(Event.AUTODISABLED).get());
+        if (Constants.Indication.isValidMeasurement()) {
+            updateLEDs(getRequest(Event.VISION).get());
+        } else {
+            updateLEDs(getRequest(Event.AUTODISABLED).get());
+        }
       }
     } else {
       if (DriverStation.isEnabled()) {

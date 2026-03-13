@@ -1,3 +1,4 @@
+
 package frc.robot.constants;
 
 import static edu.wpi.first.units.Units.*;
@@ -77,24 +78,43 @@ public final class Constants {
       timerOffset = offset.in(Seconds);
     }
 
-    public static Time getTime() {
+    public static Time tick() {
       Time t = Seconds.of(DriverStation.getMatchTime());
       time =
           (t.isEquivalent(Seconds.of(-1)))
               ? Seconds.of(timer.get() + timerOffset)
               : ((DriverStation.isAutonomous())
                       ? Constants.Length.autonomous
-                      : Constants.Length.teleoperated)
+                      : Constants.Length.teleoperated
+                          .plus(Constants.Length.autonomous))
                   .minus(t);
       Logger.recordOutput("Time", time.in(Seconds));
 
       return time;
+    }
+
+    public static Time getTime() {
+      return time;
+    }
+
+    public static boolean isElapsed(Time target) {
+      return time.gte(target);
+    }
+
+    public static boolean isRange(Time start, Time end) {
+      return time.gte(start) && time.lte(end);
     }
   }
 
   public static class Indication {
     public static SolidColor LEDColor(int r, int g, int b) {
       return new SolidColor(0, 67).withColor(new RGBWColor(r, g, b));
+    }
+
+    public static boolean isValidMeasurement;
+
+    public static boolean isValidMeasurement() {
+      return isValidMeasurement;
     }
 
     public static boolean autonomousVictory() {
@@ -117,15 +137,19 @@ public final class Constants {
       return Alliance.Blue;
     }
 
-    public static boolean visionRegister() {
-      for (String limelight : Limelight.localization) {
+    public static boolean isActive() {
+      Boolean isAutonomous = DriverStation.isAutonomous();
+      Boolean winAutonomous = autonomousVictory();
+      if (isAutonomous) {
+        return true;
+      } else {
+        if (Tempo.isRange(Seconds.of(20), Seconds.of(30))) return true;
+        if (Tempo.isRange(Seconds.of(30), Seconds.of(55))) return !winAutonomous;
+        if (Tempo.isRange(Seconds.of(55), Seconds.of(80))) return winAutonomous;
+        if (Tempo.isRange(Seconds.of(80), Seconds.of(105))) return !winAutonomous;
+        if (Tempo.isRange(Seconds.of(105), Seconds.of(130))) return winAutonomous;
         return true;
       }
-      return false;
-    }
-
-    public static boolean isActive() {
-      return autonomousVictory();
     }
 
     public static class Autonomous {
@@ -203,7 +227,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1385.92838;
+  public static final double base = 1275.92838;
   public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {
