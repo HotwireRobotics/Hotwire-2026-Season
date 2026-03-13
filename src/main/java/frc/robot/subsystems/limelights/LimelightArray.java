@@ -59,7 +59,7 @@ public class LimelightArray extends SubsystemBase {
 
         Logger.recordOutput("Limelight/" + limelight + "/Pose", estimate.pose);
 
-        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.25, 0.25, 9999999);
+        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.25, 0.25, Math.toRadians(20));
 
         drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, stdDevs);
 
