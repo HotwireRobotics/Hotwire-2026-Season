@@ -60,9 +60,7 @@ public class LEDIndication extends SubsystemBase {
             Constants.Indication.LEDColor(180, 0, 0),
             Constants.Indication.LEDColor(0, 0, 0),
             Hertz.of(0.5)));
-    color.put(
-        Event.TELEENABLED,
-        () -> Constants.Indication.LEDColor(0, 170, 0));
+    color.put(Event.TELEENABLED, () -> Constants.Indication.LEDColor(0, 170, 0));
     color.put(
         Event.VISION,
         toggle(
@@ -103,12 +101,6 @@ public class LEDIndication extends SubsystemBase {
 
   @Override
   public void periodic() {
-    Time t = Seconds.of(DriverStation.getMatchTime());
-    Time length =
-        (DriverStation.isAutonomous())
-            ? Constants.Length.autonomous
-            : Constants.Length.teleoperated;
-
     // Get period-relative time.
     time = Constants.Tempo.getTime();
 
@@ -121,6 +113,7 @@ public class LEDIndication extends SubsystemBase {
 
   public void indicatorPipeline(Time time) {
     Logger.recordOutput("Indicators/time", time);
+    Logger.recordOutput("Indicators/active", Constants.Indication.isActive());
 
     if (DriverStation.isEStopped()) {
       updateLEDs(getRequest(Event.EMERGENCY).get());

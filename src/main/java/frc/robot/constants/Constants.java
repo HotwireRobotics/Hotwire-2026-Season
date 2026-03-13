@@ -14,7 +14,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
-import edu.wpi.first.units.measure.Per;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -85,7 +84,8 @@ public final class Constants {
               ? Seconds.of(timer.get() + timerOffset)
               : ((DriverStation.isAutonomous())
                       ? Constants.Length.autonomous
-                      : Constants.Length.teleoperated)
+                      : Constants.Length.teleoperated
+                          .plus(Constants.Length.autonomous))
                   .minus(t);
       Logger.recordOutput("Time", time.in(Seconds));
 
@@ -143,28 +143,18 @@ public final class Constants {
       if (isAutonomous) {
         return true;
       } else {
-        if (Tempo.isRange(Seconds.of(0),  Seconds.of(10)))  return true;
-        if (Tempo.isRange(Seconds.of(10), Seconds.of(35)))  return !winAutonomous;
-        if (Tempo.isRange(Seconds.of(35), Seconds.of(60)))  return  winAutonomous;
-        if (Tempo.isRange(Seconds.of(60), Seconds.of(85)))  return !winAutonomous;
-        if (Tempo.isRange(Seconds.of(85), Seconds.of(110))) return  winAutonomous;
+        if (Tempo.isRange(Seconds.of(20), Seconds.of(30))) return true;
+        if (Tempo.isRange(Seconds.of(30), Seconds.of(55))) return !winAutonomous;
+        if (Tempo.isRange(Seconds.of(55), Seconds.of(80))) return winAutonomous;
+        if (Tempo.isRange(Seconds.of(80), Seconds.of(105))) return !winAutonomous;
+        if (Tempo.isRange(Seconds.of(105), Seconds.of(130))) return winAutonomous;
         return true;
       }
     }
 
-    public static class Autonomous {
-      public static final Time[] transitions = {};
-    }
-
-    public static class Teloperated {
-      public static final Time[] transitions = {
-        Seconds.of(10),
-        Seconds.of(35),
-        Seconds.of(60),
-        Seconds.of(85),
-        Seconds.of(110),
-      };
-    }
+    public static final Time[] transitions = {
+      Seconds.of(30), Seconds.of(55), Seconds.of(80), Seconds.of(105), Seconds.of(130),
+    };
   }
 
   public static final double lerp = 1.7; // 1.7
@@ -177,6 +167,7 @@ public final class Constants {
 
   public static class Length {
     public static final Time autonomous = Seconds.of(20);
+    public static final Time delay = Seconds.of(3);
     public static final Time transition = Seconds.of(10);
     public static final Time period = Seconds.of(25); // x4
     public static final Time endgame = Seconds.of(30);

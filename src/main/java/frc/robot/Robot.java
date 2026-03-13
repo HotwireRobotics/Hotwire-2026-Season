@@ -1,14 +1,9 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Hertz;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -16,10 +11,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.constants.Constants;
-import java.util.ArrayList;
-import java.util.List;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -133,10 +125,7 @@ public class Robot extends LoggedRobot {
     // Controller haptic indicators
     Boolean rumble = false;
 
-    for (Time target :
-        ((isAutonomous)
-            ?  Constants.Indication.Autonomous.transitions
-            : Constants.Indication.Teloperated.transitions)) {
+    for (Time target : Constants.Indication.transitions) {
       double difference = target.minus(time).in(Seconds);
       if ((Math.abs(difference) < 1) && (difference < 0)) {
         rumble = true;
@@ -170,7 +159,8 @@ public class Robot extends LoggedRobot {
   //     LimelightHelpers.SetIMUAssistAlpha(limelight, 0.003);
 
   //     // Get pose estimate from limelight
-  //     PoseEstimate MG2measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+  //     PoseEstimate MG2measurement =
+  // LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
 
   //     if ((MG2measurement != null)
   //         && (MG2measurement.tagCount > 0)
