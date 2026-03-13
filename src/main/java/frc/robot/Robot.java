@@ -229,9 +229,6 @@ public class Robot extends LoggedRobot {
   public void autonomousPeriodic() {
     processLimelightMeasurements();
     indicateLimelight(Indicate.AUTO);
-    if (Constants.Tempo.getTime().gte(Seconds.of(20))) {
-      autonomousCommand.cancel();
-    }
   }
 
   @Override
