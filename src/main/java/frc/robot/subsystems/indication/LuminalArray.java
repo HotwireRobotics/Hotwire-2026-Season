@@ -18,18 +18,18 @@ import java.util.HashMap;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
-public class LEDIndication extends SubsystemBase {
+public class LuminalArray extends SubsystemBase {
 
   private final CANdle candle;
 
   private enum Event {
     AUTOENABLED,
-    ACTIVE,
-    VISION,
-    INACTIVE,
+    ACTIVE, WANING,
+    INACTIVE, WAXING,
     TELEDISABLED,
     TELEENABLED,
     EMERGENCY,
+    VISION,
     AUTODISABLED
   }
 
@@ -41,7 +41,11 @@ public class LEDIndication extends SubsystemBase {
     return () -> (((Math.floor(time.in(Seconds) * frequency.in(Hertz)) % 2) == 1) ? t : f);
   }
 
-  public LEDIndication() {
+  private Supplier<ControlRequest> tick(ControlRequest high, ControlRequest low, Frequency frequency) {
+    return () -> ((((time.in(Seconds) * frequency.in(Hertz)) % 2) >= 1.7) ? high : low);
+  }
+
+  public LuminalArray() {
     candle = new CANdle(0);
 
     // Configuration
@@ -53,6 +57,12 @@ public class LEDIndication extends SubsystemBase {
     color = new HashMap<>();
     color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(180, 0, 0));
     color.put(Event.ACTIVE, () -> Constants.Indication.LEDColor(0, 180, 0));
+    color.put(
+      Event.WANING,
+      tick(
+          Constants.Indication.LEDColor(0, 180, 0),
+          Constants.Indication.LEDColor(0, 0, 0),
+          Hertz.of(2)));
     color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(0, 10, 0));
     color.put(
         Event.TELEDISABLED,
@@ -68,6 +78,12 @@ public class LEDIndication extends SubsystemBase {
             Constants.Indication.LEDColor(0, 0, 0),
             Hertz.of(3)));
     color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(180, 0, 0));
+    color.put(
+      Event.WAXING,
+      toggle(
+          Constants.Indication.LEDColor(0, 180, 0),
+          Constants.Indication.LEDColor(0, 0, 0),
+          Hertz.of(2)));
     color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(255, 0, 0));
 
     color.put(Event.AUTODISABLED, () -> Constants.Indication.LEDColor(255, 0, 0));
@@ -128,9 +144,17 @@ public class LEDIndication extends SubsystemBase {
     } else {
       if (DriverStation.isEnabled()) {
         if (Constants.Indication.isActive()) {
-          updateLEDs(getRequest(Event.ACTIVE).get());
+          if (Constants.Indication.isWaning()) {
+            updateLEDs(getRequest(Event.WANING).get());
+          } else {
+            updateLEDs(getRequest(Event.ACTIVE).get());
+          }
         } else {
-          updateLEDs(getRequest(Event.INACTIVE).get());
+          if (Constants.Indication.isWaxing()) {
+            updateLEDs(getRequest(Event.WAXING).get());
+          } else {
+            updateLEDs(getRequest(Event.INACTIVE).get());
+          }
         }
       } else {
         updateLEDs(getRequest(Event.TELEDISABLED).get());

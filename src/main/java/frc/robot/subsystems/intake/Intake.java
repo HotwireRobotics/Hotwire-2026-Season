@@ -20,7 +20,7 @@ import frc.robot.constants.Constants;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoIntake extends ModularSubsystem implements Systerface {
+public class Intake extends ModularSubsystem implements Systerface {
 
   public final TalonFX rollers;
   public final TalonFX arm;
@@ -40,7 +40,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private ArmState armState = ArmState.ZERO;
 
-  public ProtoIntake() {
+  public Intake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     arm = new TalonFX(Constants.MotorIDs.i_arm);
     defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));

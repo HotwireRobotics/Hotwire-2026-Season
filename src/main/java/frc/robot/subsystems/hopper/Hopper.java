@@ -8,14 +8,14 @@ import frc.robot.constants.Constants;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
-public class HopperSubsystem extends ModularSubsystem implements Systerface {
+public class Hopper extends ModularSubsystem implements Systerface {
   private final TalonFX hopper;
 
   public enum Device {
     HOPPER
   }
 
-  public HopperSubsystem() {
+  public Hopper() {
     hopper = new TalonFX(Constants.MotorIDs.h_hopper);
     defineDevice(Device.HOPPER, hopper);
   }

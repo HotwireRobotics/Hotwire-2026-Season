@@ -26,12 +26,12 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.hopper.HopperSubsystem;
-import frc.robot.subsystems.indication.LEDIndication;
-import frc.robot.subsystems.intake.ProtoIntake;
-import frc.robot.subsystems.intake.ProtoIntake.ArmState;
+import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.indication.LuminalArray;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.Intake.ArmState;
 import frc.robot.subsystems.limelights.LimelightArray;
-import frc.robot.subsystems.shooter.ProtoShooter;
+import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -40,10 +40,10 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   public final Drive drive;
-  public final ProtoIntake intake;
-  public final ProtoShooter shooter;
-  public final HopperSubsystem hopper;
-  public final LEDIndication lights;
+  public final Intake intake;
+  public final Shooter shooter;
+  public final Hopper hopper;
+  public final LuminalArray lights;
   public final LimelightArray vision;
   public double testVelocity = 0;
   private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
@@ -143,10 +143,10 @@ public class RobotContainer {
               .lt(Constants.Shooter.kAlignmentError);
         };
 
-    intake = new ProtoIntake();
-    shooter = new ProtoShooter();
-    hopper = new HopperSubsystem();
-    lights = new LEDIndication();
+    intake = new Intake();
+    shooter = new Shooter();
+    hopper = new Hopper();
+    lights = new LuminalArray();
     vision = new LimelightArray(drive);
 
     velocity =
