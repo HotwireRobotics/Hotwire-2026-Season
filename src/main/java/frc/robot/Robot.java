@@ -33,8 +33,7 @@ public class Robot extends LoggedRobot {
   private final RobotContainer robotContainer;
   public Pose2d poseEstimate = new Pose2d();
 
-  private final Timer bitimer = new Timer();
-  private final Timer unitimer = new Timer();
+  private Time time = Seconds.of(0);
 
   private final Field2d field = new Field2d();
 
@@ -83,8 +82,6 @@ public class Robot extends LoggedRobot {
     SmartDashboard.setPersistent("Test Shooter RPM");
     SmartDashboard.putData("Robot Pose (Field)", field);
 
-    unitimer.start();
-
     // music = new Orchestra();
     // music.addInstrument(robotContainer.intake.rollers);
     // music.addInstrument(robotContainer.shooter.m_feeder);
@@ -103,7 +100,7 @@ public class Robot extends LoggedRobot {
   }
 
   public void indicateLimelight(Indicate mode) {
-    Boolean b = (Math.floor(unitimer.get() * 10) % 2) == 1;
+    Boolean b = (Math.floor(time.in(Seconds) * 10) % 2) == 1;
     switch (mode) {
       case DISABLED:
         for (String limelight : Constants.Limelight.limelights) {
@@ -125,6 +122,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
+    time = Constants.Tempo.getTime();
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
     CommandScheduler.getInstance().run();
@@ -132,11 +130,7 @@ public class Robot extends LoggedRobot {
     // Localization and orienttion feeding
     processLimelightMeasurements();
 
-    // Tracking
-    Time time = Seconds.of(DriverStation.getMatchTime());
     Boolean isAutonomous = DriverStation.isAutonomous();
-    Time length = (isAutonomous) ? Constants.Length.autonomous : Constants.Length.teleoperated;
-    time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(bitimer.get()) : length.minus(time);
 
     // Controller haptic indicators
     Logger.recordOutput("Time", time.in(Seconds));
@@ -207,9 +201,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
-
-    bitimer.restart();
-    bitimer.stop();
   }
 
   @Override
@@ -230,8 +221,6 @@ public class Robot extends LoggedRobot {
     } else {
       Logger.recordOutput("Robot/AutonomousCommand", "None");
     }
-
-    bitimer.start();
     Constants.Tempo.startTime();
   }
 
@@ -269,8 +258,6 @@ public class Robot extends LoggedRobot {
     CommandScheduler.getInstance().cancelAll();
 
     teleopInit();
-
-    bitimer.start();
   }
 
   @Override
