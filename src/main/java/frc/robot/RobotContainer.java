@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.constants.Constants;
+import frc.robot.constants.Constants.Limelight;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -30,6 +31,7 @@ import frc.robot.subsystems.hopper.HopperSubsystem;
 import frc.robot.subsystems.indication.LEDIndication;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.intake.ProtoIntake.ArmState;
+import frc.robot.subsystems.limelights.LimelightArray;
 import frc.robot.subsystems.shooter.ProtoShooter;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -43,6 +45,7 @@ public class RobotContainer {
   public final ProtoShooter shooter;
   public final HopperSubsystem hopper;
   public final LEDIndication lights;
+  public final LimelightArray vision;
   public double testVelocity = 0;
   private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
   public final BooleanSupplier aligned;
@@ -145,6 +148,7 @@ public class RobotContainer {
     shooter = new ProtoShooter();
     hopper = new HopperSubsystem();
     lights = new LEDIndication();
+    vision = new LimelightArray(drive);
 
     velocity =
         () -> {
@@ -416,7 +420,7 @@ public class RobotContainer {
     }
 
     drive.setPose(startingPose);
-    Logger.recordOutput("Robot/AutoSeedPose", startingPose);
+    Logger.recordOutput("AutoSeedPose", startingPose);
   }
 }
 

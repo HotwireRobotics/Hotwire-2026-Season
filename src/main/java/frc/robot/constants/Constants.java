@@ -77,7 +77,7 @@ public final class Constants {
       timerOffset = offset.in(Seconds);
     }
 
-    public static Time getTime() {
+    public static Time tick() {
       Time t = Seconds.of(DriverStation.getMatchTime());
       time =
           (t.isEquivalent(Seconds.of(-1)))
@@ -89,6 +89,18 @@ public final class Constants {
       Logger.recordOutput("Time", time.in(Seconds));
 
       return time;
+    }
+
+    public static Time getTime() {
+      return time;
+    }
+
+    public static boolean isElapsed(Time target) {
+      return time.gte(target);
+    }
+
+    public static boolean isRange(Time start, Time end) {
+      return time.gte(start) && time.lte(end);
     }
   }
 

@@ -149,7 +149,7 @@ public class LEDIndication extends SubsystemBase {
     }
   }
 
-  private void updateLEDs(ControlRequest color) {
-    candle.setControl(color);
+  private void updateLEDs(ControlRequest request) {
+    candle.setControl(request);
   }
 }

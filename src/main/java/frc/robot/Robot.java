@@ -122,14 +122,11 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
-    time = Constants.Tempo.getTime();
+    time = Constants.Tempo.tick();
     robotContainer.mHertzOscillate = Hertz.of(SmartDashboard.getNumber("Oscillate", 0));
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
     CommandScheduler.getInstance().run();
-
-    // Localization and orienttion feeding
-    processLimelightMeasurements();
 
     Boolean isAutonomous = DriverStation.isAutonomous();
 
@@ -162,42 +159,42 @@ public class Robot extends LoggedRobot {
     field.setRobotPose(robotContainer.drive.getPose());
   }
 
-  private void processLimelightMeasurements() {
-    List<PoseEstimate> measurements = new ArrayList<>();
+  // private void processLimelightMeasurements() {
+  //   List<PoseEstimate> measurements = new ArrayList<>();
 
-    for (String limelight : Constants.Limelight.localization) {
-      LimelightHelpers.SetIMUMode(limelight, 3);
-      LimelightHelpers.setPipelineIndex(limelight, 0);
-      Pose2d robotPose = robotContainer.drive.getPose();
-      double headingDeg = robotPose.getRotation().getDegrees();
+  //   for (String limelight : Constants.Limelight.localization) {
+  //     LimelightHelpers.SetIMUMode(limelight, 3);
+  //     LimelightHelpers.setPipelineIndex(limelight, 0);
+  //     Pose2d robotPose = robotContainer.drive.getPose();
+  //     double headingDeg = robotPose.getRotation().getDegrees();
 
-      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.003);
+  //     LimelightHelpers.SetIMUAssistAlpha(limelight, 0.003);
 
-      // Get pose estimate from limelight
-      PoseEstimate MG2measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+  //     // Get pose estimate from limelight
+  //     PoseEstimate MG2measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
 
-      if ((MG2measurement != null)
-          && (MG2measurement.tagCount > 0)
-          && (MG2measurement.avgTagDist <= Constants.Limelight.maxDistance.in(Meters))) {
-        // measurement = MG1measurement.
-        measurements.add(MG2measurement);
-        // Log pose estimate and limelight status
-        Logger.recordOutput(limelight + " Detecting", true);
-        poseEstimate = MG2measurement.pose;
-        Logger.recordOutput("Pose Estimate", poseEstimate);
+  //     if ((MG2measurement != null)
+  //         && (MG2measurement.tagCount > 0)
+  //         && (MG2measurement.avgTagDist <= Constants.Limelight.maxDistance.in(Meters))) {
+  //       // measurement = MG1measurement.
+  //       measurements.add(MG2measurement);
+  //       // Log pose estimate and limelight status
+  //       Logger.recordOutput(limelight + " Detecting", true);
+  //       poseEstimate = MG2measurement.pose;
+  //       Logger.recordOutput("Pose Estimate", poseEstimate);
 
-        // Define standard deviation
-        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.3, 0.3, Math.toRadians(20));
+  //       // Define standard deviation
+  //       Matrix<N3, N1> stdDevs = VecBuilder.fill(0.3, 0.3, Math.toRadians(20));
 
-        Logger.recordOutput("limelight Estimate", MG2measurement.pose);
-        robotContainer.drive.addVisionMeasurement(
-            MG2measurement.pose, MG2measurement.timestampSeconds, stdDevs);
-      } else {
-        Logger.recordOutput(limelight + " Detecting", false);
-      }
-      LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
-    }
-  }
+  //       Logger.recordOutput("limelight Estimate", MG2measurement.pose);
+  //       robotContainer.drive.addVisionMeasurement(
+  //           MG2measurement.pose, MG2measurement.timestampSeconds, stdDevs);
+  //     } else {
+  //       Logger.recordOutput(limelight + " Detecting", false);
+  //     }
+  //     LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
+  //   }
+  // }
 
   @Override
   public void disabledInit() {
@@ -206,7 +203,6 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void disabledPeriodic() {
-    processLimelightMeasurements();
     indicateLimelight(Indicate.DISABLED);
   }
 
@@ -227,7 +223,6 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousPeriodic() {
-    processLimelightMeasurements();
     indicateLimelight(Indicate.AUTO);
     if (Constants.Tempo.getTime().gte(Seconds.of(20))) {
       autonomousCommand.cancel();
