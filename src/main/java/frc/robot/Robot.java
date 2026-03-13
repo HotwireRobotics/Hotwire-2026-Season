@@ -1,5 +1,6 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 
@@ -11,14 +12,12 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.constants.Constants;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -78,6 +77,7 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
+    SmartDashboard.putNumber("Oscillate", Constants.Intake.kOscillationFrequency.in(Hertz));
     SmartDashboard.putNumber("Test Shooter RPM", robotContainer.testVelocity);
     SmartDashboard.setPersistent("Test Shooter RPM");
     SmartDashboard.putData("Robot Pose (Field)", field);
@@ -123,6 +123,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     time = Constants.Tempo.getTime();
+    robotContainer.mHertzOscillate = Hertz.of(SmartDashboard.getNumber("Oscillate", 0));
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
     CommandScheduler.getInstance().run();
@@ -185,9 +186,8 @@ public class Robot extends LoggedRobot {
         Logger.recordOutput("Pose Estimate", poseEstimate);
 
         // Define standard deviation
-        Matrix<N3, N1> stdDevs =
-            VecBuilder.fill(0.3, 0.3, Math.toRadians(20));
-        
+        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.3, 0.3, Math.toRadians(20));
+
         Logger.recordOutput("limelight Estimate", measurement.pose);
         robotContainer.drive.addVisionMeasurement(
             measurement.pose, measurement.timestampSeconds, stdDevs);

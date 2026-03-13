@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
-
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -128,7 +127,7 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command occilateArm(Frequency frequency) {
+  public Command oscillateArm(Frequency frequency) {
     Time period = Seconds.of(1 / (2 * frequency.in(Hertz)));
     return new SequentialCommandGroup(
             lowerArm(), Commands.waitTime(period),

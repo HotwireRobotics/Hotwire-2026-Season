@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -45,6 +46,7 @@ public class RobotContainer {
   public double testVelocity = 0;
   private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
   public final BooleanSupplier aligned;
+  public Frequency mHertzOscillate = Hertz.of(0);
 
   public Pose2d hubTarget;
 
@@ -99,6 +101,7 @@ public class RobotContainer {
   Orchestra music = new Orchestra(Filesystem.getDeployDirectory() + "/orchestra/output.chirp");
 
   public RobotContainer() {
+    Frequency mHertzOscillate = Constants.Intake.kOscillationFrequency;
     switch (Constants.currentMode) {
       case REAL:
         drive =
@@ -181,7 +184,7 @@ public class RobotContainer {
         intake.runIntake(isInverse).repeatedly().finallyDo(() -> intake.stopIntake());
     final Command raiseIntake = intake.raiseArm();
     final Command lowerIntake = intake.lowerArm().andThen(Commands.waitTime(Seconds.of(0.5)));
-    final Command occilateIntake = intake.occilateArm(Constants.Intake.kOccilationFrequency);
+    final Command oscillateIntake = intake.oscillateArm(Constants.Intake.kOscillationFrequency);
     final Command stopDrive = Commands.runOnce(() -> drive.stop());
     final Command runFiringSequence =
         new SequentialCommandGroup(
@@ -192,7 +195,7 @@ public class RobotContainer {
             Commands.waitTime(Constants.Shooter.kFiringTime)
                 .raceWith(
                     Commands.waitTime(Constants.Shooter.kUntilAggitateTime)
-                        .andThen(occilateIntake)),
+                        .andThen(oscillateIntake)),
             killShooter,
             killHopper,
             lowerIntake,
@@ -204,7 +207,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("Raise Intake", raiseIntake);
     NamedCommands.registerCommand("Lower Intake", lowerIntake);
     NamedCommands.registerCommand("Stop", stopDrive);
-    NamedCommands.registerCommand("Occilate Intake", occilateIntake);
+    NamedCommands.registerCommand("Occilate Intake", oscillateIntake);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
@@ -268,6 +271,8 @@ public class RobotContainer {
 
     autoChooser.addOption("A-Unineutral Right", new PathPlannerAuto("A-Unineutral", false));
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
+
+    autoChooser.addOption("Shooting Sequence", runFiringSequence);
 
     hubTarget = Constants.Poses.hub;
   }

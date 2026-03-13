@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
-
 import java.util.HashMap;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;

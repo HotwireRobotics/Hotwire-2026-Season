@@ -2,8 +2,6 @@ package frc.robot.constants;
 
 import static edu.wpi.first.units.Units.*;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.signals.RGBWColor;
 import com.pathplanner.lib.config.PIDConstants;
@@ -22,6 +20,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import org.littletonrobotics.junction.Logger;
 
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
@@ -47,7 +46,7 @@ public final class Constants {
 
   public static class Intake {
     public static final double kSpeed = 0.8;
-    public static final Frequency kOccilationFrequency = Hertz.of(2.62);
+    public static final Frequency kOscillationFrequency = Hertz.of(2.62);
   }
 
   public static class Hopper {
@@ -64,6 +63,7 @@ public final class Constants {
   public static class Tempo {
     private static double timerOffset = 0;
     private static Time time = Seconds.of(0);
+
     public static void startTime() {
       timer.reset();
       timer.start();
@@ -74,21 +74,21 @@ public final class Constants {
       timer.start();
       timerOffset = offset.in(Seconds);
     }
-  
+
     public static Time getTime() {
       Time t = Seconds.of(DriverStation.getMatchTime());
-      time = (t.isEquivalent(Seconds.of(-1))) 
-          ? Seconds.of(timer.get() + timerOffset) 
-          : ((DriverStation.isAutonomous())
-            ? Constants.Length.autonomous
-            : Constants.Length.teleoperated).minus(t);
+      time =
+          (t.isEquivalent(Seconds.of(-1)))
+              ? Seconds.of(timer.get() + timerOffset)
+              : ((DriverStation.isAutonomous())
+                      ? Constants.Length.autonomous
+                      : Constants.Length.teleoperated)
+                  .minus(t);
       Logger.recordOutput("Time", time.in(Seconds));
-  
+
       return time;
     }
   }
-
-  
 
   public static class Indication {
     public static SolidColor LEDColor(int r, int g, int b) {
@@ -140,7 +140,7 @@ public final class Constants {
 
   public static class Limelight {
     public static final String[] localization = {"limelight-gamma", "limelight-alpha"};
-    public static final String[] limelights   = {"limelight-gamma", "limelight-alpha"};
+    public static final String[] limelights = {"limelight-gamma", "limelight-alpha"};
     public static final Distance maxDistance = Inches.of(100);
   }
 

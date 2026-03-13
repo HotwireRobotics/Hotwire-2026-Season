@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.804655555555557,
-        "y": 1.6865888888843177
+        "x": 5.970311111111112,
+        "y": 0.6049555555555548
       },
       "prevControl": null,
       "nextControl": {
-        "x": 8.503866666666667,
-        "y": 0.40032222222222247
+        "x": 8.669522222222222,
+        "y": -0.6813111111065404
       },
       "isLocked": false,
       "linkedName": "Second Exo Unineutral"
@@ -73,7 +73,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 5.0,
-    "rotation": -91.070824454787
+    "rotation": 179.36340642373793
   },
   "useDefaultConstraints": true
 }
