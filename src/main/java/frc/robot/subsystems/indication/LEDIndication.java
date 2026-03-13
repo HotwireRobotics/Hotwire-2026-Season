@@ -53,7 +53,7 @@ public class LEDIndication extends SubsystemBase {
     color = new HashMap<>();
     color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(180, 0, 0));
     color.put(Event.ACTIVE, () -> Constants.Indication.LEDColor(0, 180, 0));
-    color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(180, 0, 0));
+    color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(0, 10, 0));
     color.put(
         Event.TELEDISABLED,
         toggle(
@@ -62,7 +62,7 @@ public class LEDIndication extends SubsystemBase {
             Hertz.of(0.5)));
     color.put(
         Event.TELEENABLED,
-        () -> (Constants.Indication.isActive() ? Constants.Indication.LEDColor(0, 170, 0) : Constants.Indication.LEDColor(0, 0, 0)));
+        () -> Constants.Indication.LEDColor(0, 170, 0));
     color.put(
         Event.VISION,
         toggle(
@@ -134,12 +134,11 @@ public class LEDIndication extends SubsystemBase {
       }
     } else {
       if (DriverStation.isEnabled()) {
-        // if (Constants.Indication.autonomousVictory()) {
-        //   updateLEDs(getRequest(Event.INACTIVE).get());
-        // } else {
-        //   updateLEDs(getRequest(Event.ACTIVE).get());
-        // }
-        updateLEDs(getRequest(Event.TELEENABLED).get());
+        if (Constants.Indication.isActive()) {
+          updateLEDs(getRequest(Event.ACTIVE).get());
+        } else {
+          updateLEDs(getRequest(Event.INACTIVE).get());
+        }
       } else {
         updateLEDs(getRequest(Event.TELEDISABLED).get());
       }
