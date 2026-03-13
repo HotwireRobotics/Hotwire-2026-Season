@@ -131,14 +131,13 @@ public class Robot extends LoggedRobot {
     Boolean isAutonomous = DriverStation.isAutonomous();
 
     // Controller haptic indicators
-    Logger.recordOutput("Time", time.in(Seconds));
     Boolean rumble = false;
 
     for (Time target :
         ((isAutonomous)
-            ? Constants.Indication.Autonomous.haptic
-            : Constants.Indication.Teloperated.haptic)) {
-      double difference = target.minus(time).in(Seconds);
+            ? Constants.Indication.Autonomous.transitions
+            : Constants.Indication.Teloperated.transitions)) {
+      double difference = target.minus(time.plus(isAutonomous ? Seconds.of(0) : Seconds.of(20))).in(Seconds);
       if ((Math.abs(difference) < 1) && (difference < 0)) {
         rumble = true;
       }

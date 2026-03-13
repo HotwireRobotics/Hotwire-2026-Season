@@ -14,6 +14,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
+import edu.wpi.first.units.measure.Per;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -129,29 +130,28 @@ public final class Constants {
       return Alliance.Blue;
     }
 
-    public static boolean visionRegister() {
-      for (String limelight : Limelight.localization) {
-        return true;
-      }
-      return false;
-    }
+    // public static boolean visionRegister() {
+    //   for (String limelight : Limelight.localization) {
+    //     return true;
+    //   }
+    //   return false;
+    // }
 
     public static boolean isActive() {
       return autonomousVictory();
     }
 
     public static class Autonomous {
-      public static final Time[] haptic = {};
+      public static final Time[] transitions = {};
     }
 
     public static class Teloperated {
-      public static final Time[] haptic = {
+      public static final Time[] transitions = {
         Seconds.of(10),
-        Seconds.of(25),
-        Seconds.of(50),
-        Seconds.of(75),
-        Seconds.of(100),
-        Seconds.of(125),
+        Seconds.of(35),
+        Seconds.of(60),
+        Seconds.of(85),
+        Seconds.of(110),
       };
     }
   }
