@@ -286,7 +286,7 @@ public class RobotContainer {
 
     autoChooser.addOption("Shooting Sequence", runFiringSequence);
 
-    // autoChooser.addOption("Shooter Cleaning", shooter (RPM.of(-50)).repeatedly());
+    // autoChooser.addOption("Shooter Clea  ning", shooter (RPM.of(-50)).repeatedly());
 
     hubTarget = Constants.Poses.hub;
   }

@@ -84,8 +84,7 @@ public final class Constants {
               ? Seconds.of(timer.get() + timerOffset)
               : ((DriverStation.isAutonomous())
                       ? Constants.Length.autonomous
-                      : Constants.Length.teleoperated
-                          .plus(Constants.Length.autonomous))
+                      : Constants.Length.teleoperated.plus(Constants.Length.autonomous))
                   .minus(t);
       Logger.recordOutput("Time", time.in(Seconds));
 
@@ -217,7 +216,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1310.92838;
+  public static final double base = 1275.92838;
   public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {

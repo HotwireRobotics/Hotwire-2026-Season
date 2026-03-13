@@ -47,7 +47,7 @@ public class LimelightArray extends SubsystemBase {
 
       LimelightHelpers.SetRobotOrientation(limelight, heading, 0, 0, 0, 0, 0);
 
-      PoseEstimate estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+      PoseEstimate estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
 
       if (isValidMeasurement(estimate)) {
 
