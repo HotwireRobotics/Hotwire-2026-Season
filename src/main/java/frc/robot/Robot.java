@@ -223,15 +223,11 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousPeriodic() {
     indicateLimelight(Indicate.AUTO);
-    if (Constants.Tempo.getTime().gte(Seconds.of(20))) {
-      autonomousCommand.cancel();
-    }
   }
 
   @Override
   public void teleopInit() {
     Logger.recordOutput("Robot/Mode", "Teleop");
-    robotContainer.lights.time();
     robotContainer.inverse = false;
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
