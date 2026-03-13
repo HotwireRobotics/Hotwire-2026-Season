@@ -135,9 +135,9 @@ public class Robot extends LoggedRobot {
 
     for (Time target :
         ((isAutonomous)
-            ? Constants.Indication.Autonomous.transitions
+            ?  Constants.Indication.Autonomous.transitions
             : Constants.Indication.Teloperated.transitions)) {
-      double difference = target.minus(time.plus(isAutonomous ? Seconds.of(0) : Seconds.of(20))).in(Seconds);
+      double difference = target.minus(time).in(Seconds);
       if ((Math.abs(difference) < 1) && (difference < 0)) {
         rumble = true;
       }

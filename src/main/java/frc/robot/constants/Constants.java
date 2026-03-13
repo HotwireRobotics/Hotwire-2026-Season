@@ -138,7 +138,18 @@ public final class Constants {
     // }
 
     public static boolean isActive() {
-      return autonomousVictory();
+      Boolean isAutonomous = DriverStation.isAutonomous();
+      Boolean winAutonomous = autonomousVictory();
+      if (isAutonomous) {
+        return true;
+      } else {
+        if (Tempo.isRange(Seconds.of(0),  Seconds.of(10)))  return true;
+        if (Tempo.isRange(Seconds.of(10), Seconds.of(35)))  return !winAutonomous;
+        if (Tempo.isRange(Seconds.of(35), Seconds.of(60)))  return  winAutonomous;
+        if (Tempo.isRange(Seconds.of(60), Seconds.of(85)))  return !winAutonomous;
+        if (Tempo.isRange(Seconds.of(85), Seconds.of(110))) return  winAutonomous;
+        return true;
+      }
     }
 
     public static class Autonomous {

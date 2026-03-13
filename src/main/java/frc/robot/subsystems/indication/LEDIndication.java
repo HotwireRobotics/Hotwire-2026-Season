@@ -62,10 +62,7 @@ public class LEDIndication extends SubsystemBase {
             Hertz.of(0.5)));
     color.put(
         Event.TELEENABLED,
-        toggle(
-            Constants.Indication.LEDColor(0, 255, 0),
-            Constants.Indication.LEDColor(0, 0, 0),
-            Hertz.of(3)));
+        () -> (Constants.Indication.isActive() ? Constants.Indication.LEDColor(0, 170, 0) : Constants.Indication.LEDColor(0, 0, 0)));
     color.put(
         Event.VISION,
         toggle(
