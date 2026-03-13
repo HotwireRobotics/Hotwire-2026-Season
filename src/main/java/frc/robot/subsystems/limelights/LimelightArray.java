@@ -51,6 +51,8 @@ public class LimelightArray extends SubsystemBase {
 
       if (isValidMeasurement(estimate)) {
 
+        Constants.Indication.isValidMeasurement = true;
+
         measurements.add(estimate);
 
         Logger.recordOutput(limelight + " Detecting", true);
@@ -65,6 +67,7 @@ public class LimelightArray extends SubsystemBase {
 
       } else {
         Logger.recordOutput(limelight + " Detecting", false);
+        Constants.Indication.isValidMeasurement = false;
       }
     }
   }

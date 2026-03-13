@@ -1,3 +1,4 @@
+
 package frc.robot.constants;
 
 import static edu.wpi.first.units.Units.*;
@@ -109,6 +110,12 @@ public final class Constants {
       return new SolidColor(0, 67).withColor(new RGBWColor(r, g, b));
     }
 
+    public static boolean isValidMeasurement;
+
+    public static boolean isValidMeasurement() {
+      return isValidMeasurement;
+    }
+
     public static boolean autonomousVictory() {
       String gameData = DriverStation.getGameSpecificMessage();
       Boolean allianceIsRed = DriverStation.getAlliance().get().equals(Alliance.Red);
@@ -128,13 +135,6 @@ public final class Constants {
       if (alliance == null) return Alliance.Red;
       return Alliance.Blue;
     }
-
-    // public static boolean visionRegister() {
-    //   for (String limelight : Limelight.localization) {
-    //     return true;
-    //   }
-    //   return false;
-    // }
 
     public static boolean isActive() {
       Boolean isAutonomous = DriverStation.isAutonomous();
@@ -216,7 +216,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 650.92838;
+  public static final double base = 1275.92838;
   public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {
