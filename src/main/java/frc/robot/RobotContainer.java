@@ -390,9 +390,14 @@ public class RobotContainer {
         .onTrue(intake.runIntake(isInverse));
 
     Constants.Joysticks.operator
-        .rightTrigger()
-        .onFalse(shooter.runMechanism(0, 0).alongWith(hopper.stopHopper()))
-        .onTrue(conditionalShooting().alongWith(hopper.runHopper(isInverse)));
+        .rightBumper()
+        .whileFalse(shooter.runMechanism(0, 0))
+        .onTrue(conditionalShooting());
+
+    Constants.Joysticks.operator
+        .leftBumper()
+        .whileFalse(hopper.stopHopper())
+        .onTrue(hopper.runHopper(isInverse));
 
     Constants.Joysticks.operator.povRight().onFalse(intake.lowerArm()).onTrue(intake.emergency());
 

@@ -53,6 +53,8 @@ public class HopperSubsystem extends ModularSubsystem implements Systerface {
   }
 
   public Command stopHopper() {
-    return runDevice(Device.HOPPER, 0);
+    Command command = runDevice(Device.HOPPER, 0);
+    command.addRequirements(this);
+    return command;
   }
 }
