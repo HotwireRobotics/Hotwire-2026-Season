@@ -15,14 +15,16 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+  public static final Timer timer = new Timer();
 
   public static class Mathematics {
     public static final double TAU = 6.283185307179586;
@@ -34,10 +36,10 @@ public final class Constants {
   }
 
   public static class Shooter {
-    public static final Time kChargeUpTime = Seconds.of(0.25);
-    public static final Time kFiringTime = Seconds.of(4.1);
-    public static final Time kUntilAggitateTime = Seconds.of(2);
-    public static AngularVelocity kSpeed = RPM.of(2500);
+    public static final Time kChargeUpTime = Seconds.of(0.05);
+    public static final Time kFiringTime = Seconds.of(3.5);
+    public static final Time kUntilAggitateTime = Seconds.of(1.1);
+    public static final AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
   }
 
@@ -54,14 +56,47 @@ public final class Constants {
 
   public static class Control {
     public static final PIDConstants translationPID = new PIDConstants(25.0, 0.0, 0.0);
-    public static final PIDConstants rotationPID = new PIDConstants(15.0, 0.0, 0.0);
+    public static final PIDConstants rotationPID = new PIDConstants(13.0, 0.0, 0.0);
     public static final double ANGLE_KP = rotationPID.kP;
     public static final double ANGLE_KD = rotationPID.kD;
   }
 
+  public static void startTime() {
+    timer.reset();
+    timer.start();
+  }
+
+  public static Time getTime() {
+    Time t = Seconds.of(DriverStation.getMatchTime());
+    Time length = (DriverStation.isAutonomous()) ? Constants.autoLength : Constants.teleopLength;
+
+    return (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(t);
+  }
+
   public static class Indication {
     public static SolidColor LEDColor(int r, int g, int b) {
-      return new SolidColor(0, 67).withColor(new RGBWColor(255, 255, 255));
+      return new SolidColor(0, 67).withColor(new RGBWColor(r, g, b));
+    }
+
+    public static boolean autonomousVictory() {
+      String gameData = DriverStation.getGameSpecificMessage();
+      Boolean allianceIsRed = DriverStation.getAlliance().get().equals(Alliance.Red);
+      if (gameData.length() < 1) return true;
+      switch (gameData.charAt(0)) {
+        case 'R':
+          return (allianceIsRed);
+        case 'B':
+          return (!allianceIsRed);
+        default:
+          return true;
+      }
+    }
+
+    public static boolean visionRegister() {
+      for (String limelight : Limelight.localization) {
+        return true;
+      }
+      return false;
     }
 
     public static class Autonomous {
@@ -98,7 +133,7 @@ public final class Constants {
     public static final Integer s_feeder = 11;
     public static final Integer s_shooterR = 12;
     public static final Integer s_shooterL = 13;
-    public static final Integer h_hopperU = 14;
+    public static final Integer h_hopper = 14;
     public static final Integer i_arm = 15;
   }
 
@@ -137,7 +172,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1480.92838;
+  public static final double base = 1455.92838;
   public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {

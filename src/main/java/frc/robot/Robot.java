@@ -10,7 +10,6 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -192,19 +191,6 @@ public class Robot extends LoggedRobot {
     field.setRobotPose(robotContainer.drive.getPose());
   }
 
-  public boolean autonomousVictory() {
-    String gameData = DriverStation.getGameSpecificMessage();
-    Boolean allianceIsRed = DriverStation.getAlliance().get().equals(Alliance.Red);
-    switch (gameData.charAt(0)) {
-      case 'R':
-        return (allianceIsRed);
-      case 'B':
-        return (!allianceIsRed);
-      default:
-        return true;
-    }
-  }
-
   private void processLimelightMeasurements() {
     Pose2d robotPose = robotContainer.drive.getPose();
     visionIO.setRobotOrientationDegrees(robotPose.getRotation().getDegrees());
@@ -275,17 +261,23 @@ public class Robot extends LoggedRobot {
     }
 
     bitimer.start();
+    Constants.startTime();
   }
 
   @Override
   public void autonomousPeriodic() {
     processLimelightMeasurements();
     indicateLimelight(Indicate.AUTO);
+    if (Constants.getTime().gte(Seconds.of(20))) {
+      autonomousCommand.cancel();
+    }
   }
 
   @Override
   public void teleopInit() {
     Logger.recordOutput("Robot/Mode", "Teleop");
+    robotContainer.lights.time();
+    robotContainer.inverse = false;
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
