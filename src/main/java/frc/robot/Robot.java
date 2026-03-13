@@ -234,7 +234,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     Logger.recordOutput("Robot/Mode", "Teleop");
-    robotContainer.lights.time();
     robotContainer.inverse = false;
     if (autonomousCommand != null) {
       autonomousCommand.cancel();

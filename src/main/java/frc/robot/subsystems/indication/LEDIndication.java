@@ -113,7 +113,8 @@ public class LEDIndication extends SubsystemBase {
             : Constants.Length.teleoperated;
 
     // Get period-relative time.
-    time = (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(t);
+    // time = (t.isEquivalent(Seconds.of(-1))) ? Seconds.of(timer.get()) : length.minus(t);
+    time = Constants.Tempo.getTime();
 
     indicatorPipeline(time);
   }
