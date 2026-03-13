@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 public final class Constants {
@@ -38,8 +39,9 @@ public final class Constants {
 
   public static class Shooter {
     public static final Time kChargeUpTime = Seconds.of(0.1);
-    public static final Time kFiringTime = Seconds.of(5);
-    public static final Time kUntilAggitateTime = Seconds.of(2.6);
+    public static final Time kFiringTime = Seconds.of(8.2);
+    public static final Time k35Time = Seconds.of(3);
+    public static final Time k60Time = Seconds.of(3);
     public static final AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
   }
@@ -107,6 +109,12 @@ public final class Constants {
         default:
           return true;
       }
+    }
+
+    public static Alliance getAlliance() {
+      Optional<Alliance> alliance = DriverStation.getAlliance();
+      if (alliance == null) return Alliance.Red;
+      return Alliance.Blue;
     }
 
     public static boolean visionRegister() {
@@ -195,7 +203,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1455.92838;
+  public static final double base = 1385.92838;
   public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {

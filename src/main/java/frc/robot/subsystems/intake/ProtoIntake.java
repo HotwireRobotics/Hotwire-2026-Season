@@ -7,10 +7,12 @@ import static edu.wpi.first.units.Units.Seconds;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
@@ -127,19 +129,22 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command oscillateArm(Frequency frequency) {
+  public Command oscillateArm(Angle angle, Frequency frequency) {
     Time period = Seconds.of(1 / (2 * frequency.in(Hertz)));
-    return new SequentialCommandGroup(
-            lowerArm(), Commands.waitTime(period),
-            raiseArm(), Commands.waitTime(period))
-        .repeatedly();
+    RepeatCommand group =
+        new SequentialCommandGroup(
+                lowerArm(), Commands.waitTime(period),
+                raiseArm(angle), Commands.waitTime(period))
+            .repeatedly();
+    group.addRequirements(this);
+    return group;
   }
 
-  public Command raiseArm() {
+  public Command raiseArm(Angle angle) {
     return Commands.runOnce(
         () -> {
           configureProportional(18.0);
-          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(60)));
+          arm.setControl(m_PositionVoltage.withPosition(angle));
         });
   }
 

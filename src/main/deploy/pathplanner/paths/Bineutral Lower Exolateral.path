@@ -124,10 +124,10 @@
     "rotation": 0.0
   },
   "reversed": false,
-  "folder": null,
+  "folder": "Bineutral",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 59.770355343057986
+    "rotation": 59.95822272735132
   },
   "useDefaultConstraints": true
 }

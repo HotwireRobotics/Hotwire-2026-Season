@@ -182,9 +182,14 @@ public class RobotContainer {
     //// NamedCommands.registerCommand("KillShooter", killShooter);
     final Command periodIntake =
         intake.runIntake(isInverse).repeatedly().finallyDo(() -> intake.stopIntake());
-    final Command raiseIntake = intake.raiseArm();
+    final Command raiseIntake = intake.raiseArm(Degrees.of(60));
     final Command lowerIntake = intake.lowerArm().andThen(Commands.waitTime(Seconds.of(0.5)));
-    final Command oscillateIntake = intake.oscillateArm(Constants.Intake.kOscillationFrequency);
+    final Command oscillateIntakek35 =
+        intake.oscillateArm(Degrees.of(35), Constants.Intake.kOscillationFrequency);
+    final Command oscillateIntakek60 =
+        intake.oscillateArm(Degrees.of(60), Constants.Intake.kOscillationFrequency);
+    final Command oscillateIntakek20 =
+        intake.oscillateArm(Degrees.of(20), Constants.Intake.kOscillationFrequency);
     final Command stopDrive = Commands.runOnce(() -> drive.stop());
     final Command runFiringSequence =
         new SequentialCommandGroup(
@@ -194,12 +199,17 @@ public class RobotContainer {
             startHopper,
             Commands.waitTime(Constants.Shooter.kFiringTime)
                 .raceWith(
-                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime)
-                        .andThen(oscillateIntake)),
+                    oscillateIntakek20
+                        .raceWith(Commands.waitTime(Constants.Shooter.k35Time))
+                        .andThen(
+                            oscillateIntakek35
+                                .raceWith(Commands.waitTime(Constants.Shooter.k60Time))
+                                .andThen(oscillateIntakek60))),
             killShooter,
             killHopper,
             lowerIntake,
             staticVelocity());
+
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
     NamedCommands.registerCommand("Start Intaking", startIntake);
     NamedCommands.registerCommand("Stop Intaking", killIntake);
@@ -207,7 +217,6 @@ public class RobotContainer {
     NamedCommands.registerCommand("Raise Intake", raiseIntake);
     NamedCommands.registerCommand("Lower Intake", lowerIntake);
     NamedCommands.registerCommand("Stop", stopDrive);
-    NamedCommands.registerCommand("Occilate Intake", oscillateIntake);
 
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
@@ -273,6 +282,8 @@ public class RobotContainer {
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
 
     autoChooser.addOption("Shooting Sequence", runFiringSequence);
+
+    // autoChooser.addOption("Shooter Cleaning", shooter (RPM.of(-50)).repeatedly());
 
     hubTarget = Constants.Poses.hub;
   }
@@ -368,7 +379,7 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .povUp()
         .onFalse(intake.lowerArm().alongWith(intake.stopIntake()))
-        .onTrue(intake.raiseArm().alongWith(intake.runIntake(isInverse)));
+        .onTrue(intake.raiseArm(Degrees.of(60)).alongWith(intake.runIntake(isInverse)));
 
     Constants.Joysticks.operator
         .leftTrigger()

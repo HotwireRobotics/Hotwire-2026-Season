@@ -5,12 +5,12 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import com.ctre.phoenix6.configs.CANdleConfiguration;
 import com.ctre.phoenix6.controls.ControlRequest;
-import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.StripTypeValue;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
@@ -33,11 +33,11 @@ public class LEDIndication extends SubsystemBase {
     AUTODISABLED
   }
 
-  private final HashMap<Event, Supplier<SolidColor>> color;
+  private final HashMap<Event, Supplier<ControlRequest>> color;
   private final Timer timer = new Timer();
   private Time time = Seconds.of(0);
 
-  private Supplier<SolidColor> toggle(SolidColor t, SolidColor f, Frequency frequency) {
+  private Supplier<ControlRequest> toggle(ControlRequest t, ControlRequest f, Frequency frequency) {
     return () -> (((Math.floor(time.in(Seconds) * frequency.in(Hertz)) % 2) == 1) ? t : f);
   }
 
@@ -74,18 +74,27 @@ public class LEDIndication extends SubsystemBase {
             Hertz.of(3)));
     color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(180, 0, 0));
     color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(255, 0, 0));
-    color.put(
-        Event.AUTODISABLED,
-        toggle(
-            Constants.Indication.LEDColor(20, 20, 150),
-            Constants.Indication.LEDColor(0, 0, 0),
-            Hertz.of(0.5)));
+
+    color.put(Event.AUTODISABLED, () -> Constants.Indication.LEDColor(255, 0, 0));
+    // color.put(Event.AUTODISABLED, () -> new EmptyAnimation(0).withSlot(0));
+    // color.put(
+    //     Event.AUTOENABLED,
+    //     () ->
+    //         new FireAnimation(0, 55)
+    //             .withSlot(0)
+    //             .withBrightness(0.149)
+    //             .withDirection(AnimationDirectionValue.Forward)
+    //             .withSparking(0.6)
+    //             .withCooling(0.3)
+    //             .withFrameRate(Hertz.of(30)));
     color.put(
         Event.AUTOENABLED,
         toggle(
-            Constants.Indication.LEDColor(20, 20, 150),
+            Constants.Indication.getAlliance().equals(Alliance.Blue)
+                ? Constants.Indication.LEDColor(0, 0, 200)
+                : Constants.Indication.LEDColor(200, 0, 0),
             Constants.Indication.LEDColor(0, 0, 0),
-            Hertz.of(3)));
+            Hertz.of(2)));
 
     timer.start();
   }
@@ -109,7 +118,7 @@ public class LEDIndication extends SubsystemBase {
     indicatorPipeline(time);
   }
 
-  private Supplier<SolidColor> getRequest(Event event) {
+  private Supplier<ControlRequest> getRequest(Event event) {
     return color.get(event);
   }
 
