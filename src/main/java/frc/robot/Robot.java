@@ -188,6 +188,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
+    robotContainer.vision.setIMUMode(1);
   }
 
   @Override
@@ -231,6 +232,7 @@ public class Robot extends LoggedRobot {
       LimelightHelpers.SetThrottle(limelight, 0);
     }
     indicateLimelight(Indicate.ENABLED);
+    robotContainer.vision.setIMUMode(4);
   }
 
   @Override

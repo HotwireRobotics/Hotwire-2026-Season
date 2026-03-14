@@ -31,6 +31,18 @@ public class LimelightArray extends SubsystemBase {
     }
   }
 
+  public void setIMUAssistAlpha(double alpha) {
+    for (String limelight : Constants.Limelight.localization) {
+      LimelightHelpers.SetIMUAssistAlpha(limelight, alpha);
+    }
+  }
+
+  public void setIMUMode(int mode) {
+    for (String limelight : Constants.Limelight.localization) {
+      LimelightHelpers.SetIMUMode(limelight, mode);
+    }
+  }
+
   @Override
   public void periodic() {
     processMeasurements();
