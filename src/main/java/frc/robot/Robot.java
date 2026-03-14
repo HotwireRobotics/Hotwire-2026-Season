@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -132,8 +131,8 @@ public class Robot extends LoggedRobot {
 
     Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
 
-    Logger.recordOutput("Hub Pose", Constants.Poses.hub.get());
-    Logger.recordOutput("Tower Pose", Constants.Poses.tower.get());
+    Logger.recordOutput("Hub Pose", Constants.Poses.hub);
+    Logger.recordOutput("Tower Pose", Constants.Poses.tower);
 
     Logger.recordOutput("Shooting State", robotContainer.velocityType.toString());
 

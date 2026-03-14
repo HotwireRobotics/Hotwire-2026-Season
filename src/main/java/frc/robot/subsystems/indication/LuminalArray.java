@@ -63,8 +63,8 @@ public class LuminalArray extends SubsystemBase {
     color.put(
         Event.WANING,
         tick(
+            Constants.Indication.LEDColor(180, 0, 0),
             Constants.Indication.LEDColor(0, 180, 0),
-            Constants.Indication.LEDColor(0, 0, 0),
             Hertz.of(2)));
     color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(0, 10, 0));
     color.put(
@@ -85,7 +85,7 @@ public class LuminalArray extends SubsystemBase {
         Event.WAXING,
         toggle(
             Constants.Indication.LEDColor(0, 180, 0),
-            Constants.Indication.LEDColor(0, 0, 0),
+            Constants.Indication.LEDColor(180, 0, 0),
             Hertz.of(2)));
     color.put(Event.EMERGENCY, () -> Constants.Indication.LEDColor(255, 0, 0));
 

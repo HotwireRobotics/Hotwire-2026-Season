@@ -167,7 +167,7 @@ public class RobotContainer {
             case REGRESSION:
               // if (aligned.getAsBoolean()) {
               return Constants.regress(
-                  Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+                  Meters.of(drive.getPose().minus(Constants.Poses.hub).getTranslation().getNorm()));
               // } else {
               //   return Constants.Shooter.kSpeed;
               // }
@@ -306,7 +306,7 @@ public class RobotContainer {
         () -> -Constants.Joysticks.driver.getLeftX(),
         () -> {
           Pose2d robotPose = drive.getPose();
-          Pose2d hubPose = Constants.Poses.hub.get();
+          Pose2d hubPose = Constants.Poses.hub;
 
           Angle toHub =
               Radians.of(
