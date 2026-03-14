@@ -11,6 +11,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Frequency;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -57,7 +59,8 @@ public class RobotContainer {
   public enum VelocityType {
     STATIC,
     REGRESSION,
-    TESTING
+    TESTING,
+    AUTO
   }
 
   public boolean inverse = false;
@@ -69,6 +72,13 @@ public class RobotContainer {
     return Commands.runOnce(
         () -> {
           velocityType = VelocityType.STATIC;
+        });
+  }
+
+  private Command autoVelocity() {
+    return Commands.runOnce(
+        () -> {
+          velocityType = VelocityType.AUTO;
         });
   }
 
@@ -163,6 +173,8 @@ public class RobotContainer {
               // }
             case TESTING:
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
+            case AUTO:
+              return RPM.of(1250);
             default:
               return Constants.Shooter.kSpeed;
           }
@@ -196,7 +208,7 @@ public class RobotContainer {
     final Command stopDrive = Commands.runOnce(() -> drive.stop());
     final Command runFiringSequence =
         new SequentialCommandGroup(
-            regressVelocity(),
+            autoVelocity(),
             startShooter,
             Commands.waitTime(Constants.Shooter.kChargeUpTime),
             startHopper,
@@ -310,7 +322,12 @@ public class RobotContainer {
           Pose2d pointer =
               new Pose2d(robotPose.getMeasureX(), robotPose.getMeasureY(), new Rotation2d(toHub));
           Logger.recordOutput("Hub Pointer", pointer);
-          drive.setRotationTarget(new Rotation2d(toHub).rotateBy(Rotation2d.k180deg));
+          drive.setRotationTarget(
+              new Rotation2d(toHub)
+                  .rotateBy(
+                      DriverStation.getAlliance().get().equals(Alliance.Red)
+                          ? Rotation2d.k180deg
+                          : Rotation2d.kZero));
           return drive.getRotationTarget();
         });
   }

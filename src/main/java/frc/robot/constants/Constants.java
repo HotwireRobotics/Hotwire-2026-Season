@@ -140,27 +140,26 @@ public final class Constants {
     // }
 
     public static enum Period {
-      AUTONOMOUS, TRANSITION,
-      PRIMARY, SECONDARY, TERTIARY, 
-      QUATERNARY, ENDGAME
+      AUTONOMOUS,
+      TRANSITION,
+      PRIMARY,
+      SECONDARY,
+      TERTIARY,
+      QUATERNARY,
+      ENDGAME
     }
 
     public static Period fromTime(Time t) {
       if (t.lte(Length.autonomous)) return Period.AUTONOMOUS;
-      if (t.lte(Length.autonomous
-        .plus(Length.transition))) return Period.TRANSITION;
-      if (t.lte(Length.autonomous
-        .plus(Length.phase)
-        .plus(Length.transition))) return Period.PRIMARY;
-      if (t.lte(Length.autonomous
-        .plus(Length.phase.times(2))
-        .plus(Length.transition))) return Period.SECONDARY;
-      if (t.lte(Length.autonomous
-        .plus(Length.phase.times(3))
-        .plus(Length.transition))) return Period.TERTIARY;
-      if (t.lte(Length.autonomous
-        .plus(Length.phase.times(4))
-        .plus(Length.transition))) return Period.QUATERNARY;
+      if (t.lte(Length.autonomous.plus(Length.transition))) return Period.TRANSITION;
+      if (t.lte(Length.autonomous.plus(Length.phase).plus(Length.transition)))
+        return Period.PRIMARY;
+      if (t.lte(Length.autonomous.plus(Length.phase.times(2)).plus(Length.transition)))
+        return Period.SECONDARY;
+      if (t.lte(Length.autonomous.plus(Length.phase.times(3)).plus(Length.transition)))
+        return Period.TERTIARY;
+      if (t.lte(Length.autonomous.plus(Length.phase.times(4)).plus(Length.transition)))
+        return Period.QUATERNARY;
       return Period.ENDGAME;
     }
 
@@ -174,7 +173,7 @@ public final class Constants {
           return true;
         case SECONDARY:
         case QUATERNARY:
-           return victoryAuto;
+          return victoryAuto;
         case PRIMARY:
         case TERTIARY:
           return !victoryAuto;
@@ -193,7 +192,7 @@ public final class Constants {
           return true;
         case SECONDARY:
         case QUATERNARY:
-           return victoryAuto;
+          return victoryAuto;
         case PRIMARY:
         case TERTIARY:
           return !victoryAuto;
@@ -213,7 +212,7 @@ public final class Constants {
     public static final Time warning = Seconds.of(7);
 
     public static final Time[] transitions = {
-      Seconds.of(20), Seconds.of(30), Seconds.of(55), 
+      Seconds.of(20), Seconds.of(30), Seconds.of(55),
       Seconds.of(80), Seconds.of(105), Seconds.of(130),
     };
   }
