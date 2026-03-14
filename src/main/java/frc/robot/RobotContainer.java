@@ -2,7 +2,6 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
-import com.ctre.phoenix6.Orchestra;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
@@ -10,29 +9,18 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Frequency;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.constants.Constants;
-import frc.robot.generated.TunerConstants;
+import frc.robot.constants.LimelightHelpers;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.GyroIO;
-import frc.robot.subsystems.drive.GyroIOPigeon2;
-import frc.robot.subsystems.drive.ModuleIO;
-import frc.robot.subsystems.drive.ModuleIOSim;
-import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.indication.LuminalArray;
+import frc.robot.subsystems.indication.limelights.LimelightArray;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.Intake.ArmState;
-import frc.robot.subsystems.limelights.LimelightArray;
 import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -40,22 +28,23 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
-  // Subsystems
+  // Declare subsystems.
   public final Drive drive;
   public final Intake intake;
   public final Shooter shooter;
   public final Hopper hopper;
   public final LuminalArray lights;
   public final LimelightArray vision;
-  public double testVelocity = 0;
-  private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
-  public final BooleanSupplier aligned;
-  public Frequency mHertzOscillate = Hertz.of(0);
 
-  public Pose2d hubTarget;
-
+  // Static configuration.
   private final boolean firstPerson = false;
 
+  // Alignment supplier.
+  public final BooleanSupplier aligned;
+  // Velocity supplier.
+  public final Supplier<AngularVelocity> velocity;
+
+  // Velocity control states.
   public enum VelocityType {
     STATIC,
     REGRESSION,
@@ -63,171 +52,134 @@ public class RobotContainer {
     AUTO
   }
 
+  // Mutable state control.
   public boolean inverse = false;
+  public double testVelocity = 0;
+  public final Supplier<Integer> kInverse = () -> (inverse ? -1 : 1);
   public VelocityType velocityType = VelocityType.REGRESSION;
 
-  private final Supplier<Boolean> isInverse = () -> inverse;
-
-  private Command staticVelocity() {
-    return Commands.runOnce(
-        () -> {
-          velocityType = VelocityType.STATIC;
-        });
+  // Methodic toggles.
+  private final Command velocity(VelocityType type) {
+    return Commands.runOnce(() -> velocityType = type);
   }
 
-  private Command regressVelocity() {
-    return Commands.runOnce(
-        () -> {
-          velocityType = VelocityType.REGRESSION;
-        });
-  }
-
-  private Command invertControl() {
-    return Commands.runOnce(
-        () -> {
-          inverse = true;
-        });
-  }
-
-  private Command regularControl() {
-    return Commands.runOnce(
-        () -> {
-          inverse = false;
-        });
-  }
-
-  private void testVelocity() {
-    velocityType = VelocityType.TESTING;
+  private final Command invertion(boolean value) {
+    return Commands.runOnce(() -> inverse = value);
   }
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
-  Orchestra music = new Orchestra(Filesystem.getDeployDirectory() + "/orchestra/output.chirp");
-
   public RobotContainer() {
-    Frequency mHertzOscillate = Constants.Intake.kOscillationFrequency;
-    switch (Constants.currentMode) {
-      case REAL:
-        drive =
-            new Drive(
-                new GyroIOPigeon2(),
-                new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                new ModuleIOTalonFX(TunerConstants.FrontRight),
-                new ModuleIOTalonFX(TunerConstants.BackLeft),
-                new ModuleIOTalonFX(TunerConstants.BackRight));
-        break;
+    // Initialize drive subsystem.
+    drive = new Drive(Constants.currentMode);
 
-      case SIM:
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIOSim(TunerConstants.FrontLeft),
-                new ModuleIOSim(TunerConstants.FrontRight),
-                new ModuleIOSim(TunerConstants.BackLeft),
-                new ModuleIOSim(TunerConstants.BackRight));
-        break;
-
-      default:
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {});
-        break;
-    }
-
+    // Alignment supplier.
     aligned =
         () -> {
-          Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
-          return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
-              .lt(Constants.Shooter.kAlignmentError);
+          return drive
+              .getRotation()
+              .getMeasure()
+              .isNear(drive.getRotationTarget().getMeasure(), Constants.Shooter.kAlignmentError);
         };
 
-    intake = new Intake();
-    shooter = new Shooter();
-    hopper = new Hopper();
-    lights = new LuminalArray();
-    vision = new LimelightArray(drive);
-
+    // Velocity supplier.
     velocity =
         () -> {
           switch (velocityType) {
             case STATIC:
+              // Ferrying static velocity.
               return Constants.Shooter.kSpeed;
             case REGRESSION:
-              if (aligned.getAsBoolean()) {
+              // Conditional shooting.
+              if (aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get()) {
                 return Constants.regress(
-                    Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+                    Meters.of(
+                        drive
+                            .getPose()
+                            .minus(Constants.Poses.hub.get())
+                            .getTranslation()
+                            .getNorm()));
               } else {
                 return Constants.Shooter.kSpeed;
               }
             case TESTING:
+              // Allow testing of shooter velocity via dashboard input, for characterization
+              // purposes.
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             case AUTO:
               return RPM.of(1250);
             default:
+              // Fallback velocity.
               return Constants.Shooter.kSpeed;
           }
         };
 
+    // Initialize shooter subsystem.
+    shooter = new Shooter(() -> velocity.get().times(kInverse.get()));
+
+    // Initialize fuel intake and storage subsystems.
+    intake = new Intake(() -> Constants.Intake.kSpeed * kInverse.get());
+    hopper = new Hopper(() -> Constants.Hopper.kSpeed * kInverse.get());
+
+    // Initialize indicator subsystems.
+    lights = new LuminalArray();
+    vision = new LimelightArray(drive::getPose, drive::getRotation, drive::addVisionMeasurement);
+
+    // Configure button bindings.
     configureButtonBindings();
 
-    final Command startHopper = hopper.runHopper(isInverse);
-    final Command startShooter = conditionalShooting();
-    final Command startIntake = intake.runIntake(isInverse);
-    final Command dropArm =
-        intake
-            .controlArm(ArmState.BACKWARD)
-            .andThen(Commands.waitSeconds(0.5))
-            .andThen(intake.controlArm(ArmState.ZERO));
-    //// NamedCommands.registerCommand("StartShooter", regressionShooting().repeatedly());
-    final Command killHopper = hopper.stopHopper();
-    final Command killShooter = shooter.runMechanism(0, 0);
-    final Command killIntake = intake.stopIntake();
-    //// NamedCommands.registerCommand("KillShooter", killShooter);
-    final Command periodIntake =
-        intake.runIntake(isInverse).repeatedly().finallyDo(() -> intake.stopIntake());
-    final Command raiseIntake = intake.raiseArm(Degrees.of(60));
-    final Command lowerIntake = intake.lowerArm().andThen(Commands.waitTime(Seconds.of(0.5)));
+    // Wrist commands.
+    final Command raiseWrist = intake.raiseWrist(Degrees.of(60));
+    final Command lowerWrist = intake.lowerWrist().andThen(Commands.waitTime(Seconds.of(0.5)));
     final Command oscillateIntakek35 =
         intake.oscillateArm(Degrees.of(35), Constants.Intake.kOscillationFrequency);
     final Command oscillateIntakek60 =
         intake.oscillateArm(Degrees.of(60), Constants.Intake.kOscillationFrequency);
     final Command oscillateIntakek20 =
         intake.oscillateArm(Degrees.of(20), Constants.Intake.kOscillationFrequency);
-    final Command stopDrive = Commands.runOnce(() -> drive.stop());
-    final Command runFiringSequence =
-        new SequentialCommandGroup(
-            regressVelocity(),
-            startShooter,
-            Commands.waitTime(Constants.Shooter.kChargeUpTime),
-            startHopper,
-            Commands.waitTime(Constants.Shooter.kFiringTime)
-                .raceWith(
-                    oscillateIntakek20
-                        .raceWith(Commands.waitTime(Constants.Shooter.k35Time))
-                        .andThen(
-                            oscillateIntakek35
-                                .raceWith(Commands.waitTime(Constants.Shooter.k60Time))
-                                .andThen(oscillateIntakek60))),
-            killShooter,
-            killHopper,
-            lowerIntake,
-            staticVelocity());
 
+    // Drivetrain commands.
+    final Command stopDrive = Commands.runOnce(() -> drive.stop());
+    final Command lockDrive = Commands.runOnce(() -> drive.stopWithX());
+
+    // Shooter commands.
+    final Command initializeFiring =
+        Commands.sequence(lockDrive, velocity(VelocityType.REGRESSION), shooter.run());
+
+    final Command initializeFeeding =
+        Commands.sequence(Commands.waitTime(Constants.Shooter.kChargeUpTime), hopper.run());
+
+    final Command oscillateIntakeSequence =
+        oscillateIntakek20
+            .raceWith(Commands.waitTime(Constants.Shooter.k35Time))
+            .andThen(oscillateIntakek35.raceWith(Commands.waitTime(Constants.Shooter.k60Time)))
+            .andThen(oscillateIntakek60);
+
+    final Command terminateFiring =
+        Commands.parallel(shooter.halt(), hopper.halt(), lowerWrist, velocity(VelocityType.STATIC));
+
+    final Command runFiringSequence =
+        Commands.sequence(
+            initializeFiring,
+            initializeFeeding,
+            Commands.waitTime(Constants.Shooter.kFiringTime).raceWith(oscillateIntakeSequence),
+            terminateFiring);
+
+    // Register commands for pathplanner.
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
-    NamedCommands.registerCommand("Start Intaking", startIntake);
-    NamedCommands.registerCommand("Stop Intaking", killIntake);
-    NamedCommands.registerCommand("Intake Period", periodIntake);
-    NamedCommands.registerCommand("Raise Intake", raiseIntake);
-    NamedCommands.registerCommand("Lower Intake", lowerIntake);
+    NamedCommands.registerCommand("Start Intaking", intake.run());
+    NamedCommands.registerCommand("Stop Intaking", intake.halt());
+    NamedCommands.registerCommand(
+        "Intake Period", intake.run().repeatedly().finallyDo(() -> intake.halt()));
+    NamedCommands.registerCommand("Raise Intake", raiseWrist);
+    NamedCommands.registerCommand("Lower Intake", lowerWrist);
     NamedCommands.registerCommand("Stop", stopDrive);
 
+    // Create autonomous selector and add options.
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
+    // Drivetrain characterization routines.
     autoChooser.addOption(
         "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
     autoChooser.addOption(
@@ -242,110 +194,68 @@ public class RobotContainer {
         "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Right Shooter SysId (Quasistatic Forward)",
-        shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Right Shooter SysId (Quasistatic Reverse)",
-        shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Left Shooter SysId (Quasistatic Forward)",
-        shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Left Shooter SysId (Quasistatic Reverse)",
-        shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Right Shooter SysId (Dynamic Forward)",
-        shooter.sysIdDynamicRight(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Right Shooter SysId (Dynamic Reverse)",
-        shooter.sysIdDynamicRight(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Left Shooter SysId (Dynamic Forward)",
-        shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Left Shooter SysId (Dynamic Reverse)",
-        shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse));
 
-    autoChooser.addOption(
-        "SysId Right Shooter Analysis",
-        new SequentialCommandGroup(
-            shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kForward),
-            shooter.sysIdQuasistaticRight(SysIdRoutine.Direction.kReverse),
-            shooter.sysIdDynamicRight(SysIdRoutine.Direction.kForward),
-            shooter.sysIdDynamicRight(SysIdRoutine.Direction.kReverse)));
+    // Shooter characterization routines.
+    autoChooser.addOption("Right Shooter SysId", shooter.sysIdRightAnalysis());
+    autoChooser.addOption("Left Shooter SysId", shooter.sysIdLeftAnalysis());
+    autoChooser.addOption("Feeder SysId", shooter.sysIdFeederAnalysis());
 
-    autoChooser.addOption(
-        "SysId Left Shooter Analysis",
-        new SequentialCommandGroup(
-            shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kForward),
-            shooter.sysIdQuasistaticLeft(SysIdRoutine.Direction.kReverse),
-            shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kForward),
-            shooter.sysIdDynamicLeft(SysIdRoutine.Direction.kReverse)));
-
+    // Secondary autonomous routine.
     autoChooser.addOption("A-Bineutral Right", new PathPlannerAuto("A-Bineutral", false));
     autoChooser.addOption("A-Bineutral Left", new PathPlannerAuto("A-Bineutral", true));
 
+    // Primary autonomous routine.
     autoChooser.addOption("A-Unineutral Right", new PathPlannerAuto("A-Unineutral", false));
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
 
+    /** Test autonomous firing sequence. */
     autoChooser.addOption("Shooting Sequence", runFiringSequence);
-
-    // autoChooser.addOption("Shooter Clea  ning", shooter (RPM.of(-50)).repeatedly());
-
-    hubTarget = Constants.Poses.hub;
   }
 
-  private Command pointToHub() {
+  /** Returns the Rotation2d the robot needs to face the hub. */
+  private Rotation2d calculateHubRotation() {
+    // Get poses.
+    Pose2d robotPose = drive.getPose();
+    Pose2d hubPose = Constants.Poses.hub.get();
+
+    // Pose differences.
+    double dx = hubPose.getX() - robotPose.getX();
+    double dy = hubPose.getY() - robotPose.getY();
+
+    // Angle from robot to hub
+    Angle toHub = Radians.of(Math.IEEEremainder(Math.atan2(dy, dx), Constants.Mathematics.TAU));
+
+    // Log the pointer
+    Pose2d pointer = new Pose2d(robotPose.getX(), robotPose.getY(), new Rotation2d(toHub));
+    Logger.recordOutput("Hub Pointer", pointer);
+
+    // Update drive target.
+    drive.setRotationTarget(new Rotation2d(toHub));
+
+    return drive.getRotationTarget();
+  }
+
+  /** Orient robot to face the hub. */
+  private Command firingOrientation() {
+    return pointToAngle(this::calculateHubRotation);
+  }
+
+  /**
+   * Orient the robot to face a supplied angle.
+   *
+   * @param rotation
+   */
+  private Command pointToAngle(Supplier<Rotation2d> rotation) {
     return DriveCommands.joystickDriveAtAngle(
         drive,
         () -> -Constants.Joysticks.driver.getLeftY(),
         () -> -Constants.Joysticks.driver.getLeftX(),
-        () -> {
-          Pose2d robotPose = drive.getPose();
-          Pose2d hubPose = Constants.Poses.hub;
-
-          Angle toHub =
-              Radians.of(
-                  Math.IEEEremainder(
-                      Math.atan(
-                          (hubPose.getY() - robotPose.getY())
-                              / (hubPose.getX() - robotPose.getX())),
-                      Constants.Mathematics.TAU));
-          Pose2d pointer =
-              new Pose2d(robotPose.getMeasureX(), robotPose.getMeasureY(), new Rotation2d(toHub));
-          Logger.recordOutput("Hub Pointer", pointer);
-          drive.setRotationTarget(
-              new Rotation2d(toHub)
-                  .rotateBy(
-                      DriverStation.getAlliance().get().equals(Alliance.Red)
-                          ? Rotation2d.k180deg
-                          : Rotation2d.kZero));
-          return drive.getRotationTarget();
-        });
-  }
-
-  private Command pointToAngle(Supplier<Angle> angle) {
-    return DriveCommands.joystickDriveAtAngle(
-        drive,
-        () -> -Constants.Joysticks.driver.getLeftY(),
-        () -> -Constants.Joysticks.driver.getLeftX(),
-        () -> {
-          return new Rotation2d(angle.get());
-        });
-  }
-
-  private Command conditionalShooting() {
-    return shooter.runMechanismVelocity(velocity, velocity);
-  }
-
-  private Command staticShooting(AngularVelocity v) {
-    return shooter.runMechanismVelocity(v, v);
+        rotation);
   }
 
   private void configureButtonBindings() {
-    // Default command, normal field-relative drive
     if (firstPerson) {
+      // First person drive command.
       drive.setDefaultCommand(
           DriveCommands.firstPersonDrive(
               drive,
@@ -353,6 +263,7 @@ public class RobotContainer {
               () -> -Constants.Joysticks.operator.getLeftX(),
               () -> -Constants.Joysticks.operator.getRightX()));
     } else {
+      // Third person drive command.
       drive.setDefaultCommand(
           DriveCommands.joystickDrive(
               drive,
@@ -361,19 +272,10 @@ public class RobotContainer {
               () -> -Constants.Joysticks.driver.getRightX()));
     }
 
-    // Lock to 0° when down POV button is helds
-    Constants.Joysticks.driver
-        .povDown()
-        .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> Constants.Joysticks.driver.getLeftY(),
-                () -> Constants.Joysticks.driver.getLeftX(),
-                () -> Rotation2d.kZero));
-
     // Hold wheel position.
-    // Constants.Joysticks.driver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    Constants.Joysticks.driver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
+    // Seed limelights and zero pose heading.
     Constants.Joysticks.driver
         .a()
         .onTrue(
@@ -381,7 +283,7 @@ public class RobotContainer {
                     () -> {
                       drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero));
                       for (String limelight : Constants.Limelight.localization) {
-                        LimelightHelpers.SetIMUMode(limelight, 1);
+                        LimelightHelpers.SetIMUMode(limelight, 0);
                         LimelightHelpers.SetRobotOrientation(limelight, 0, 0, 0, 0, 0, 0);
                         LimelightHelpers.SetIMUMode(limelight, 2);
                       }
@@ -389,45 +291,60 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
+    // Toggle intake between raised and lowered positions to aggitate fuel.
     Constants.Joysticks.operator
         .povUp()
-        .onFalse(intake.lowerArm().alongWith(intake.stopIntake()))
-        .onTrue(intake.raiseArm(Degrees.of(60)).alongWith(intake.runIntake(isInverse)));
+        .onFalse(intake.lowerWrist().alongWith(intake.halt()))
+        .onTrue(intake.raiseWrist(Degrees.of(60)).alongWith(intake.run()));
 
-    Constants.Joysticks.operator
-        .leftTrigger()
-        .onFalse(intake.stopIntake())
-        .onTrue(intake.runIntake(isInverse));
+    // Run intake rollers at full speed when left trigger is held, and halt when released.
+    Constants.Joysticks.operator.leftTrigger().onFalse(intake.halt()).onTrue(intake.run());
 
+    // Run shooter at target velocity when right bumper is held, and halt when released.
     Constants.Joysticks.operator
         .rightBumper()
-        .whileFalse(shooter.runMechanism(0, 0))
-        .onTrue(conditionalShooting());
+        .whileTrue(shooter.run())
+        .onFalse(
+            shooter.halt()
+            // .andThen(Commands.either(hopper.run(), hopper.halt(), () -> shooter.isReady()))
+            );
 
-    Constants.Joysticks.operator
-        .leftBumper()
-        .whileFalse(hopper.stopHopper())
-        .onTrue(hopper.runHopper(isInverse));
+    // Run feeding mechanism.
+    Constants.Joysticks.operator.leftBumper().whileFalse(hopper.halt()).onTrue(hopper.run());
 
-    Constants.Joysticks.operator.povRight().onFalse(intake.lowerArm()).onTrue(intake.emergency());
+    // Raise intake to avoid impact.
+    Constants.Joysticks.operator.povRight().onFalse(intake.lowerWrist()).onTrue(intake.emergency());
 
-    Constants.Joysticks.operator.povLeft().whileTrue(invertControl()).whileFalse(regularControl());
+    // Invert all control.
+    Constants.Joysticks.operator.povLeft().whileTrue(invertion(true)).whileFalse(invertion(false));
 
+    // Toggle regression velocity control.
     Constants.Joysticks.operator
         .x()
-        .whileTrue(regressVelocity().alongWith(pointToHub()))
-        .whileFalse(staticVelocity());
+        .whileTrue(velocity(VelocityType.REGRESSION).alongWith(firingOrientation()))
+        .whileFalse(velocity(VelocityType.STATIC));
   }
 
+  /**
+   * Supplies the autonomous command selected on the dashboard.
+   *
+   * @return
+   */
   public Command getAutonomousCommand() {
     return autoChooser.get();
   }
 
+  /**
+   * Set the robot's pose to the starting pose of the selected autonomous command, if it exists.
+   *
+   * @param autonomousCommand
+   */
   public void seedAutonomousPose(Command autonomousCommand) {
     if (!(autonomousCommand instanceof PathPlannerAuto selectedAuto)) {
       return;
     }
 
+    // Get autonomous starting pose.
     Pose2d startingPose = selectedAuto.getStartingPose();
     if (startingPose == null) {
       return;

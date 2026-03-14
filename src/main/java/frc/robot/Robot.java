@@ -11,6 +11,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.constants.Constants;
+import frc.robot.constants.LimelightHelpers;
+import frc.robot.subsystems.Logs;
+import frc.robot.subsystems.indication.limelights.LimelightArray;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -114,33 +117,27 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     time = Constants.Tempo.tick();
-    robotContainer.mHertzOscillate = Hertz.of(SmartDashboard.getNumber("Oscillate", 0));
-    Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
-    Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
+
+    // Control command scheduler and log data.
     CommandScheduler.getInstance().run();
 
-    // Controller haptic indicators
-    Boolean rumble = false;
+    // Log poses.
+    Logger.recordOutput("Hub Pose", Constants.Poses.hub.get());
+    Logger.recordOutput("Tower Pose", Constants.Poses.tower.get());
+    Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
 
-    for (Time target : Constants.Indication.transitions) {
-      double difference = target.minus(time).in(Seconds);
-      if ((Math.abs(difference) < 1) && (difference < 0)) {
-        rumble = true;
-      }
-    }
+    // Log shooter status.
+    Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
+    Logger.recordOutput("Shooter/ready", robotContainer.shooter.isReady());
+    Logs.write("Shooter/type", robotContainer.velocityType);
 
-    Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
-
-    Logger.recordOutput("Hub Pose", Constants.Poses.hub);
-    Logger.recordOutput("Tower Pose", Constants.Poses.tower);
-
-    Logger.recordOutput("Shooting State", robotContainer.velocityType.toString());
-
+    // Update python pose estimate.
     Double[] robotpose = {
       robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()
     };
     SmartDashboard.putNumberArray("robot-pose", robotpose);
 
+    // Update field visualization.
     field.setRobotPose(robotContainer.drive.getPose());
   }
 
@@ -153,6 +150,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledPeriodic() {
     indicateLimelight(Indicate.DISABLED);
+    robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
   }
 
   @Override
@@ -175,6 +173,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousPeriodic() {
     indicateLimelight(Indicate.AUTO);
+    robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
   }
 
   @Override
@@ -193,6 +192,7 @@ public class Robot extends LoggedRobot {
       LimelightHelpers.SetThrottle(limelight, 0);
     }
     indicateLimelight(Indicate.ENABLED);
+    robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
   }
 
   @Override
