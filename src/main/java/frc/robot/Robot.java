@@ -120,8 +120,6 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
     CommandScheduler.getInstance().run();
 
-    Boolean isAutonomous = DriverStation.isAutonomous();
-
     // Controller haptic indicators
     Boolean rumble = false;
 
@@ -134,8 +132,8 @@ public class Robot extends LoggedRobot {
 
     Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
 
-    Logger.recordOutput("Hub Pose", Constants.Poses.hub);
-    Logger.recordOutput("Tower Pose", Constants.Poses.tower);
+    Logger.recordOutput("Hub Pose", Constants.Poses.hub.get());
+    Logger.recordOutput("Tower Pose", Constants.Poses.tower.get());
 
     Logger.recordOutput("Shooting State", robotContainer.velocityType.toString());
 

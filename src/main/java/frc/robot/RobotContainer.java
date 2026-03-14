@@ -208,7 +208,7 @@ public class RobotContainer {
     final Command stopDrive = Commands.runOnce(() -> drive.stop());
     final Command runFiringSequence =
         new SequentialCommandGroup(
-            autoVelocity(),
+            regressVelocity(),
             startShooter,
             Commands.waitTime(Constants.Shooter.kChargeUpTime),
             startHopper,
@@ -297,10 +297,6 @@ public class RobotContainer {
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
 
     autoChooser.addOption("Shooting Sequence", runFiringSequence);
-
-    // autoChooser.addOption("Shooter Clea  ning", shooter (RPM.of(-50)).repeatedly());
-
-    hubTarget = Constants.Poses.hub;
   }
 
   private Command pointToHub() {
@@ -310,7 +306,7 @@ public class RobotContainer {
         () -> -Constants.Joysticks.driver.getLeftX(),
         () -> {
           Pose2d robotPose = drive.getPose();
-          Pose2d hubPose = Constants.Poses.hub;
+          Pose2d hubPose = Constants.Poses.hub.get();
 
           Angle toHub =
               Radians.of(

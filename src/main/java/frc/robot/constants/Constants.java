@@ -22,6 +22,8 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import java.util.Optional;
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 
 public final class Constants {
@@ -268,19 +270,20 @@ public final class Constants {
 
   public static class Poses {
     // X: 14.916m, Y: 3.875m
-    public static final Pose2d tower =
-        flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.146), Rotation2d.k180deg));
-    public static final Pose2d hub =
-        flipAlliance(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
-    public static final Pose2d lowerStart =
-        flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
+    public static final Supplier<Pose2d> tower =
+        () -> flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.146), Rotation2d.k180deg));
+    public static final Supplier<Pose2d> hub =
+        () -> flipAlliance(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
+    public static final Supplier<Pose2d> lowerStart =
+        () -> flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 650.92838;
+  public static final double base = 1235.92838;
   public static final double exponential = 1.00529;
 
   public static AngularVelocity regress(Distance distance) {
+    Logger.recordOutput("Shooter/Distance", distance.in(Inches));
     return RPM.of(base * Math.pow(exponential, distance.in(Inches)));
   }
 
