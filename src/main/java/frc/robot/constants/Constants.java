@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
@@ -44,6 +45,8 @@ public final class Constants {
     public static final Time k60Time = Seconds.of(3);
     public static final AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
+    public static final Current kCurrentLimit = Amps.of(80);
+    public static final double kVelocityTolerance = 0.08;
   }
 
   public static class Intake {

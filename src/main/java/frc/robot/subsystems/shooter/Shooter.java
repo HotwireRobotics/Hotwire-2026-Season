@@ -1,8 +1,11 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -58,6 +61,14 @@ public class Shooter extends ModularSubsystem implements Systerface {
     leftRPSControl.withKP(0.8);
 
     final TalonFX[] bothShooters = {m_leftShooter, m_rightShooter};
+    
+    // Configure current limits
+    CurrentLimitsConfigs limitConfig = new CurrentLimitsConfigs();
+    limitConfig.withSupplyCurrentLimit(Constants.Shooter.kCurrentLimit);
+  
+    m_feeder.getConfigurator().apply(limitConfig);
+    m_rightShooter.getConfigurator().apply(limitConfig);
+    m_leftShooter.getConfigurator().apply(limitConfig);
 
     defineDevice(
         new DevicePointer(Device.RIGHT_SHOOTER, m_rightShooter),
@@ -101,6 +112,7 @@ public class Shooter extends ModularSubsystem implements Systerface {
   @Override
   public void periodic() {
     Logger.recordOutput("Shooter/State", state.toString());
+    Logger.recordOutput("Shooter/Ready", isShooterReady());
 
     // Active device flags (what is currently being driven)
     Logger.recordOutput("Shooter/Active/BothShooter", isActiveDevice(Device.BOTH_SHOOTER));
@@ -249,9 +261,24 @@ public class Shooter extends ModularSubsystem implements Systerface {
       Supplier<AngularVelocity> feederVel, Supplier<AngularVelocity> shooterVel) {
     return Commands.runOnce(
         () -> {
+          Logger.recordOutput("Shooter/Scontrol", shooterVel.get().in(RPM), "rpm");
+          Logger.recordOutput("Shooter/Fcontrol", feederVel.get().in(RPM), "rpm");
           runDeviceVelocity(Device.BOTH_SHOOTER, shooterVel.get());
           runDeviceVelocity(Device.FEEDER, feederVel.get());
         });
+  }
+  
+  public boolean isShooterReady() {
+    AngularVelocity leftTarget =   ((VelocityVoltage)  m_leftShooter.getAppliedControl()).getVelocityMeasure();
+    AngularVelocity rightTarget = ((VelocityVoltage) m_rightShooter.getAppliedControl()).getVelocityMeasure();
+    if (
+      m_leftShooter.getVelocity().getValue().isNear(leftTarget, Constants.Shooter.kVelocityTolerance) &&
+      m_rightShooter.getVelocity().getValue().isNear(rightTarget, Constants.Shooter.kVelocityTolerance)
+    ) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public void configureProportional(double Kp) {

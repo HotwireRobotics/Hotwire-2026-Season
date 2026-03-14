@@ -155,12 +155,12 @@ public class RobotContainer {
             case STATIC:
               return Constants.Shooter.kSpeed;
             case REGRESSION:
-              if (aligned.getAsBoolean()) {
-                return Constants.regress(
-                    Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
-              } else {
-                return Constants.Shooter.kSpeed;
-              }
+              // if (aligned.getAsBoolean()) {
+              return Constants.regress(
+                  Meters.of(drive.getPose().minus(hubTarget).getTranslation().getNorm()));
+              // } else {
+              //   return Constants.Shooter.kSpeed;
+              // }
             case TESTING:
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             default:
