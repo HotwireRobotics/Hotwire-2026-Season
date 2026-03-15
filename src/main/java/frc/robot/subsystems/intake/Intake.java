@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
+import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.Motor;
 
@@ -22,11 +23,17 @@ import org.littletonrobotics.junction.Logger;
 
 public class Intake extends ModularSubsystem implements Systerface {
 
-  public final TalonFX rollers;
-  public final TalonFX wrist;
-  private final PositionVoltage m_PositionVoltage;
+  // Declare devices.
+  public final Motor rollers, wrist;
+
+  // Declare suppliers.
+  private final Supplier<Double> speed;
+
+  // Declare control loop.
+  private final PositionVoltage control;
   private final Slot0Configs slot;
 
+  // Declare device enum.
   public enum Device {
     ROLLERS,
     WRIST
@@ -40,49 +47,55 @@ public class Intake extends ModularSubsystem implements Systerface {
 
   private ArmState armState = ArmState.ZERO;
 
-  public Intake() {
-    rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    wrist = new TalonFX(Constants.MotorIDs.i_arm);
+  public Intake(Supplier<Double> speed) {
+    // Initialize devices.
+    rollers = new Motor(this, Constants.MotorIDs.i_rollers, Amps.of(40));
+    wrist = new Motor(this, Constants.MotorIDs.i_arm, Amps.of(40));
+
+    // Define devices.
     defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.WRIST, wrist));
 
-    m_PositionVoltage = new PositionVoltage(Degrees.of(0));
+    // Initialize control loop.
+    control = new PositionVoltage(Degrees.of(0));
 
     slot = new Slot0Configs();
     configureProportional(18.0);
 
     // Configuration
-    wrist.setControl(m_PositionVoltage);
+    wrist.setControl(control);
     wrist.getConfigurator().apply(slot);
+
+    this.speed = speed;
+  }
+
+  public Intake() {
+    this(() -> Constants.Intake.kSpeed);
   }
 
   public void configureProportional(double kP) {
     slot.withKP(kP);
   }
 
+  // State system.
   private enum State {
     STOPPED,
-    INTAKING // Running rollers
+    INTAKING
   }
-
   State state = State.STOPPED;
 
+  // Supply state.
   public Object getState() {
     return state;
   }
 
+  
   @Override
   public void periodic() {
-    Logger.recordOutput("Intake/State", state.toString());
-
-    Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Intake/Rollers/Voltage", rollers.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
+    // Log devices and state.
+    rollers.log();
+    wrist.log();
+    Logs.log(this, state);
+    Logs.write("Intake/ArmState", armState);
 
     if (isActiveDevice(Device.ROLLERS)) {
       state = State.INTAKING;
@@ -91,68 +104,44 @@ public class Intake extends ModularSubsystem implements Systerface {
     }
   }
 
-  // Device control methods
   /**
-   * Allows you to limit the voltage of the intake rollers
-   *
-   * @param device
-   * @param volts
+   * Run the hopper at the specified speed.
    */
-  public void runDeviceVoltage(Device device, double volts) {
-    for (TalonFX d : getDevices(device)) {
-      d.setVoltage(volts);
-    }
-
-    if (volts == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
-    }
+  public Command run() {
+    return runDevice(Device.ROLLERS, speed, this);
   }
 
-  public Command runIntake() {
-    return runDevice(Device.ROLLERS, Constants.Intake.kSpeed);
-  }
-
-  public Command runIntake(Supplier<Boolean> inverse) {
-    return runDevice(Device.ROLLERS, () -> (Constants.Hopper.kSpeed * (inverse.get() ? -1 : 1)));
-  }
-
-  public Command stopIntake() {
-    return runDevice(Device.ROLLERS, 0);
-  }
-
-  public Command controlArm(ArmState state) {
-    return Commands.runOnce(
-        () -> {
-          armState = state;
-        });
+  /**
+   * Halt the hopper.
+   */
+  public Command halt() {
+    return runDevice(Device.ROLLERS, 0, this);
   }
 
   public Command oscillateArm(Angle angle, Frequency frequency) {
     Time period = Seconds.of(1 / (2 * frequency.in(Hertz)));
     RepeatCommand group =
         new SequentialCommandGroup(
-                lowerArm(), Commands.waitTime(period),
-                raiseArm(angle), Commands.waitTime(period))
+                lowerWrist(), Commands.waitTime(period),
+                raiseWrist(angle), Commands.waitTime(period))
             .repeatedly();
     group.addRequirements(this);
     return group;
   }
 
-  public Command raiseArm(Angle angle) {
+  public Command raiseWrist(Angle angle) {
     return Commands.runOnce(
         () -> {
           configureProportional(18.0);
-          wrist.setControl(m_PositionVoltage.withPosition(angle));
+          wrist.setControl(control.withPosition(angle));
         });
   }
 
-  public Command lowerArm() {
+  public Command lowerWrist() {
     return Commands.runOnce(
         () -> {
           configureProportional(18.0);
-          wrist.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
+          wrist.setControl(control.withPosition(Degrees.of(0)));
         });
   }
 
@@ -160,7 +149,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           configureProportional(28.0);
-          wrist.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
+          wrist.setControl(control.withPosition(Degrees.of(90)));
         });
   }
 }

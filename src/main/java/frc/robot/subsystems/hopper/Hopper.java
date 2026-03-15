@@ -16,15 +16,23 @@ import org.littletonrobotics.junction.Logger;
 
 public class Hopper extends ModularSubsystem implements Systerface {
   private final Motor hopper;
+
+  // Declare suppliers.
   private final Supplier<Double> speed;
 
+  // Declare device enum.
   public enum Device {
     HOPPER
   }
 
   public Hopper(Supplier<Double> speed) {
+    // Initialize devices.
     hopper = new Motor(this, Constants.MotorIDs.h_hopper, Amps.of(40));
+
+    // Define devices.
     defineDevice(Device.HOPPER, hopper);
+
+    // Intialize suppliers.
     this.speed = speed;
   }
 
@@ -32,19 +40,21 @@ public class Hopper extends ModularSubsystem implements Systerface {
     this(() -> Constants.Hopper.kSpeed);
   }
 
+  // State system.
   private enum State {
     STOPPED,
     FEEDING
   }
-
   State state = State.STOPPED;
 
+  // Supply state.
   public Object getState() {
     return state;
   }
 
   @Override
   public void periodic() {
+    // Log devices and state.
     hopper.log();
 
     if (isActiveDevice(Device.HOPPER)) {
@@ -54,13 +64,17 @@ public class Hopper extends ModularSubsystem implements Systerface {
     }
   }
 
-  public Command runHopper() {
-    return runDevice(Device.HOPPER, speed);
+  /**
+   * Run the hopper at the specified speed.
+   */
+  public Command run() {
+    return runDevice(Device.HOPPER, speed, this);
   }
 
-  public Command stopHopper() {
-    Command command = runDevice(Device.HOPPER, 0, this);
-    command.addRequirements(this);
-    return command;
+  /**
+   * Halt the hopper.
+   */
+  public Command halt() {
+    return runDevice(Device.HOPPER, 0, this);
   }
 }

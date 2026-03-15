@@ -17,6 +17,7 @@ import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -44,6 +45,7 @@ public final class Constants {
     public static final Time k60Time = Seconds.of(3);
     public static final AngularVelocity kSpeed = RPM.of(2500);
     public static final Angle kAlignmentError = Degrees.of(4);
+    public static final AngularVelocity kZero = RPM.of(0);
   }
 
   public static class Intake {
@@ -63,42 +65,58 @@ public final class Constants {
   }
 
   public static class Tempo {
+    // Mutable time tracking fields.
     private static double timerOffset = 0;
     private static Time time = Seconds.of(0);
 
+    /**
+     * Start the timer from zero.
+     */
     public static void startTime() {
       timer.reset();
       timer.start();
     }
 
+    /**
+     * Start the timer with an offset, used for simulating delayed starts and autonomous periods.
+     * @param offset
+     */
     public static void startTime(Time offset) {
       timer.reset();
       timer.start();
       timerOffset = offset.in(Seconds);
     }
 
-    public static Time tick() {
-      Time t = Seconds.of(DriverStation.getMatchTime());
-      time =
-          (t.isEquivalent(Seconds.of(-1)))
-              ? Seconds.of(timer.get() + timerOffset)
-              : ((DriverStation.isAutonomous())
-                      ? Constants.Length.autonomous
-                      : Constants.Length.teleoperated.plus(Constants.Length.autonomous))
-                  .minus(t);
+    /**
+     * Update time measurement.
+     */
+    public static Time tick() { 
+      time = Seconds.of(timer.get() + timerOffset);
       Logger.recordOutput("Time", time.in(Seconds));
 
       return time;
     }
 
+    /**
+     * Get time measurement.
+     */
     public static Time getTime() {
       return time;
     }
 
+    /**
+     * Identify if the specified time has elapsed.
+     * @param target
+     */
     public static boolean isElapsed(Time target) {
       return time.gte(target);
     }
 
+    /**
+     * Identify if the current time is within the specified range.
+     * @param start
+     * @param end
+     */
     public static boolean isRange(Time start, Time end) {
       return time.gte(start) && time.lte(end);
     }
@@ -109,9 +127,12 @@ public final class Constants {
       return new SolidColor(0, 67).withColor(new RGBWColor(r, g, b));
     }
 
+    /**
+     * Determine if the robot is on track for an autonomous victory, based on the first character of the game-specific message and the alliance color.
+     */
     public static boolean autonomousVictory() {
       String gameData = DriverStation.getGameSpecificMessage();
-      Boolean allianceIsRed = DriverStation.getAlliance().get().equals(Alliance.Red);
+      Boolean allianceIsRed = getAlliance().equals(Alliance.Red);
       if (gameData.length() < 1) return true;
       switch (gameData.charAt(0)) {
         case 'R':
@@ -123,18 +144,35 @@ public final class Constants {
       }
     }
 
+    /**
+     * Get the alliance color for this robot.
+     * @return
+     */
     public static Alliance getAlliance() {
       Optional<Alliance> alliance = DriverStation.getAlliance();
       if (alliance == null) return Alliance.Red;
       return Alliance.Blue;
     }
 
-    // public static boolean visionRegister() {
-    //   for (String limelight : Limelight.localization) {
-    //     return true;
-    //   }
-    //   return false;
-    // }
+    /**
+     * Control haptic indicators based on time remaining in the match.
+     */
+    public static void updateHaptics() {
+      Time time = Tempo.getTime();
+   
+      // Control haptic indicators.
+      Boolean rumble = false;
+
+      for (Time target : Constants.Indication.transitions) {
+        double difference = target.minus(time).in(Seconds);
+        if ((Math.abs(difference) < 1) && (difference < 0)) {
+          rumble = true;
+        }
+      }
+
+      // Apply haptics.
+      Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
+    }
 
     public static enum Period {
       AUTONOMOUS, TRANSITION,
@@ -250,14 +288,14 @@ public final class Constants {
   public static final Translation2d middle = new Translation2d(Meters.of(8.27), Meters.of(4.01));
 
   public static Pose2d flipAlliance(Pose2d pose) {
-    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+    if (Constants.Indication.getAlliance().equals(Alliance.Red)) {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
   }
 
   public static Angle flipAlliance(Angle angle) {
-    if (DriverStation.getAlliance().get().equals(Alliance.Red)) {
+    if (Constants.Indication.getAlliance().equals(Alliance.Red)) {
       return angle.plus(Degrees.of(180));
     }
     return angle;

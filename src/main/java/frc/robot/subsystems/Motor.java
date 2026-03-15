@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Motor extends TalonFX {
 
     private final SysIdRoutine sysIdRoutine;
+    private final Subsystem subsystem;
 
     public Motor(Subsystem subsystem, int deviceID, Current limit) {
         super(deviceID);
@@ -34,6 +35,7 @@ public class Motor extends TalonFX {
 
         // Initialize SysId routine for this motor.
         VoltageOut control = new VoltageOut(0);
+        this.subsystem = subsystem;
         sysIdRoutine =
             new SysIdRoutine(
                 new SysIdRoutine.Config(
@@ -46,11 +48,18 @@ public class Motor extends TalonFX {
     }
 
     /**
+     * Get the enclosing subsystem for this motor.
+     */
+    public Subsystem getSubsystem() {
+        return subsystem;
+    }
+
+    /**
      * Log TalonFX data to the Logger. This should be called periodically in the subsystem's periodic method.
      */
     public void log() {
         // Log TalonFX data.
-        LogGroups.log(this);
+        Logs.log(this);
     }
         
     /**

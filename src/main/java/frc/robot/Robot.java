@@ -12,7 +12,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.constants.Constants;
-import frc.robot.subsystems.limelights.LimelightArray;
+import frc.robot.subsystems.Logs;
+import frc.robot.subsystems.indication.limelights.LimelightArray;
 
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -117,35 +118,23 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     time = Constants.Tempo.tick();
-    robotContainer.mHertzOscillate = Hertz.of(SmartDashboard.getNumber("Oscillate", 0));
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
+
+    // Control command scheduler and log data.
     CommandScheduler.getInstance().run();
-
-    Boolean isAutonomous = DriverStation.isAutonomous();
-
-    // Controller haptic indicators
-    Boolean rumble = false;
-
-    for (Time target : Constants.Indication.transitions) {
-      double difference = target.minus(time).in(Seconds);
-      if ((Math.abs(difference) < 1) && (difference < 0)) {
-        rumble = true;
-      }
-    }
-
-    Constants.Joysticks.driver.setRumble(RumbleType.kLeftRumble, rumble ? 1 : 0);
 
     Logger.recordOutput("Hub Pose", Constants.Poses.hub);
     Logger.recordOutput("Tower Pose", Constants.Poses.tower);
+    Logs.write("Shooting State", robotContainer.velocityType);
 
-    Logger.recordOutput("Shooting State", robotContainer.velocityType.toString());
-
+    // Update python pose estimate.
     Double[] robotpose = {
       robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()
     };
     SmartDashboard.putNumberArray("robot-pose", robotpose);
 
+    // Update field visualization.
     field.setRobotPose(robotContainer.drive.getPose());
   }
 
