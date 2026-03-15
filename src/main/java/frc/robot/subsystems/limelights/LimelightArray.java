@@ -88,17 +88,17 @@ public class LimelightArray extends SubsystemBase {
 
       LimelightHelpers.SetRobotOrientation(limelight, heading, 0, 0, 0, 0, 0);
 
-      PoseEstimate MG2estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+      PoseEstimate MT2estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
 
-      if (isValidEstimate(MG2estimate)) {
-        measurements.add(MG2estimate);
-        lastPoseEstimate = MG2estimate.pose;
+      if (isValidEstimate(MT2estimate)) {
+        measurements.add(MT2estimate);
+        lastPoseEstimate = MT2estimate.pose;
 
         Logger.recordOutput(limelight + " Detecting", true);
-        Logger.recordOutput("Limelight/" + limelight + "/Pose", MG2estimate.pose);
+        Logger.recordOutput("Limelight/" + limelight + "/Pose", MT2estimate.pose);
 
         Matrix<N3, N1> stdDevs = VecBuilder.fill(0.7, 0.7, Double.POSITIVE_INFINITY);
-        this.supply.accept(MG2estimate, stdDevs);
+        this.supply.accept(MT2estimate, stdDevs);
       } else {
         Logger.recordOutput(limelight + " Detecting", false);
       }
