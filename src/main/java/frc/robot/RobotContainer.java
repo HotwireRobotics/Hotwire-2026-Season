@@ -416,10 +416,10 @@ public class RobotContainer {
 
     Constants.Joysticks.operator.povLeft().whileTrue(invertControl()).whileFalse(regularControl());
 
-    Constants.Joysticks.operator
-        .x()
-        .whileTrue(regressVelocity().alongWith(pointToHub()))
-        .whileFalse(staticVelocity());
+    // Constants.Joysticks.operator
+    //     .x()
+    //     .whileTrue(regressVelocity().alongWith(pointToHub()))
+    //     .whileFalse(staticVelocity());
   }
 
   public Command getAutonomousCommand() {
