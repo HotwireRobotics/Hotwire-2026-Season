@@ -204,6 +204,12 @@ public class Drive extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
+
+    Logger.recordOutput("Gyro", getGyroRotation());
+  }
+
+  public Rotation2d getGyroRotation() {
+    return rawGyroRotation;
   }
 
   /**
