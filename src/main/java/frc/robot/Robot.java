@@ -187,13 +187,13 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Robot/Mode", "Disabled");
   }
 
-  @Override
+  @Override 
   public void disabledPeriodic() {
     indicateLimelight(Indicate.DISABLED);
   }
 
   @Override
-  public void autonomousInit() {
+  public void autonomousInit() { //
     Logger.recordOutput("Robot/Mode", "Autonomous");
     autonomousCommand = robotContainer.getAutonomousCommand();
     robotContainer.seedAutonomousPose(autonomousCommand);
