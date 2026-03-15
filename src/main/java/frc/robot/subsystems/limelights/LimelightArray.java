@@ -19,6 +19,7 @@ public class LimelightArray extends SubsystemBase {
   private final Drive drive;
 
   private Pose2d lastPoseEstimate;
+  private boolean localization = true;
 
   public LimelightArray(Drive drive) {
     this.drive = drive;
@@ -61,7 +62,8 @@ public class LimelightArray extends SubsystemBase {
 
         Matrix<N3, N1> stdDevs = VecBuilder.fill(0.25, 0.25, Math.toRadians(20));
 
-        drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, stdDevs);
+        if (localization)
+          drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, stdDevs);
 
       } else {
         Logger.recordOutput(limelight + " Detecting", false);
@@ -78,5 +80,13 @@ public class LimelightArray extends SubsystemBase {
 
   public Pose2d getLastPoseEstimate() {
     return lastPoseEstimate;
+  }
+
+  public void enableLocalization() {
+    localization = true;
+  }
+
+  public void disableLocalization() {
+    localization = false;
   }
 }

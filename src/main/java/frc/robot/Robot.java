@@ -187,13 +187,14 @@ public class Robot extends LoggedRobot {
     Logger.recordOutput("Robot/Mode", "Disabled");
   }
 
-  @Override 
+  @Override
   public void disabledPeriodic() {
     indicateLimelight(Indicate.DISABLED);
   }
 
   @Override
-  public void autonomousInit() { //
+  public void autonomousInit() {
+    robotContainer.vision.enableLocalization();
     Logger.recordOutput("Robot/Mode", "Autonomous");
     autonomousCommand = robotContainer.getAutonomousCommand();
     robotContainer.seedAutonomousPose(autonomousCommand);
@@ -207,7 +208,7 @@ public class Robot extends LoggedRobot {
     Constants.Tempo.startTime();
   }
 
-//"uwu" -brylee
+  // "uwu" -brylee
 
   @Override
   public void autonomousPeriodic() {
@@ -216,6 +217,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
+    robotContainer.vision.disableLocalization();
     Logger.recordOutput("Robot/Mode", "Teleop");
     robotContainer.inverse = false;
     if (autonomousCommand != null) {
