@@ -3,26 +3,57 @@ package frc.robot.subsystems.limelights;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.constants.Constants;
+import frc.robot.constants.Field;
 import frc.robot.subsystems.drive.Drive;
+
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 
 public class LimelightArray extends SubsystemBase {
 
-  private final Drive drive;
+  public static enum IMUMode {
+    OFF(0),
+    SEED(1),
+    INTERNAL(2),
+    MT1ASSIST(3),
+    EXTERNAL(4);
+
+    public final int mode;
+
+    IMUMode(int mode) {
+      this.mode = mode;
+    }
+  }
+
+  private int mode = 0;
 
   private Pose2d lastPoseEstimate;
+  private final Supplier<Pose2d> pose;
+  private final Supplier<Rotation2d> gyro;
 
-  public LimelightArray(Drive drive) {
-    this.drive = drive;
+  private final BiConsumer<PoseEstimate, Matrix<N3, N1>> supply;
 
+  public LimelightArray(Supplier<Pose2d> getPose, Supplier<Rotation2d> getGyro, BiConsumer<PoseEstimate, Matrix<N3, N1>> supplyMeasurement) {
+    // Suppliers
+    this.pose = getPose;
+    this.gyro = getGyro;
+    // Consumer
+    this.supply = supplyMeasurement;
     // Initialize limelights
     for (String limelight : Constants.Limelight.localization) {
       LimelightHelpers.SetIMUMode(limelight, 3);
@@ -37,10 +68,8 @@ public class LimelightArray extends SubsystemBase {
     }
   }
 
-  public void setIMUMode(int mode) {
-    for (String limelight : Constants.Limelight.localization) {
-      LimelightHelpers.SetIMUMode(limelight, mode);
-    }
+  public void setIMUMode(IMUMode mode) {
+    this.mode = mode.mode;
   }
 
   @Override
@@ -51,41 +80,38 @@ public class LimelightArray extends SubsystemBase {
   private void processMeasurements() {
 
     List<PoseEstimate> measurements = new ArrayList<>();
-
-    Pose2d pose = drive.getPose();
-    double heading = pose.getRotation().getDegrees();
+    double heading = this.gyro.get().getMeasure().in(Degrees);
 
     for (String limelight : Constants.Limelight.localization) {
 
+      LimelightHelpers.SetIMUMode(limelight, mode);
+
       LimelightHelpers.SetRobotOrientation(limelight, heading, 0, 0, 0, 0, 0);
 
-      PoseEstimate estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
+      PoseEstimate MG2estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
 
-      if (isValidMeasurement(estimate)) {
-
-        measurements.add(estimate);
+      if (isValidEstimate(MG2estimate)) {
+        measurements.add(MG2estimate);
+        lastPoseEstimate = MG2estimate.pose;
 
         Logger.recordOutput(limelight + " Detecting", true);
+        Logger.recordOutput("Limelight/" + limelight + "/Pose", MG2estimate.pose);
 
-        lastPoseEstimate = estimate.pose;
-
-        Logger.recordOutput("Limelight/" + limelight + "/Pose", estimate.pose);
-
-        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.25, 0.25, Math.toRadians(20));
-
-        drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, stdDevs);
-
+        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.7, 0.7, Double.POSITIVE_INFINITY);
+        this.supply.accept(MG2estimate, stdDevs);
       } else {
         Logger.recordOutput(limelight + " Detecting", false);
       }
     }
   }
 
-  private boolean isValidMeasurement(PoseEstimate estimate) {
-    return estimate != null
-        && estimate.tagCount > 0
-        && estimate.avgTagDist
-            <= Constants.Limelight.maxDistance.in(edu.wpi.first.units.Units.Meters);
+  public boolean isValidEstimate(PoseEstimate estimation) {
+    if (estimation == null) return false;
+    Pose2d pose = estimation.pose;
+    return (pose.getX() > 0.0 && pose.getX() < Field.length.in(Meters)) && 
+           (pose.getY() > 0.0 && pose.getY() < Field.width.in(Meters)) &&
+           (estimation.tagCount > 0) && 
+           (estimation.avgTagDist <= Constants.Limelight.maxDistance.in(Meters));
   }
 
   public Pose2d getLastPoseEstimate() {

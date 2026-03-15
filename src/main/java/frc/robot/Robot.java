@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.constants.Constants;
+import frc.robot.subsystems.limelights.LimelightArray;
+
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -188,12 +190,12 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
-    robotContainer.vision.setIMUMode(1);
   }
 
   @Override
   public void disabledPeriodic() {
     indicateLimelight(Indicate.DISABLED);
+    robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
   }
 
   @Override
@@ -214,6 +216,8 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousPeriodic() {
     indicateLimelight(Indicate.AUTO);
+    robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
+    
   }
 
   @Override
@@ -232,7 +236,7 @@ public class Robot extends LoggedRobot {
       LimelightHelpers.SetThrottle(limelight, 0);
     }
     indicateLimelight(Indicate.ENABLED);
-    robotContainer.vision.setIMUMode(4);
+    robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
   }
 
   @Override

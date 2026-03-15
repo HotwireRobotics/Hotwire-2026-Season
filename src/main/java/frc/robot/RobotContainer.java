@@ -147,7 +147,11 @@ public class RobotContainer {
     shooter = new Shooter();
     hopper = new Hopper();
     lights = new LuminalArray();
-    vision = new LimelightArray(drive);
+    vision = new LimelightArray(
+      drive::getPose, 
+      drive::getGyroRotation, 
+      drive::addVisionMeasurement
+    );
 
     velocity =
         () -> {
@@ -371,7 +375,7 @@ public class RobotContainer {
                     () -> {
                       drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero));
                       for (String limelight : Constants.Limelight.localization) {
-                        LimelightHelpers.SetIMUMode(limelight, 1);
+                        LimelightHelpers.SetIMUMode(limelight, 0);
                         LimelightHelpers.SetRobotOrientation(limelight, 0, 0, 0, 0, 0, 0);
                         LimelightHelpers.SetIMUMode(limelight, 2);
                       }
