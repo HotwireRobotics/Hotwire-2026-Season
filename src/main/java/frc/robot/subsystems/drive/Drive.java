@@ -213,10 +213,6 @@ public class Drive extends SubsystemBase {
     return rawGyroRotation;
   }
 
-  public Rotation2d getGyroRotation() {
-    return rawGyroRotation;
-  }
-
   /**
    * Runs the drive at the desired velocity.
    *
