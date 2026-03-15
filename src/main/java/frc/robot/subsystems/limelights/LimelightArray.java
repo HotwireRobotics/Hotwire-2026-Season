@@ -108,9 +108,7 @@ public class LimelightArray extends SubsystemBase {
   public boolean isValidEstimate(PoseEstimate estimation) {
     if (estimation == null) return false;
     Pose2d pose = estimation.pose;
-    return (pose.getX() > 0.0 && pose.getX() < Field.length.in(Meters)) && 
-           (pose.getY() > 0.0 && pose.getY() < Field.width.in(Meters)) &&
-           (estimation.tagCount > 0) && 
+    return (estimation.tagCount > 0) && 
            (estimation.avgTagDist <= Constants.Limelight.maxDistance.in(Meters));
   }
 
