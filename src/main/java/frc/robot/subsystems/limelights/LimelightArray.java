@@ -56,7 +56,6 @@ public class LimelightArray extends SubsystemBase {
     this.supply = supplyMeasurement;
     // Initialize limelights
     for (String limelight : Constants.Limelight.localization) {
-      LimelightHelpers.SetIMUMode(limelight, 3);
       LimelightHelpers.setPipelineIndex(limelight, 0);
       LimelightHelpers.SetIMUAssistAlpha(limelight, 0.005);
     }
