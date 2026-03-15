@@ -30,6 +30,7 @@ public class LimelightArray extends SubsystemBase {
 
   private static class Configuration {
     public static final Distance maxDistance = Inches.of(100);
+    private static final Pipeline pipeline = Pipeline.MEGATAG2;
   }
 
   /**
@@ -58,7 +59,6 @@ public class LimelightArray extends SubsystemBase {
     MEGATAG2, MEGATAG1
   }
 
-  private Pipeline pipeline = Pipeline.MEGATAG2;
 
   private Pose2d lastPoseEstimate;
 
@@ -98,14 +98,6 @@ public class LimelightArray extends SubsystemBase {
    */
   public void setIMUMode(IMUMode mode) {
     this.mode = mode.mode;
-  }
-
-  /**
-   * Set the vision pipeline for all limelights.
-   * @param pipeline
-   */
-  public void setPipeline(Pipeline pipeline) {
-    this.pipeline = pipeline;
   }
 
   @Override
@@ -175,7 +167,7 @@ public class LimelightArray extends SubsystemBase {
    * @return
    */
   private PoseEstimate getEstimation(String limelight) {
-    return pipeline.equals(Pipeline.MEGATAG2) ?
+    return Configuration.pipeline.equals(Pipeline.MEGATAG2) ?
       LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight)
        :       LimelightHelpers.getBotPoseEstimate_wpiBlue(limelight);
   }
