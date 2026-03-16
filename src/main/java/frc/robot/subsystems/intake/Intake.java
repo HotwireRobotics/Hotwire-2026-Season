@@ -163,34 +163,4 @@ public class Intake extends ModularSubsystem implements Systerface {
           arm.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
         });
   }
-
-  /**
-   * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
-   *
-   * @param direction
-   * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
-   */
-  // public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineRight.quasistatic(direction);
-  // }
-
-  // public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineRight.dynamic(direction);
-  // }
-
-  // public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineLeft.quasistatic(direction);
-  // }
-
-  // public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineLeft.dynamic(direction);
-  // }
-
-  // public Command sysIdQuasistaticARM(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineARM.quasistatic(direction);
-  // }
-
-  // public Command sysIdDynamicARM(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineARM.dynamic(direction);
-  // }
 }
