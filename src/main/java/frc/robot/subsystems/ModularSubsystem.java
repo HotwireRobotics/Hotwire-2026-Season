@@ -1,8 +1,9 @@
-package frc.robot;
+package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +54,12 @@ public class ModularSubsystem extends SubsystemBase {
             specifyActiveDevice(device);
           }
         });
+  }
+
+  public Command runDevice(Object device, double speed, Subsystem subsystem) {
+    Command command = runDevice(device, speed);
+    command.addRequirements(subsystem);
+    return command;
   }
 
   public Command runDevice(Object device, Supplier<Double> speed) {

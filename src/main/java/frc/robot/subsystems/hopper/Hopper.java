@@ -1,27 +1,40 @@
 package frc.robot.subsystems.hopper;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
+import frc.robot.subsystems.ModularSubsystem;
+import frc.robot.subsystems.Motor;
+
+import static edu.wpi.first.units.Units.Amps;
+
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Hopper extends ModularSubsystem implements Systerface {
-  private final TalonFX hopper;
+  private final Motor hopper;
+  private final Supplier<Double> speed;
 
   public enum Device {
     HOPPER
   }
 
-  public Hopper() {
-    hopper = new TalonFX(Constants.MotorIDs.h_hopper);
+  public Hopper(Supplier<Double> speed) {
+    hopper = new Motor(this, Constants.MotorIDs.h_hopper, Amps.of(40));
     defineDevice(Device.HOPPER, hopper);
+    this.speed = speed;
+  }
+
+  public Hopper() {
+    this(() -> Constants.Hopper.kSpeed);
   }
 
   private enum State {
-    STOPPED
+    STOPPED,
+    FEEDING
   }
 
   State state = State.STOPPED;
@@ -32,28 +45,21 @@ public class Hopper extends ModularSubsystem implements Systerface {
 
   @Override
   public void periodic() {
-    Logger.recordOutput(
-        "Hopper/upperFeed/Position", hopper.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Velocity", hopper.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Voltage", hopper.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Current", hopper.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Temperature", hopper.getDeviceTemp().getValueAsDouble(), "°C");
+    hopper.log();
+
+    if (isActiveDevice(Device.HOPPER)) {
+      state = State.FEEDING;
+    } else {
+      state = State.STOPPED;
+    }
   }
 
   public Command runHopper() {
-    return runDevice(Device.HOPPER, Constants.Hopper.kSpeed);
-  }
-
-  public Command runHopper(Supplier<Boolean> inverse) {
-    return runDevice(Device.HOPPER, () -> (Constants.Hopper.kSpeed * (inverse.get() ? -1 : 1)));
+    return runDevice(Device.HOPPER, speed);
   }
 
   public Command stopHopper() {
-    Command command = runDevice(Device.HOPPER, 0);
+    Command command = runDevice(Device.HOPPER, 0, this);
     command.addRequirements(this);
     return command;
   }

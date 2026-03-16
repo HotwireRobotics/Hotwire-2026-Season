@@ -12,9 +12,10 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
+import frc.robot.subsystems.ModularSubsystem;
+
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -265,6 +266,7 @@ public class Shooter extends ModularSubsystem implements Systerface {
     m_rightShooter.getConfigurator().apply(rightRPSControl);
     m_feeder.getConfigurator().apply(leftRPSControl);
   }
+
   // Mechanism commands
   public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
     return m_sysIdRoutineRight.quasistatic(direction);

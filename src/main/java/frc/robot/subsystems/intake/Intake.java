@@ -1,8 +1,6 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Hertz;
-import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -14,9 +12,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
+import frc.robot.subsystems.ModularSubsystem;
+import frc.robot.subsystems.Motor;
+
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 

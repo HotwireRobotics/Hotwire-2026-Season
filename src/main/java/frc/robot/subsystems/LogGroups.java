@@ -11,6 +11,10 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 public class LogGroups {
+    /**
+     * Log TalonFX data to the Logger. This should be called periodically in the subsystem's periodic method.
+     * @param motor
+     */
     public static void log(TalonFX motor) {
         Logger.recordOutput("Motors/" + motor.getDeviceID() + "/Position", motor.getPosition().getValue().in(Rotations), "rotations");
         Logger.recordOutput("Motors/" + motor.getDeviceID() + "/Velocity", motor.getVelocity().getValue().in(RotationsPerSecond), "RPS");
