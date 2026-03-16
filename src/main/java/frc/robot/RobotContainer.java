@@ -177,11 +177,6 @@ public class RobotContainer {
     final Command startHopper = hopper.runHopper(isInverse);
     final Command startShooter = conditionalShooting();
     final Command startIntake = intake.runIntake(isInverse);
-    final Command dropArm =
-        intake
-            .controlArm(ArmState.BACKWARD)
-            .andThen(Commands.waitSeconds(0.5))
-            .andThen(intake.controlArm(ArmState.ZERO));
     //// NamedCommands.registerCommand("StartShooter", regressionShooting().repeatedly());
     final Command killHopper = hopper.stopHopper();
     final Command killShooter = shooter.runMechanism(0, 0);

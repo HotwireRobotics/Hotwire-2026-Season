@@ -23,13 +23,13 @@ import org.littletonrobotics.junction.Logger;
 public class Intake extends ModularSubsystem implements Systerface {
 
   public final TalonFX rollers;
-  public final TalonFX arm;
+  public final TalonFX wrist;
   private final PositionVoltage m_PositionVoltage;
   private final Slot0Configs slot;
 
   public enum Device {
     ROLLERS,
-    ARM
+    WRIST
   }
 
   public enum ArmState {
@@ -42,8 +42,8 @@ public class Intake extends ModularSubsystem implements Systerface {
 
   public Intake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    arm = new TalonFX(Constants.MotorIDs.i_arm);
-    defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
+    wrist = new TalonFX(Constants.MotorIDs.i_arm);
+    defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.WRIST, wrist));
 
     m_PositionVoltage = new PositionVoltage(Degrees.of(0));
 
@@ -51,8 +51,8 @@ public class Intake extends ModularSubsystem implements Systerface {
     configureProportional(18.0);
 
     // Configuration
-    arm.setControl(m_PositionVoltage);
-    arm.getConfigurator().apply(slot);
+    wrist.setControl(m_PositionVoltage);
+    wrist.getConfigurator().apply(slot);
   }
 
   public void configureProportional(double kP) {
@@ -144,7 +144,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           configureProportional(18.0);
-          arm.setControl(m_PositionVoltage.withPosition(angle));
+          wrist.setControl(m_PositionVoltage.withPosition(angle));
         });
   }
 
@@ -152,7 +152,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           configureProportional(18.0);
-          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
+          wrist.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
         });
   }
 
@@ -160,7 +160,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           configureProportional(28.0);
-          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
+          wrist.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
         });
   }
 }
