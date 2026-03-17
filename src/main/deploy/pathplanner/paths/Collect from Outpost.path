@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.583,
-        "y": 2.008
+        "x": 3.5195833333333333,
+        "y": 4.015767543859649
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.630532610585817,
-        "y": 1.6164127453863901
+        "x": 3.35765592048423,
+        "y": 3.824812310968572
       },
       "isLocked": false,
-      "linkedName": "Lower Start"
+      "linkedName": "Hub Start"
     },
     {
       "anchor": {
@@ -20,8 +20,8 @@
         "y": 0.7938659058487882
       },
       "prevControl": {
-        "x": 1.1806977203580127,
-        "y": 0.9404161853240326
+        "x": 1.0560932278042388,
+        "y": 1.1516524471027534
       },
       "nextControl": null,
       "isLocked": false,

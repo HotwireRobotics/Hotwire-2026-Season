@@ -2,24 +2,30 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Hertz;
+import static edu.wpi.first.units.Units.Seconds;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import frc.robot.constants.Constants;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
-public class ProtoIntake extends ModularSubsystem implements Systerface {
+public class Intake extends ModularSubsystem implements Systerface {
 
   public final TalonFX rollers;
   public final TalonFX arm;
+  private final PositionVoltage m_PositionVoltage;
+  private final Slot0Configs slot;
 
   public enum Device {
     ROLLERS,
@@ -34,12 +40,9 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
 
   private ArmState armState = ArmState.ZERO;
 
-  public ProtoIntake() {
+  public Intake() {
     rollers = new TalonFX(Constants.MotorIDs.i_rollers);
     arm = new TalonFX(Constants.MotorIDs.i_arm);
-    // CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
-    // currentLimits.withSupplyCurrentLimit(40);
-    // arm.getConfigurator().apply(currentLimits);
     defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
 
     m_PositionVoltage = new PositionVoltage(Degrees.of(0));
@@ -86,29 +89,9 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     } else {
       state = State.STOPPED;
     }
-
-    arm.setControl(
-        new VoltageOut(
-            armState.equals(ArmState.FORWARD)
-                ? Constants.Intake.kArmVolts
-                : (armState.equals(ArmState.BACKWARD)
-                    ? Constants.Intake.kArmVolts.times(-1)
-                    : Volts.of(0))));
   }
 
   // Device control methods
-
-  public void runDevice(Device device, double speed) {
-    for (TalonFX d : getDevices(device)) {
-      d.set(speed);
-    }
-
-    if (speed == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
-    }
-  }
   /**
    * Allows you to limit the voltage of the intake rollers
    *
@@ -127,17 +110,16 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
     }
   }
 
-  /**
-   * Allows you to limit the speed of the intake rollers
-   *
-   * @param speed
-   * @return
-   */
-  public Command runIntake(double speed) {
-    return Commands.runOnce(
-        () -> {
-          runDevice(Device.ROLLERS, speed);
-        });
+  public Command runIntake() {
+    return runDevice(Device.ROLLERS, Constants.Intake.kSpeed);
+  }
+
+  public Command runIntake(Supplier<Boolean> inverse) {
+    return runDevice(Device.ROLLERS, () -> (Constants.Hopper.kSpeed * (inverse.get() ? -1 : 1)));
+  }
+
+  public Command stopIntake() {
+    return runDevice(Device.ROLLERS, 0);
   }
 
   public Command controlArm(ArmState state) {
@@ -147,31 +129,39 @@ public class ProtoIntake extends ModularSubsystem implements Systerface {
         });
   }
 
-  public Command occilateArm(Frequency frequency) {
-    return new SequentialCommandGroup(
-        lowerArm(), Commands.waitSeconds(1 / frequency.in(Hertz)), raiseArm())
-        .repeatedly();
+  public Command oscillateArm(Angle angle, Frequency frequency) {
+    Time period = Seconds.of(1 / (2 * frequency.in(Hertz)));
+    RepeatCommand group =
+        new SequentialCommandGroup(
+                lowerArm(), Commands.waitTime(period),
+                raiseArm(angle), Commands.waitTime(period))
+            .repeatedly();
+    group.addRequirements(this);
+    return group;
   }
 
-  public Command raiseArm() {
-    return Commands.runOnce(() -> {
-      configureProportional(18.0);
-      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(60)));
-    });
+  public Command raiseArm(Angle angle) {
+    return Commands.runOnce(
+        () -> {
+          configureProportional(18.0);
+          arm.setControl(m_PositionVoltage.withPosition(angle));
+        });
   }
 
   public Command lowerArm() {
-    return Commands.runOnce(() -> {
-      configureProportional(18.0);
-      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
-    });
+    return Commands.runOnce(
+        () -> {
+          configureProportional(18.0);
+          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
+        });
   }
 
   public Command emergency() {
-    return Commands.runOnce(() -> {
-      configureProportional(28.0);
-      arm.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
-    });
+    return Commands.runOnce(
+        () -> {
+          configureProportional(28.0);
+          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
+        });
   }
 
   /**

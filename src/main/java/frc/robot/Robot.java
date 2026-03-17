@@ -1,25 +1,16 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Seconds;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.LimelightHelpers.PoseEstimate;
-import java.util.ArrayList;
-import java.util.List;
+import frc.robot.constants.Constants;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -32,8 +23,7 @@ public class Robot extends LoggedRobot {
   private final RobotContainer robotContainer;
   public Pose2d poseEstimate = new Pose2d();
 
-  private final Timer bitimer = new Timer();
-  private final Timer unitimer = new Timer();
+  private Time time = Seconds.of(0);
 
   private final Field2d field = new Field2d();
 
@@ -78,11 +68,10 @@ public class Robot extends LoggedRobot {
 
     robotContainer = new RobotContainer();
 
+    SmartDashboard.putNumber("Oscillate", Constants.Intake.kOscillationFrequency.in(Hertz));
     SmartDashboard.putNumber("Test Shooter RPM", robotContainer.testVelocity);
     SmartDashboard.setPersistent("Test Shooter RPM");
     SmartDashboard.putData("Robot Pose (Field)", field);
-
-    unitimer.start();
 
     // music = new Orchestra();
     // music.addInstrument(robotContainer.intake.rollers);
@@ -102,7 +91,7 @@ public class Robot extends LoggedRobot {
   }
 
   public void indicateLimelight(Indicate mode) {
-    Boolean b = (Math.floor(unitimer.get() * 10) % 2) == 1;
+    Boolean b = (Math.floor(time.in(Seconds) * 10) % 2) == 1;
     switch (mode) {
       case DISABLED:
         for (String limelight : Constants.Limelight.limelights) {
@@ -124,27 +113,16 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
+    time = Constants.Tempo.tick();
+    robotContainer.mHertzOscillate = Hertz.of(SmartDashboard.getNumber("Oscillate", 0));
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
     CommandScheduler.getInstance().run();
 
-    // Localization and orienttion feeding
-    processLimelightMeasurements();
-
-    // Tracking
-    Time time = Seconds.of(DriverStation.getMatchTime());
-    Boolean isAutonomous = DriverStation.isAutonomous();
-    Time length = (isAutonomous) ? Constants.autoLength : Constants.teleopLength;
-    time = (time.isEquivalent(Seconds.of(-1))) ? Seconds.of(bitimer.get()) : length.minus(time);
-
     // Controller haptic indicators
-    Logger.recordOutput("Time", time.in(Seconds));
     Boolean rumble = false;
 
-    for (Time target :
-        ((isAutonomous)
-            ? Constants.Indication.Autonomous.haptic
-            : Constants.Indication.Teloperated.haptic)) {
+    for (Time target : Constants.Indication.transitions) {
       double difference = target.minus(time).in(Seconds);
       if ((Math.abs(difference) < 1) && (difference < 0)) {
         rumble = true;
@@ -166,72 +144,60 @@ public class Robot extends LoggedRobot {
     field.setRobotPose(robotContainer.drive.getPose());
   }
 
-  public boolean autonomousVictory() {
-    String gameData = DriverStation.getGameSpecificMessage();
-    Boolean allianceIsRed = DriverStation.getAlliance().get().equals(Alliance.Red);
-    switch (gameData.charAt(0)) {
-      case 'R':
-        return (allianceIsRed);
-      case 'B':
-        return (!allianceIsRed);
-      default:
-        return true;
-    }
-  }
+  // private void processLimelightMeasurements() {
+  //   List<PoseEstimate> measurements = new ArrayList<>();
 
-  private void processLimelightMeasurements() {
-    List<PoseEstimate> measurements = new ArrayList<>();
+  //   for (String limelight : Constants.Limelight.localization) {
+  //     LimelightHelpers.SetIMUMode(limelight, 3);
+  //     LimelightHelpers.setPipelineIndex(limelight, 0);
+  //     Pose2d robotPose = robotContainer.drive.getPose();
+  //     double headingDeg = robotPose.getRotation().getDegrees();
 
-    for (String limelight : Constants.Limelight.localization) {
-      LimelightHelpers.SetIMUMode(limelight, 3);
-      LimelightHelpers.setPipelineIndex(limelight, 0);
-      Pose2d robotPose = robotContainer.drive.getPose();
-      double headingDeg = robotPose.getRotation().getDegrees();
+  //     LimelightHelpers.SetIMUAssistAlpha(limelight, 0.003);
 
-      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.005);
+  //     // Get pose estimate from limelight
+  //     PoseEstimate MG2measurement =
+  // LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
 
-      // Get pose estimate from limelight
-      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+  //     if ((MG2measurement != null)
+  //         && (MG2measurement.tagCount > 0)
+  //         && (MG2measurement.avgTagDist <= Constants.Limelight.maxDistance.in(Meters))) {
+  //       // measurement = MG1measurement.
+  //       measurements.add(MG2measurement);
+  //       // Log pose estimate and limelight status
+  //       Logger.recordOutput(limelight + " Detecting", true);
+  //       poseEstimate = MG2measurement.pose;
+  //       Logger.recordOutput("Pose Estimate", poseEstimate);
 
-      if ((measurement != null)
-          && (measurement.tagCount > 0)
-          && (measurement.avgTagDist <= Constants.Limelight.maxDistance.in(Meters))) {
-        measurements.add(measurement);
-        // Log pose estimate and limelight status
-        Logger.recordOutput(limelight + " detecting", true);
-        poseEstimate = measurement.pose;
-        Logger.recordOutput("Pose Estimate", poseEstimate);
+  //       // Define standard deviation
+  //       Matrix<N3, N1> stdDevs = VecBuilder.fill(0.3, 0.3, Math.toRadians(20));
 
-        // Define standard deviation
-        Matrix<N3, N1> stdDevs = VecBuilder.fill(0.001, 0.001, Math.toRadians(0.01));
-        Logger.recordOutput("limelight estimated pose", measurement.pose);
-        robotContainer.drive.addVisionMeasurement(
-            measurement.pose, measurement.timestampSeconds, stdDevs);
-      } else {
-        Logger.recordOutput(limelight + " detecting", false);
-      }
-      LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
-    }
-  }
+  //       Logger.recordOutput("limelight Estimate", MG2measurement.pose);
+  //       robotContainer.drive.addVisionMeasurement(
+  //           MG2measurement.pose, MG2measurement.timestampSeconds, stdDevs);
+  //     } else {
+  //       Logger.recordOutput(limelight + " Detecting", false);
+  //     }
+  //     LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
+  //   }
+  // }
 
   @Override
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
-
-    bitimer.restart();
-    bitimer.stop();
   }
 
   @Override
   public void disabledPeriodic() {
-    processLimelightMeasurements();
     indicateLimelight(Indicate.DISABLED);
   }
 
   @Override
   public void autonomousInit() {
+    robotContainer.vision.enableLocalization();
     Logger.recordOutput("Robot/Mode", "Autonomous");
     autonomousCommand = robotContainer.getAutonomousCommand();
+    robotContainer.seedAutonomousPose(autonomousCommand);
 
     if (autonomousCommand != null) {
       Logger.recordOutput("Robot/AutonomousCommand", autonomousCommand.getName());
@@ -239,22 +205,25 @@ public class Robot extends LoggedRobot {
     } else {
       Logger.recordOutput("Robot/AutonomousCommand", "None");
     }
-
-    bitimer.start();
+    Constants.Tempo.startTime();
   }
+
+  // "uwu" -brylee
 
   @Override
   public void autonomousPeriodic() {
-    processLimelightMeasurements();
     indicateLimelight(Indicate.AUTO);
   }
 
   @Override
   public void teleopInit() {
+    robotContainer.vision.disableLocalization();
     Logger.recordOutput("Robot/Mode", "Teleop");
+    robotContainer.inverse = false;
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
+    Constants.Tempo.startTime(Seconds.of(20));
   }
 
   @Override
@@ -271,8 +240,6 @@ public class Robot extends LoggedRobot {
     CommandScheduler.getInstance().cancelAll();
 
     teleopInit();
-
-    bitimer.start();
   }
 
   @Override

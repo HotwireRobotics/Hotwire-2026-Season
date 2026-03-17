@@ -1,8 +1,10 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -12,9 +14,9 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants;
 import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
+import frc.robot.constants.Constants;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -23,7 +25,7 @@ import org.littletonrobotics.junction.Logger;
  * (RPS), and voltage control. runShooter runs both wheels; runLeftShooter/runRightShooter run one
  * side for tuning or backup.
  */
-public class ProtoShooter extends ModularSubsystem implements Systerface {
+public class Shooter extends ModularSubsystem implements Systerface {
   private final SysIdRoutine m_sysIdRoutineRight;
   private final SysIdRoutine m_sysIdRoutineLeft;
   private final VoltageOut m_voltReq;
@@ -42,7 +44,7 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     FEEDER
   }
 
-  public ProtoShooter() {
+  public Shooter() {
     m_feeder = new TalonFX(Constants.MotorIDs.s_feeder);
     m_leftShooter = new TalonFX(Constants.MotorIDs.s_shooterL);
     m_rightShooter = new TalonFX(Constants.MotorIDs.s_shooterR);
@@ -58,6 +60,14 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
     leftRPSControl.withKP(0.8);
 
     final TalonFX[] bothShooters = {m_leftShooter, m_rightShooter};
+
+    // Configure current limits
+    CurrentLimitsConfigs limitConfig = new CurrentLimitsConfigs();
+    limitConfig.withSupplyCurrentLimit(Constants.Shooter.kCurrentLimit);
+
+    m_feeder.getConfigurator().apply(limitConfig);
+    m_rightShooter.getConfigurator().apply(limitConfig);
+    m_leftShooter.getConfigurator().apply(limitConfig);
 
     defineDevice(
         new DevicePointer(Device.RIGHT_SHOOTER, m_rightShooter),
@@ -249,6 +259,8 @@ public class ProtoShooter extends ModularSubsystem implements Systerface {
       Supplier<AngularVelocity> feederVel, Supplier<AngularVelocity> shooterVel) {
     return Commands.runOnce(
         () -> {
+          Logger.recordOutput("Shooter/Scontrol", shooterVel.get().in(RPM), "rpm");
+          Logger.recordOutput("Shooter/Fcontrol", feederVel.get().in(RPM), "rpm");
           runDeviceVelocity(Device.BOTH_SHOOTER, shooterVel.get());
           runDeviceVelocity(Device.FEEDER, feederVel.get());
         });

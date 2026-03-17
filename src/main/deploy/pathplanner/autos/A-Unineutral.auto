@@ -19,13 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Lower Exolateral"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Bineutral Lower Endolateral"
+            "pathName": "Unineutral Lower Exolateral"
           }
         },
         {
@@ -35,33 +29,9 @@
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "Firing Sequence"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Start Intaking"
-          }
-        },
-        {
           "type": "path",
           "data": {
-            "pathName": "Bineutral Lower Exolateral"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Bineutral Lower Second Endolateral"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Stop Intaking"
+            "pathName": "Unineutral Lower Endolateral"
           }
         },
         {
