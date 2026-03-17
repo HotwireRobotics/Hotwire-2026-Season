@@ -52,6 +52,8 @@ public class RobotContainer {
 
   // Alignment supplier.
   public final BooleanSupplier aligned;
+  // Velocity supplier.
+  public final Supplier<AngularVelocity> velocity;
 
   // Velocity control states.
   public enum VelocityType {
@@ -66,6 +68,7 @@ public class RobotContainer {
   public final Supplier<Integer> kInverse = () -> (inverse ? -1 : 1);
   public VelocityType velocityType = VelocityType.REGRESSION;
 
+  // Methodic toggles.
   private final Command velocity(VelocityType type) {
     return Commands.runOnce(() -> velocityType = type);
   }
@@ -73,72 +76,45 @@ public class RobotContainer {
     return Commands.runOnce(() -> inverse = value);
   }
 
-  private void testVelocity() {
-    velocityType = VelocityType.TESTING;
-  }
-
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
-  Orchestra music = new Orchestra(Filesystem.getDeployDirectory() + "/orchestra/output.chirp");
-
   public RobotContainer() {
-    switch (Constants.currentMode) {
-      case REAL:
-        drive =
-            new Drive(
-                new GyroIOPigeon2(),
-                new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                new ModuleIOTalonFX(TunerConstants.FrontRight),
-                new ModuleIOTalonFX(TunerConstants.BackLeft),
-                new ModuleIOTalonFX(TunerConstants.BackRight));
-        break;
+    // Initialize drive subsystem.
+    drive = new Drive(Constants.currentMode);
 
-      case SIM:
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIOSim(TunerConstants.FrontLeft),
-                new ModuleIOSim(TunerConstants.FrontRight),
-                new ModuleIOSim(TunerConstants.BackLeft),
-                new ModuleIOSim(TunerConstants.BackRight));
-        break;
-
-      default:
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {});
-        break;
-    }
-
+    // Alignment supplier.
     aligned =
         () -> {
           return drive.getRotation().getMeasure()
               .isNear(drive.getRotationTarget().getMeasure(), Constants.Shooter.kAlignmentError);
         };
 
-    // Initialize shooter subsystem.
-    shooter = new Shooter(
-      () -> {
-        switch (velocityType) {
-          case STATIC:
-            return Constants.Shooter.kSpeed;
-          case REGRESSION:
-            if (aligned.getAsBoolean()) {
-              return Constants.regress(
-                  Meters.of(drive.getPose().minus(Constants.Poses.hub.get()).getTranslation().getNorm()));
-            } else {
+    // Velocity supplier.
+    velocity =
+        () -> {
+          switch (velocityType) {
+            case STATIC:
+              // Ferrying static velocity.
               return Constants.Shooter.kSpeed;
-            }
-          case TESTING:
-            return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
-          default:
-            return Constants.Shooter.kSpeed;
-    }});
+            case REGRESSION:
+              // Conditional shooting.
+              if (aligned.getAsBoolean()) {
+                return Constants.regress(
+                    Meters.of(drive.getPose().minus(Constants.Poses.hub.get()).getTranslation().getNorm()));
+              } else {
+                return Constants.Shooter.kSpeed;
+              }
+            case TESTING:
+              // Allow testing of shooter velocity via dashboard input, for characterization purposes.
+              return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
+            default:
+              // Fallback velocity.
+              return Constants.Shooter.kSpeed;
+    }};
+
+    // Initialize shooter subsystem.
+    shooter = new Shooter(velocity);
 
     // Initialize fuel intake and storage subsystems.
     intake = new Intake(
@@ -157,37 +133,33 @@ public class RobotContainer {
     // Configure button bindings.
     configureButtonBindings();
 
-    // Register commands.
-    final Command startHopper = hopper.run();
-    final Command startShooter = shooter.run();
-    final Command startIntake = intake.run();
-    final Command killHopper = hopper.halt();
-    final Command killShooter = shooter.halt();
-    final Command killIntake = intake.halt();
-    final Command periodIntake =
-        intake.run().repeatedly().finallyDo(() -> intake.halt());
+    // Wrist commands.
     final Command raiseWrist = intake.raiseWrist(Degrees.of(60));
-    final Command lowerWrist = intake.lowerWrist().andThen(Commands.waitTime(Seconds.of(0.5)));
+    final Command lowerWrist = intake.lowerWrist()
+        .andThen(Commands.waitTime(Seconds.of(0.5)));
     final Command oscillateIntakek35 =
         intake.oscillateArm(Degrees.of(35), Constants.Intake.kOscillationFrequency);
     final Command oscillateIntakek60 =
         intake.oscillateArm(Degrees.of(60), Constants.Intake.kOscillationFrequency);
     final Command oscillateIntakek20 =
         intake.oscillateArm(Degrees.of(20), Constants.Intake.kOscillationFrequency);
+
+    // Drivetrain commands.
     final Command stopDrive = Commands.runOnce(() -> drive.stop());
     final Command lockDrive = Commands.runOnce(() -> drive.stopWithX());
     
+    // Shooter commands.
     final Command initializeFiring = 
         Commands.sequence(
           lockDrive,
           velocity(VelocityType.REGRESSION),
-          startShooter
+          shooter.run()
         );
 
     final Command initializeFeeding = 
         Commands.sequence(
           Commands.waitTime(Constants.Shooter.kChargeUpTime),
-          startHopper
+          hopper.run()
         );
 
     final Command oscillateIntakeSequence = 
@@ -197,8 +169,8 @@ public class RobotContainer {
 
     final Command terminateFiring =
         Commands.parallel(
-            killShooter,
-            killHopper,
+            shooter.halt(),
+            hopper.halt(),
             lowerWrist,
             velocity(VelocityType.STATIC));
 
@@ -212,9 +184,10 @@ public class RobotContainer {
 
     // Register commands for pathplanner.
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
-    NamedCommands.registerCommand("Start Intaking", startIntake);
-    NamedCommands.registerCommand("Stop Intaking", killIntake);
-    NamedCommands.registerCommand("Intake Period", periodIntake);
+    NamedCommands.registerCommand("Start Intaking", intake.run());
+    NamedCommands.registerCommand("Stop Intaking", intake.halt());
+    NamedCommands.registerCommand("Intake Period", 
+        intake.run().repeatedly().finallyDo(() -> intake.halt()));
     NamedCommands.registerCommand("Raise Intake", raiseWrist);
     NamedCommands.registerCommand("Lower Intake", lowerWrist);
     NamedCommands.registerCommand("Stop", stopDrive);
@@ -295,6 +268,10 @@ public class RobotContainer {
     return pointToAngle(this::calculateHubRotation);
   }
 
+  /**
+   * Orient the robot to face a supplied angle.
+   * @param rotation
+   */
   private Command pointToAngle(Supplier<Rotation2d> rotation) {
     return DriveCommands.joystickDriveAtAngle(
         drive,
