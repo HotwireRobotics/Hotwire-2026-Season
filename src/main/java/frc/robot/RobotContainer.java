@@ -9,15 +9,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -27,24 +24,11 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.gamepieces.GamePieceSim;
-import frc.robot.subsystems.hopper.HopperIO;
-import frc.robot.subsystems.hopper.HopperIOSim;
-import frc.robot.subsystems.hopper.HopperIOTalonFX;
 import frc.robot.subsystems.hopper.HopperSubsystem;
-import frc.robot.subsystems.indication.IndicatorsIO;
-import frc.robot.subsystems.indication.IndicatorsIOCANdle;
-import frc.robot.subsystems.indication.IndicatorsIOSim;
 import frc.robot.subsystems.indication.LuminalIndicators;
 import frc.robot.subsystems.intake.ProtoIntake;
 import frc.robot.subsystems.intake.ProtoIntake.ArmState;
-import frc.robot.subsystems.intake.IntakeIO;
-import frc.robot.subsystems.intake.IntakeIOSim;
-import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.shooter.ProtoShooter;
-import frc.robot.subsystems.shooter.ShooterIO;
-import frc.robot.subsystems.shooter.ShooterIOSim;
-import frc.robot.subsystems.shooter.ShooterIOTalonFX;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -57,7 +41,6 @@ public class RobotContainer {
   public final ProtoShooter shooter;
   public final HopperSubsystem hopper;
   public final LuminalIndicators lights;
-  public final GamePieceSim gamePieceSim;
   public double testVelocity = 0;
   private final Supplier<AngularVelocity> velocity; // deployprogramStartfrcJavaroborio
   public final BooleanSupplier aligned;
@@ -86,50 +69,12 @@ public class RobotContainer {
     velocityType = VelocityType.TESTING;
   }
 
-  /** Only read driver stick when connected to avoid repeated "joystick not available" warnings. */
-  private boolean driverConnected() {
-    return DriverStation.isJoystickConnected(0);
-  }
-
-  private boolean operatorConnected() {
-    return DriverStation.isJoystickConnected(1);
-  }
-
-  private double driverLeftY() {
-    return driverConnected() ? -Constants.Joysticks.driver.getLeftY() : 0.0;
-  }
-
-  private double driverLeftX() {
-    return driverConnected() ? -Constants.Joysticks.driver.getLeftX() : 0.0;
-  }
-
-  private double driverRightX() {
-    return driverConnected() ? -Constants.Joysticks.driver.getRightX() : 0.0;
-  }
-
-  private double operatorLeftY() {
-    return operatorConnected() ? -Constants.Joysticks.operator.getLeftY() : 0.0;
-  }
-
-  private double operatorLeftX() {
-    return operatorConnected() ? -Constants.Joysticks.operator.getLeftX() : 0.0;
-  }
-
-  private double operatorRightX() {
-    return operatorConnected() ? -Constants.Joysticks.operator.getRightX() : 0.0;
-  }
-
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
   Orchestra music = new Orchestra(Filesystem.getDeployDirectory() + "/orchestra/output.chirp");
 
   public RobotContainer() {
-    final IntakeIO intakeIO;
-    final ShooterIO shooterIO;
-    final HopperIO hopperIO;
-    final IndicatorsIO indicatorsIO;
-
     switch (Constants.currentMode) {
       case REAL:
         drive =
@@ -139,10 +84,6 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.FrontRight),
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
-        intakeIO = new IntakeIOTalonFX();
-        shooterIO = new ShooterIOTalonFX();
-        hopperIO = new HopperIOTalonFX();
-        indicatorsIO = new IndicatorsIOCANdle();
         break;
 
       case SIM:
@@ -153,10 +94,6 @@ public class RobotContainer {
                 new ModuleIOSim(TunerConstants.FrontRight),
                 new ModuleIOSim(TunerConstants.BackLeft),
                 new ModuleIOSim(TunerConstants.BackRight));
-        intakeIO = new IntakeIOSim();
-        shooterIO = new ShooterIOSim();
-        hopperIO = new HopperIOSim();
-        indicatorsIO = new IndicatorsIOSim();
         break;
 
       default:
@@ -167,31 +104,20 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
-        intakeIO = new IntakeIO() {};
-        shooterIO = new ShooterIO() {};
-        hopperIO = new HopperIO() {};
-        indicatorsIO = new IndicatorsIO() {};
         break;
     }
 
     aligned =
-        () -> {
-          Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
-          return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
-              .lt(Constants.Shooter.kAlignmentError);
-        };
+      () -> {
+        Rotation2d difference = drive.getRotation().minus(drive.getRotationTarget());
+        return Degrees.of(Math.abs(difference.getMeasure().in(Degrees)))
+            .lt(Constants.Shooter.kAlignmentError);
+      };
 
-    intake = new ProtoIntake(intakeIO);
-    shooter = new ProtoShooter(shooterIO);
-    hopper = new HopperSubsystem(hopperIO);
-    lights = new LuminalIndicators(indicatorsIO);
-    gamePieceSim =
-        new GamePieceSim(
-            drive::getPose,
-            drive::setPose,
-            () -> String.valueOf(intake.getState()).equals("INTAKING"),
-            () -> String.valueOf(shooter.getState()).equals("FIRING"),
-            () -> Constants.currentMode == Constants.Mode.SIM);
+    intake = new ProtoIntake();
+    shooter = new ProtoShooter();
+    hopper = new HopperSubsystem();
+    lights = new LuminalIndicators();
 
     velocity =
         () -> {
@@ -237,8 +163,7 @@ public class RobotContainer {
             startHopper,
             Commands.waitTime(Constants.Shooter.kFiringTime)
                 .raceWith(
-                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime)
-                        .andThen(occilateIntake)),
+                    Commands.waitTime(Constants.Shooter.kUntilAggitateTime).andThen(occilateIntake)),
             killShooter,
             killHopper,
             lowerIntake,
@@ -249,10 +174,9 @@ public class RobotContainer {
     NamedCommands.registerCommand("Intake Period", periodIntake);
     NamedCommands.registerCommand("Raise Intake", raiseIntake);
     NamedCommands.registerCommand("Lower Intake", lowerIntake);
-    NamedCommands.registerCommand("Drop Arm", dropArm);
     NamedCommands.registerCommand("Stop", stopDrive);
 
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices", buildAutoChooserSafe());
+    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
     autoChooser.addOption(
         "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
@@ -315,8 +239,8 @@ public class RobotContainer {
   private Command pointToHub() {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        this::driverLeftY,
-        this::driverLeftX,
+        () -> -Constants.Joysticks.driver.getLeftY(),
+        () -> -Constants.Joysticks.driver.getLeftX(),
         () -> {
           Pose2d robotPose = drive.getPose();
           Pose2d hubPose = Constants.Poses.hub;
@@ -339,8 +263,8 @@ public class RobotContainer {
   private Command pointToAngle(Supplier<Angle> angle) {
     return DriveCommands.joystickDriveAtAngle(
         drive,
-        this::driverLeftY,
-        this::driverLeftX,
+        () -> -Constants.Joysticks.driver.getLeftY(),
+        () -> -Constants.Joysticks.driver.getLeftX(),
         () -> {
           return new Rotation2d(angle.get());
         });
@@ -359,23 +283,34 @@ public class RobotContainer {
     if (firstPerson) {
       drive.setDefaultCommand(
           DriveCommands.firstPersonDrive(
-              drive, () -> operatorLeftY(), () -> operatorLeftX(), () -> operatorRightX()));
+              drive,
+              () -> -Constants.Joysticks.operator.getLeftY(),
+              () -> -Constants.Joysticks.operator.getLeftX(),
+              () -> -Constants.Joysticks.operator.getRightX()));
     } else {
       drive.setDefaultCommand(
           DriveCommands.joystickDrive(
-              drive, () -> driverLeftY(), () -> driverLeftX(), () -> driverRightX()));
+              drive,
+              () -> -Constants.Joysticks.driver.getLeftY(),
+              () -> -Constants.Joysticks.driver.getLeftX(),
+              () -> -Constants.Joysticks.driver.getRightX()));
     }
 
-    // Lock to 0° when down POV button is held; only poll when driver stick connected
-    new Trigger(() -> driverConnected() && Constants.Joysticks.driver.povDown().getAsBoolean())
+    // Lock to 0° when down POV button is helds
+    Constants.Joysticks.driver
+        .povDown()
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
-                drive, () -> driverLeftY(), () -> driverLeftX(), () -> Rotation2d.kZero));
+                drive,
+                () -> Constants.Joysticks.driver.getLeftY(),
+                () -> Constants.Joysticks.driver.getLeftX(),
+                () -> Rotation2d.kZero));
 
     // Hold wheel position.
     // Constants.Joysticks.driver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    new Trigger(() -> driverConnected() && Constants.Joysticks.driver.a().getAsBoolean())
+    Constants.Joysticks.driver
+        .a()
         .onTrue(
             Commands.runOnce(
                     () -> {
@@ -389,17 +324,18 @@ public class RobotContainer {
                     drive)
                 .ignoringDisable(true));
 
-    new Trigger(() -> operatorConnected() && Constants.Joysticks.operator.povUp().getAsBoolean())
+    Constants.Joysticks.operator
+        .povUp()
         .onFalse(intake.lowerArm().alongWith(intake.runIntake(0.0)))
         .onTrue(intake.raiseArm().alongWith(intake.runIntake(Constants.Intake.kSpeed)));
 
-    new Trigger(
-            () -> operatorConnected() && Constants.Joysticks.operator.leftTrigger().getAsBoolean())
+    Constants.Joysticks.operator
+        .leftTrigger()
         .onFalse(intake.runIntake(0.0))
         .onTrue(intake.runIntake(Constants.Intake.kSpeed));
 
-    new Trigger(
-            () -> operatorConnected() && Constants.Joysticks.operator.rightTrigger().getAsBoolean())
+    Constants.Joysticks.operator
+        .rightTrigger()
         .onFalse(shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)))
         .onTrue(
             new ConditionalCommand(
@@ -407,28 +343,15 @@ public class RobotContainer {
                 shooter.runMechanism(0, 0).alongWith(hopper.runHopper(0)),
                 aligned));
 
-    new Trigger(() -> operatorConnected() && Constants.Joysticks.operator.povRight().getAsBoolean())
+    Constants.Joysticks.operator
+        .povRight()
         .onFalse(intake.lowerArm())
         .onTrue(intake.emergency());
 
-    new Trigger(() -> operatorConnected() && Constants.Joysticks.operator.x().getAsBoolean())
+    Constants.Joysticks.operator
+        .x()
         .whileTrue(Commands.run(() -> regressVelocity()).alongWith(pointToHub()))
         .whileFalse(Commands.run(() -> staticVelocity()));
-  }
-
-  /**
-   * Builds PathPlanner auto chooser; on failure (e.g. bad path causing Rotation2d error), returns
-   * an empty chooser so robot startup still completes.
-   */
-  private static SendableChooser<Command> buildAutoChooserSafe() {
-    try {
-      return AutoBuilder.buildAutoChooser();
-    } catch (Exception e) {
-      DriverStation.reportError("Auto chooser failed: " + e.getMessage(), e.getStackTrace());
-      SendableChooser<Command> empty = new SendableChooser<>();
-      empty.setDefaultOption("None", Commands.none());
-      return empty;
-    }
   }
 
   public Command getAutonomousCommand() {

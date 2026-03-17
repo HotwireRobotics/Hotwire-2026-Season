@@ -17,10 +17,9 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.vision.VisionIO;
-import frc.robot.subsystems.vision.VisionIOInputsAutoLogged;
-import frc.robot.subsystems.vision.VisionIOLimelight;
-import frc.robot.subsystems.vision.VisionIOSim;
+import frc.robot.LimelightHelpers.PoseEstimate;
+import java.util.ArrayList;
+import java.util.List;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -31,9 +30,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private final RobotContainer robotContainer;
-  private final VisionIO visionIO;
-  private final VisionIOInputsAutoLogged visionInputs = new VisionIOInputsAutoLogged();
-  private final String[] visionCameraNames;
   public Pose2d poseEstimate = new Pose2d();
 
   private final Timer bitimer = new Timer();
@@ -80,25 +76,7 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    // In sim/replay, silence repeated "joystick not available" warnings when no controller is
-    // plugged in
-    if (Constants.currentMode == Constants.Mode.SIM
-        || Constants.currentMode == Constants.Mode.REPLAY) {
-      DriverStation.silenceJoystickConnectionWarning(true);
-    }
-
     robotContainer = new RobotContainer();
-    switch (Constants.currentMode) {
-      case REAL:
-        visionIO = new VisionIOLimelight(Constants.Limelight.localization);
-        break;
-      case SIM:
-      case REPLAY:
-      default:
-        visionIO = new VisionIOSim(Constants.Limelight.localization);
-        break;
-    }
-    visionCameraNames = visionIO.getCameraNames();
 
     SmartDashboard.putNumber("Test Shooter RPM", robotContainer.testVelocity);
     SmartDashboard.setPersistent("Test Shooter RPM");
@@ -146,10 +124,6 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
-    // Log driver and operator controller state to debug axis/button mappings.
-    Constants.Joysticks.driver.log("Driver");
-    Constants.Joysticks.operator.log("Operator");
-
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
     CommandScheduler.getInstance().run();
@@ -206,45 +180,37 @@ public class Robot extends LoggedRobot {
   }
 
   private void processLimelightMeasurements() {
-    Pose2d robotPose = robotContainer.drive.getPose();
-    visionIO.setRobotOrientationDegrees(robotPose.getRotation().getDegrees());
-    visionIO.updateInputs(visionInputs);
-    Logger.processInputs("Vision", visionInputs);
+    List<PoseEstimate> measurements = new ArrayList<>();
 
-    final int cameraCount = Math.min(visionInputs.cameraCount, visionCameraNames.length);
-    for (int i = 0; i < cameraCount; i++) {
-      final String limelight = visionCameraNames[i];
-      final boolean hasEstimate = visionInputs.tagCount[i] > 0;
-      final boolean inRange =
-          hasEstimate
-              && visionInputs.avgTagDistMeters[i] <= Constants.Limelight.maxDistance.in(Meters);
+    for (String limelight : Constants.Limelight.localization) {
+      LimelightHelpers.SetIMUMode(limelight, 3);
+      LimelightHelpers.setPipelineIndex(limelight, 0);
+      Pose2d robotPose = robotContainer.drive.getPose();
+      double headingDeg = robotPose.getRotation().getDegrees();
 
-      Logger.recordOutput("Vision/" + limelight + "/Detecting", visionInputs.hasTarget[i]);
-      Logger.recordOutput("Vision/" + limelight + "/TX", visionInputs.txDegrees[i]);
-      Logger.recordOutput("Vision/" + limelight + "/TY", visionInputs.tyDegrees[i]);
-      Logger.recordOutput("Vision/" + limelight + "/TA", visionInputs.taPercent[i]);
-      Logger.recordOutput("Vision/" + limelight + "/TagCount", visionInputs.tagCount[i]);
-      Logger.recordOutput(
-          "Vision/" + limelight + "/AvgTagDistMeters", visionInputs.avgTagDistMeters[i]);
-      Logger.recordOutput(
-          "Vision/" + limelight + "/PipelineLatencyMs", visionInputs.pipelineLatencyMs[i]);
-      Logger.recordOutput(
-          "Vision/" + limelight + "/CaptureLatencyMs", visionInputs.captureLatencyMs[i]);
+      LimelightHelpers.SetIMUAssistAlpha(limelight, 0.005);
 
-      if (inRange) {
-        final Pose2d measurementPose =
-            new Pose2d(
-                visionInputs.poseX[i],
-                visionInputs.poseY[i],
-                new edu.wpi.first.math.geometry.Rotation2d(visionInputs.poseThetaRad[i]));
-        poseEstimate = measurementPose;
+      // Get pose estimate from limelight
+      PoseEstimate measurement = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelight);
+
+      if ((measurement != null)
+          && (measurement.tagCount > 0)
+          && (measurement.avgTagDist <= Constants.Limelight.maxDistance.in(Meters))) {
+        measurements.add(measurement);
+        // Log pose estimate and limelight status
+        Logger.recordOutput(limelight + " detecting", true);
+        poseEstimate = measurement.pose;
         Logger.recordOutput("Pose Estimate", poseEstimate);
-        Logger.recordOutput("Vision/" + limelight + "/EstimatedPose", measurementPose);
 
+        // Define standard deviation
         Matrix<N3, N1> stdDevs = VecBuilder.fill(0.001, 0.001, Math.toRadians(0.01));
+        Logger.recordOutput("limelight estimated pose", measurement.pose);
         robotContainer.drive.addVisionMeasurement(
-            measurementPose, visionInputs.timestampSeconds[i], stdDevs);
+            measurement.pose, measurement.timestampSeconds, stdDevs);
+      } else {
+        Logger.recordOutput(limelight + " detecting", false);
       }
+      LimelightHelpers.SetRobotOrientation(limelight, headingDeg, 0, 0, 0, 0, 0);
     }
   }
 
