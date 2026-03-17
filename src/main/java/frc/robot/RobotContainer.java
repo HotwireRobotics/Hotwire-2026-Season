@@ -333,7 +333,11 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(shooter.run())
-        .onFalse(shooter.halt());
+        .onFalse(
+          shooter.halt().andThen(
+            Commands.either(
+              hopper.run(), hopper.halt(), 
+              () -> shooter.isReady())));
 
     // Run feeding mechanism.
     Constants.Joysticks.operator

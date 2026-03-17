@@ -118,15 +118,19 @@ public class Robot extends LoggedRobot {
   @Override
   public void robotPeriodic() {
     time = Constants.Tempo.tick();
-    Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
-    Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
 
     // Control command scheduler and log data.
     CommandScheduler.getInstance().run();
 
+    // Log poses.
     Logger.recordOutput("Hub Pose", Constants.Poses.hub.get());
     Logger.recordOutput("Tower Pose", Constants.Poses.tower.get());
-    Logs.write("Shooting State", robotContainer.velocityType);
+    Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
+
+    // Log shooter status.
+    Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
+    Logger.recordOutput("Shooter/ready", robotContainer.shooter.isReady());
+    Logs.write("Shooter/type", robotContainer.velocityType);
 
     // Update python pose estimate.
     Double[] robotpose = {

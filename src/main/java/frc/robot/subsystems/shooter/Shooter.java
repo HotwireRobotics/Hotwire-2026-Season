@@ -105,6 +105,11 @@ public class Shooter extends ModularSubsystem implements Systerface {
     setState(State.STOPPED);
   }
 
+  public boolean isReady() {
+    return left.getVelocity().getValue().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance) &&
+           right.getVelocity().getValue().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance);
+  }
+
   public Command run() {
     return run(() -> start()).finallyDo(() -> stall());
   }
