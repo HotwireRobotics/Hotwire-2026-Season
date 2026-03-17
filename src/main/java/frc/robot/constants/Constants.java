@@ -23,11 +23,15 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import java.util.Optional;
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+
+  // Time tracking for match.
   public static final Timer timer = new Timer();
 
   public static class Mathematics {
@@ -35,28 +39,39 @@ public final class Constants {
   }
 
   public static class Joysticks {
+    // Static joystick instances for driver and operator controllers.
     public static final CommandXboxController driver = new CommandXboxController(0);
     public static final CommandXboxController operator = new CommandXboxController(1);
   }
 
   public static class Shooter {
+    // Static time intervals for firing states.
     public static final Time kChargeUpTime = Seconds.of(0.1);
     public static final Time kFiringTime = Seconds.of(8.2);
     public static final Time k35Time = Seconds.of(3);
     public static final Time k60Time = Seconds.of(3);
+
+    // Static target velocities and tolerances.
     public static final AngularVelocity kSpeed = RPM.of(2500);
-    public static final Angle kAlignmentError = Degrees.of(4);
-    public static final AngularVelocity kZero = RPM.of(0);
-    public static final Current kCurrentLimit = Amps.of(80);
     public static final double kVelocityTolerance = 0.08;
+    public static final AngularVelocity kZero = RPM.of(0);
+
+    // Drivetrain alignment error tolerance.
+    public static final Angle kAlignmentError = Degrees.of(4);
+
+    // Current limits for shooter motors.
+    public static final Current kCurrentLimit = Amps.of(80);
   }
 
   public static class Intake {
+    // Static speed for intake rollers.
     public static final double kSpeed = 0.8;
+    // Arm oscillation frequency.
     public static final Frequency kOscillationFrequency = Hertz.of(2.62);
   }
 
   public static class Hopper {
+    // Static speed for hopper rollers.
     public static final double kSpeed = 0.8;
   }
 
@@ -85,8 +100,7 @@ public final class Constants {
      * @param offset
      */
     public static void startTime(Time offset) {
-      timer.reset();
-      timer.start();
+      startTime();
       timerOffset = offset.in(Seconds);
     }
 
@@ -126,6 +140,12 @@ public final class Constants {
   }
 
   public static class Indication {
+    /**
+     * Creates a solid color control request for the CANdle.
+     * @param r Red
+     * @param g Green
+     * @param b Blue
+     */
     public static SolidColor LEDColor(int r, int g, int b) {
       return new SolidColor(0, 67).withColor(new RGBWColor(r, g, b));
     }
@@ -134,8 +154,11 @@ public final class Constants {
      * Determine if the robot is on track for an autonomous victory, based on the first character of the game-specific message and the alliance color.
      */
     public static boolean autonomousVictory() {
+      // Read driverstation.
       String gameData = DriverStation.getGameSpecificMessage();
       Boolean allianceIsRed = getAlliance().equals(Alliance.Red);
+    
+      // Switch based on game data.
       if (gameData.length() < 1) return true;
       switch (gameData.charAt(0)) {
         case 'R':
@@ -187,6 +210,10 @@ public final class Constants {
       ENDGAME
     }
 
+    /**
+     * Identify the current period of the match based on the specified time.
+     * @param t
+     */
     public static Period fromTime(Time t) {
       if (t.lte(Length.autonomous)) return Period.AUTONOMOUS;
       if (t.lte(Length.autonomous.plus(Length.transition))) return Period.TRANSITION;
@@ -201,6 +228,9 @@ public final class Constants {
       return Period.ENDGAME;
     }
 
+    /**
+     * Identify if the robot is within an active period.
+     */
     public static boolean isActive() {
       Boolean victoryAuto = autonomousVictory();
       Period period = fromTime(Tempo.getTime());
@@ -220,6 +250,9 @@ public final class Constants {
       }
     }
 
+    /**
+     * Identify if the specified time is within an active period for the robot.
+     */
     public static boolean isTimeActive(Time t) {
       Boolean victoryAuto = autonomousVictory();
       Period period = fromTime(t);
@@ -239,10 +272,16 @@ public final class Constants {
       }
     }
 
+    /**
+     * Identify if the robot is within a warning period before a transition.
+     */
     public static boolean isWaning() {
       return isActive() && !isTimeActive(Tempo.getTime().plus(warning));
     }
 
+    /**
+     * Identify if the robot is within a warning period before a transition.
+     */
     public static boolean isWaxing() {
       return !isActive() && isTimeActive(Tempo.getTime().plus(warning));
     }
@@ -255,14 +294,20 @@ public final class Constants {
     };
   }
 
-  public static final double lerp = 1.7; // 1.7
+  public static final double lerp = 1.7;
 
+  /**
+   * Limelight configuration and constants.
+   */
   public static class Limelight {
     public static final String[] localization = {"limelight-gamma", "limelight-alpha"};
     public static final String[] limelights = {"limelight-gamma", "limelight-alpha"};
     public static final Distance maxDistance = Inches.of(100);
   }
 
+  /**
+   * Match time periods.
+   */
   public static class Length {
     public static final Time autonomous = Seconds.of(20);
     public static final Time delay = Seconds.of(3);
@@ -273,6 +318,9 @@ public final class Constants {
     public static final Time teleoperated = Seconds.of(140);
   }
 
+  /**
+   * Motor IDs for all devices, organized by subsystem. These should match values in Phoenix Tuner.
+   */
   public static class MotorIDs {
     public static final Integer i_rollers = 17;
     public static final Integer s_feeder = 11;
@@ -290,14 +338,22 @@ public final class Constants {
    */
   public static final Translation2d middle = new Translation2d(Meters.of(8.27), Meters.of(4.01));
 
-  public static Pose2d flipAlliance(Pose2d pose) {
+  /**
+   * Flip a pose based on alliance color.
+   * @param pose
+   */
+  public static Pose2d allianceRelative(Pose2d pose) {
     if (Constants.Indication.getAlliance().equals(Alliance.Red)) {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
   }
 
-  public static Angle flipAlliance(Angle angle) {
+  /**
+   * Flip an angle based on alliance color.
+   * @param angle
+   */
+  public static Angle allianceRelative(Angle angle) {
     if (Constants.Indication.getAlliance().equals(Alliance.Red)) {
       return angle.plus(Degrees.of(180));
     }
@@ -305,19 +361,23 @@ public final class Constants {
   }
 
   public static class Poses {
-    // X: 14.916m, Y: 3.875m
-    public static final Pose2d tower =
-        flipAlliance(new Pose2d(Meters.of(1.5653), Meters.of(4.146), Rotation2d.k180deg));
-    public static final Pose2d hub =
-        flipAlliance(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
-    public static final Pose2d lowerStart =
-        flipAlliance(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
+    public static final Supplier<Pose2d> tower =
+        () -> allianceRelative(new Pose2d(Meters.of(1.5653), Meters.of(4.146), Rotation2d.k180deg));
+    public static final Supplier<Pose2d> hub =
+        () -> allianceRelative(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
+    public static final Supplier<Pose2d> lowerStart =
+        () -> allianceRelative(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
   public static final double base = 1235.92838;
   public static final double exponential = 1.00529;
 
+  /**
+   * Calculate shooter velocity from distance using an exponential regression.
+   * @param distance Distance to the target.
+   * @return Shooter velocity in RPM.
+   */
   public static AngularVelocity regress(Distance distance) {
     Logger.recordOutput("Shooter/Distance", distance.in(Inches));
     return RPM.of(base * Math.pow(exponential, distance.in(Inches)));

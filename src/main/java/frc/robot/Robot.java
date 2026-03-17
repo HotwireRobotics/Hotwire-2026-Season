@@ -124,8 +124,8 @@ public class Robot extends LoggedRobot {
     // Control command scheduler and log data.
     CommandScheduler.getInstance().run();
 
-    Logger.recordOutput("Hub Pose", Constants.Poses.hub);
-    Logger.recordOutput("Tower Pose", Constants.Poses.tower);
+    Logger.recordOutput("Hub Pose", Constants.Poses.hub.get());
+    Logger.recordOutput("Tower Pose", Constants.Poses.tower.get());
     Logs.write("Shooting State", robotContainer.velocityType);
 
     // Update python pose estimate.
