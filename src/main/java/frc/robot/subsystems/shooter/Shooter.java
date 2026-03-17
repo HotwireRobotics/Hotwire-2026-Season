@@ -5,6 +5,18 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import edu.wpi.first.wpilibj.Filesystem;
+
+import java.nio.file.Files;
+import java.io.IOException;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.wpi.first.units.measure.AngularVelocity;
 
@@ -55,6 +67,17 @@ public class Shooter extends ModularSubsystem implements Systerface {
         .withKP(0.8);
 
     configureControl();
+
+    // var file = Filesystem.getDeployDirectory()
+    //     .toPath()
+    //     .resolve("shooter/config.json");
+
+    // try {
+    //     var data = new ObjectMapper().readTree(file.toFile());
+    //     double rpm = data.get("rpm").asDouble();
+    // } catch (IOException e) {
+    //     e.printStackTrace();
+    // }
   }
 
   private enum State {
