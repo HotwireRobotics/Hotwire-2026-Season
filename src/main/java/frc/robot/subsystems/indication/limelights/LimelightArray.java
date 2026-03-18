@@ -26,6 +26,8 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import frc.robot.Dashboard;
+
 public class LimelightArray extends SubsystemBase {
 
   private static class Configuration {
@@ -131,9 +133,10 @@ public class LimelightArray extends SubsystemBase {
         Logger.recordOutput(limelight + " Detecting", true);
         Logger.recordOutput("Limelight/" + limelight + "/Pose", MT2estimate.pose);
 
+
         // Supply measurement to consumer with defined standard deviations.
         Matrix<N3, N1> stdDevs = VecBuilder.fill(0.7, 0.7, Double.POSITIVE_INFINITY);
-        this.supply.accept(MT2estimate, stdDevs);
+        if (Dashboard.visionEnabled.get()) this.supply.accept(MT2estimate, stdDevs);
       } else {
         Logger.recordOutput(limelight + " Detecting", false);
       }

@@ -100,7 +100,7 @@ public class RobotContainer {
               return Constants.Shooter.kSpeed;
             case REGRESSION:
               // Conditional shooting.
-              if (aligned.getAsBoolean()) {
+              if (aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get()) {
                 return Constants.regress(
                     Meters.of(drive.getPose().minus(Constants.Poses.hub.get()).getTranslation().getNorm()));
               } else {
