@@ -74,8 +74,8 @@ public class LimelightArray extends SubsystemBase {
                 new Rotation3d(Degrees.of(0), Degrees.of(-10), Degrees.of(-174))));
 
     static final String[] names = {
-      gamma.getName(),
-    }; //  alpha.getName()
+      gamma.getName(), alpha.getName()
+    };
   }
 
   /** Define assist mode for the internal IMU. */
@@ -185,6 +185,7 @@ public class LimelightArray extends SubsystemBase {
         // Supply measurement to consumer with defined standard deviations.
         Matrix<N3, N1> stdDevs = VecBuilder.fill(0.7, 0.7, Double.POSITIVE_INFINITY);
         if (Dashboard.visionEnabled.get()) this.supply.accept(MT2estimate, stdDevs);
+        break;
       } else {
         Logger.recordOutput(limelight + " Detecting", false);
       }
