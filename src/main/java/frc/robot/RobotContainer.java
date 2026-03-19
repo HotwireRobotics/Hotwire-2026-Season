@@ -113,7 +113,7 @@ public class RobotContainer {
         };
 
     // Initialize shooter subsystem.
-    shooter = new Shooter(velocity);
+    shooter = new Shooter(() -> velocity.get().times(kInverse.get()));
 
     // Initialize fuel intake and storage subsystems.
     intake = new Intake(() -> Constants.Intake.kSpeed * kInverse.get());
@@ -121,8 +121,7 @@ public class RobotContainer {
 
     // Initialize indicator subsystems.
     lights = new LuminalArray();
-    vision =
-        new LimelightArray(drive::getPose, drive::getGyroRotation, drive::addVisionMeasurement);
+    vision = new LimelightArray(drive::getPose, drive::getRotation, drive::addVisionMeasurement);
 
     // Configure button bindings.
     configureButtonBindings();
@@ -228,7 +227,7 @@ public class RobotContainer {
     Logger.recordOutput("Hub Pointer", pointer);
 
     // Update drive target.
-    drive.setRotationTarget(new Rotation2d(toHub).rotateBy(Rotation2d.k180deg));
+    drive.setRotationTarget(new Rotation2d(toHub));
 
     return drive.getRotationTarget();
   }

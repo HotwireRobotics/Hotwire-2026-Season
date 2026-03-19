@@ -67,19 +67,9 @@ public class LuminalArray extends SubsystemBase {
             Constants.Indication.LEDColor(0, 0, 0),
             Hertz.of(2)));
     color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(0, 10, 0));
-    color.put(
-        Event.TELEDISABLED,
-        toggle(
-            Constants.Indication.LEDColor(180, 0, 0),
-            Constants.Indication.LEDColor(0, 0, 0),
-            Hertz.of(0.5)));
+    color.put(Event.TELEDISABLED, () -> Constants.Indication.LEDColor(255, 45, 0));
     color.put(Event.TELEENABLED, () -> Constants.Indication.LEDColor(0, 170, 0));
-    color.put(
-        Event.VISION,
-        toggle(
-            Constants.Indication.LEDColor(100, 230, 100),
-            Constants.Indication.LEDColor(0, 0, 0),
-            Hertz.of(3)));
+    color.put(Event.VISION, () -> Constants.Indication.LEDColor(255, 100, 100));
     color.put(Event.INACTIVE, () -> Constants.Indication.LEDColor(180, 0, 0));
     color.put(
         Event.WAXING,

@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.VelocityVoltage;
-
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -104,13 +103,12 @@ public class Shooter extends ModularSubsystem implements Systerface {
   }
 
   public boolean isReady() {
-    return debouncer.calculate(left.getVelocity()
-            .getValue()
-            .isNear(velocity.get(), Constants.Shooter.kVelocityTolerance)
-        && right
-            .getVelocity()
-            .getValue()
-            .isNear(velocity.get(), Constants.Shooter.kVelocityTolerance));
+    return debouncer.calculate(
+        left.getVelocity().getValue().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance)
+            && right
+                .getVelocity()
+                .getValue()
+                .isNear(velocity.get(), Constants.Shooter.kVelocityTolerance));
   }
 
   public Command run() {
