@@ -29,6 +29,9 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.hopper.HopperIO;
+import frc.robot.subsystems.hopper.HopperIOSim;
+import frc.robot.subsystems.hopper.HopperIOTalonFX;
 import frc.robot.subsystems.indication.LuminalArray;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.Intake.ArmState;
@@ -155,7 +158,17 @@ public class RobotContainer {
 
     intake = new Intake();
     shooter = new Shooter();
-    hopper = new Hopper();
+    switch (Constants.currentMode) {
+      case REAL:
+        hopper = new Hopper(new HopperIOTalonFX());
+        break;
+      case SIM:
+        hopper = new Hopper(new HopperIOSim());
+        break;
+      default:
+        hopper = new Hopper(new HopperIO() {});
+        break;
+    }
     lights = new LuminalArray();
     vision = new LimelightArray(drive);
 
