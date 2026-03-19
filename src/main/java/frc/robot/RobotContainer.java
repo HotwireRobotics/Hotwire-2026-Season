@@ -342,6 +342,7 @@ public class RobotContainer {
       return;
     }
 
+    // Get autonomous starting pose.
     Pose2d startingPose = selectedAuto.getStartingPose();
     if (startingPose == null) {
       return;
