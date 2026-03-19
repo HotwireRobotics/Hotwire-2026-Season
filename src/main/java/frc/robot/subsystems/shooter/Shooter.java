@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Systerface;
@@ -26,6 +28,8 @@ public class Shooter extends ModularSubsystem implements Systerface {
   private final Slot0Configs feedSlot = new Slot0Configs();
 
   private final Supplier<AngularVelocity> velocity;
+
+  private final Debouncer debouncer = new Debouncer(Constants.Shooter.kDebounce.in(Seconds));
 
   public Shooter(Supplier<AngularVelocity> velocity) {
 
@@ -83,6 +87,10 @@ public class Shooter extends ModularSubsystem implements Systerface {
     for (var m : motors) m.setControl(velControl.withVelocity(velocity));
   }
 
+  private void applyPercent(double percent, Motor... motors) {
+    for (var m : motors) m.set(percent);
+  }
+
   public void start() {
     applyVelocity(velocity.get(), left, right, feeder);
 
@@ -90,19 +98,19 @@ public class Shooter extends ModularSubsystem implements Systerface {
   }
 
   public void stall() {
-    applyVelocity(Constants.Shooter.kZero, left, right, feeder);
+    applyPercent(Constants.Shooter.kZero.in(RPM), left, right, feeder);
 
     setState(State.STOPPED);
   }
 
   public boolean isReady() {
-    return left.getVelocity()
+    return debouncer.calculate(left.getVelocity()
             .getValue()
             .isNear(velocity.get(), Constants.Shooter.kVelocityTolerance)
         && right
             .getVelocity()
             .getValue()
-            .isNear(velocity.get(), Constants.Shooter.kVelocityTolerance);
+            .isNear(velocity.get(), Constants.Shooter.kVelocityTolerance));
   }
 
   public Command run() {
