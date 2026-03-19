@@ -106,11 +106,11 @@ public class Shooter extends ModularSubsystem implements Systerface {
   }
 
   public Command run() {
-    return run(() -> start()).finallyDo(() -> stall());
+    return runOnce(() -> start());
   }
 
   public Command halt() {
-    return run(() -> stall());
+    return runOnce(() -> stall());
   }
 
   private void configureControl() {

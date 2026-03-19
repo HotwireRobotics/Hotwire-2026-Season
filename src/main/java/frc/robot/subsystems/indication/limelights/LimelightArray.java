@@ -7,13 +7,14 @@ import static edu.wpi.first.units.Units.Meters;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Dashboard;
-import frc.robot.constants.Constants;
 import frc.robot.constants.LimelightHelpers;
 import frc.robot.constants.LimelightHelpers.PoseEstimate;
 import java.util.ArrayList;
@@ -25,8 +26,54 @@ import org.littletonrobotics.junction.Logger;
 public class LimelightArray extends SubsystemBase {
 
   private static class Configuration {
-    public static final Distance maxDistance = Inches.of(100);
+    private static final Distance maxDistance = Inches.of(100);
     private static final Pipeline pipeline = Pipeline.MEGATAG2;
+
+    public static class Limelight {
+
+      private final String name;
+      private final Pose3d pose;
+      private final Rotation3d rot;
+
+      public Limelight(String name, Pose3d pose) {
+        this.name = name;
+        this.pose = pose;
+        this.rot = pose.getRotation();
+
+        LimelightHelpers.setCameraPose_RobotSpace(
+            name,
+            this.pose.getMeasureX().in(Meters),
+            this.pose.getMeasureY().in(Meters),
+            this.pose.getMeasureZ().in(Meters),
+            this.rot.getMeasureX().in(Degrees),
+            this.rot.getMeasureY().in(Degrees),
+            this.rot.getMeasureZ().in(Degrees));
+      }
+
+      public String getName() {
+        return name;
+      }
+    }
+
+    private static final Limelight gamma =
+        new Limelight(
+            "limelight-gamma",
+            new Pose3d(
+                Meters.of(-0.23495),
+                Meters.of(-0.24764999999999998),
+                Meters.of(0.492125),
+                new Rotation3d(Degrees.of(0), Degrees.of(23), Degrees.of(0))));
+
+    private static final Limelight alpha =
+        new Limelight(
+            "limelight-alpha",
+            new Pose3d(
+                Meters.of(-0.3302),
+                Meters.of(0.2667),
+                Meters.of(0.492125),
+                new Rotation3d(Degrees.of(0), Degrees.of(-10), Degrees.of(-178))));
+
+    static final String[] names = {gamma.getName(), alpha.getName()};
   }
 
   /** Define assist mode for the internal IMU. */
@@ -71,7 +118,7 @@ public class LimelightArray extends SubsystemBase {
     // Consumer
     this.supply = supplyMeasurement;
     // Initialize limelights
-    for (String limelight : Constants.Limelight.localization) {
+    for (String limelight : Configuration.names) {
       LimelightHelpers.setPipelineIndex(limelight, 0);
       LimelightHelpers.SetIMUAssistAlpha(limelight, 0.005);
     }
@@ -84,7 +131,7 @@ public class LimelightArray extends SubsystemBase {
    * @param alpha
    */
   public void setIMUAssistAlpha(double alpha) {
-    for (String limelight : Constants.Limelight.localization) {
+    for (String limelight : Configuration.names) {
       LimelightHelpers.SetIMUAssistAlpha(limelight, alpha);
     }
   }
@@ -111,10 +158,11 @@ public class LimelightArray extends SubsystemBase {
 
     List<PoseEstimate> measurements = new ArrayList<>();
     double heading = this.gyro.get().getMeasure().in(Degrees);
+    Logger.recordOutput("Limelight/Heading", heading);
 
-    for (String limelight : Constants.Limelight.localization) {
+    for (String limelight : Configuration.names) {
 
-      // Configure periodally.
+      // Configure periodically.
       LimelightHelpers.SetIMUMode(limelight, mode);
 
       LimelightHelpers.SetRobotOrientation(limelight, heading, 0, 0, 0, 0, 0);
@@ -128,6 +176,7 @@ public class LimelightArray extends SubsystemBase {
 
         // Log detecting status and pose estimate.
         Logger.recordOutput(limelight + " Detecting", true);
+        Logger.recordOutput("Limelight/" + limelight + "/IMU", mode);
         Logger.recordOutput("Limelight/" + limelight + "/Pose", MT2estimate.pose);
 
         // Supply measurement to consumer with defined standard deviations.
