@@ -5,8 +5,6 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -15,7 +13,6 @@ import frc.robot.constants.Constants;
 import frc.robot.constants.LimelightHelpers;
 import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.indication.limelights.LimelightArray;
-
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -211,7 +208,6 @@ public class Robot extends LoggedRobot {
   public void autonomousPeriodic() {
     indicateLimelight(Indicate.AUTO);
     robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
-    
   }
 
   @Override

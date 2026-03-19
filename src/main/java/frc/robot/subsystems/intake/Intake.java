@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
@@ -17,9 +16,7 @@ import frc.robot.constants.Constants;
 import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.Motor;
-
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
 
 public class Intake extends ModularSubsystem implements Systerface {
 
@@ -53,7 +50,8 @@ public class Intake extends ModularSubsystem implements Systerface {
     wrist = new Motor(this, Constants.MotorIDs.i_arm, Amps.of(40));
 
     // Define devices.
-    defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.WRIST, wrist));
+    defineDevice(
+        new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.WRIST, wrist));
 
     // Initialize control loop.
     control = new PositionVoltage(Degrees.of(0));
@@ -81,6 +79,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     STOPPED,
     INTAKING
   }
+
   State state = State.STOPPED;
 
   // Supply state.
@@ -88,7 +87,6 @@ public class Intake extends ModularSubsystem implements Systerface {
     return state;
   }
 
-  
   @Override
   public void periodic() {
     // Log devices and state.
@@ -104,16 +102,12 @@ public class Intake extends ModularSubsystem implements Systerface {
     }
   }
 
-  /**
-   * Run the hopper at the specified speed.
-   */
+  /** Run the hopper at the specified speed. */
   public Command run() {
     return runDevice(Device.ROLLERS, speed, this);
   }
 
-  /**
-   * Halt the hopper.
-   */
+  /** Halt the hopper. */
   public Command halt() {
     return runDevice(Device.ROLLERS, 0, this);
   }

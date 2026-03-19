@@ -1,18 +1,13 @@
 package frc.robot.subsystems.hopper;
 
-import com.ctre.phoenix6.hardware.TalonFX;
+import static edu.wpi.first.units.Units.Amps;
 
-import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.Motor;
-
-import static edu.wpi.first.units.Units.Amps;
-
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
 
 public class Hopper extends ModularSubsystem implements Systerface {
   private final Motor hopper;
@@ -45,6 +40,7 @@ public class Hopper extends ModularSubsystem implements Systerface {
     STOPPED,
     FEEDING
   }
+
   State state = State.STOPPED;
 
   // Supply state.
@@ -64,16 +60,12 @@ public class Hopper extends ModularSubsystem implements Systerface {
     }
   }
 
-  /**
-   * Run the hopper at the specified speed.
-   */
+  /** Run the hopper at the specified speed. */
   public Command run() {
     return runDevice(Device.HOPPER, speed, this);
   }
 
-  /**
-   * Halt the hopper.
-   */
+  /** Halt the hopper. */
   public Command halt() {
     return runDevice(Device.HOPPER, 0, this);
   }

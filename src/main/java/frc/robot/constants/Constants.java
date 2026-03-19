@@ -24,7 +24,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import java.util.Optional;
 import java.util.function.Supplier;
-
 import org.littletonrobotics.junction.Logger;
 
 public final class Constants {
@@ -87,9 +86,7 @@ public final class Constants {
     private static double timerOffset = 0;
     private static Time time = Seconds.of(0);
 
-    /**
-     * Start the timer from zero.
-     */
+    /** Start the timer from zero. */
     public static void startTime() {
       timer.reset();
       timer.start();
@@ -97,6 +94,7 @@ public final class Constants {
 
     /**
      * Start the timer with an offset, used for simulating delayed starts and autonomous periods.
+     *
      * @param offset
      */
     public static void startTime(Time offset) {
@@ -104,25 +102,22 @@ public final class Constants {
       timerOffset = offset.in(Seconds);
     }
 
-    /**
-     * Update time measurement.
-     */
-    public static Time tick() { 
+    /** Update time measurement. */
+    public static Time tick() {
       time = Seconds.of(timer.get() + timerOffset);
       Logger.recordOutput("Time", time.in(Seconds));
 
       return time;
     }
 
-    /**
-     * Get time measurement.
-     */
+    /** Get time measurement. */
     public static Time getTime() {
       return time;
     }
 
     /**
      * Identify if the specified time has elapsed.
+     *
      * @param target
      */
     public static boolean isElapsed(Time target) {
@@ -131,6 +126,7 @@ public final class Constants {
 
     /**
      * Identify if the current time is within the specified range.
+     *
      * @param start
      * @param end
      */
@@ -142,6 +138,7 @@ public final class Constants {
   public static class Indication {
     /**
      * Creates a solid color control request for the CANdle.
+     *
      * @param r Red
      * @param g Green
      * @param b Blue
@@ -151,13 +148,14 @@ public final class Constants {
     }
 
     /**
-     * Determine if the robot is on track for an autonomous victory, based on the first character of the game-specific message and the alliance color.
+     * Determine if the robot is on track for an autonomous victory, based on the first character of
+     * the game-specific message and the alliance color.
      */
     public static boolean autonomousVictory() {
       // Read driverstation.
       String gameData = DriverStation.getGameSpecificMessage();
       Boolean allianceIsRed = getAlliance().equals(Alliance.Red);
-    
+
       // Switch based on game data.
       if (gameData.length() < 1) return true;
       switch (gameData.charAt(0)) {
@@ -172,6 +170,7 @@ public final class Constants {
 
     /**
      * Get the alliance color for this robot.
+     *
      * @return
      */
     public static Alliance getAlliance() {
@@ -180,12 +179,10 @@ public final class Constants {
       return Alliance.Blue;
     }
 
-    /**
-     * Control haptic indicators based on time remaining in the match.
-     */
+    /** Control haptic indicators based on time remaining in the match. */
     public static void updateHaptics() {
       Time time = Tempo.getTime();
-   
+
       // Control haptic indicators.
       Boolean rumble = false;
 
@@ -212,6 +209,7 @@ public final class Constants {
 
     /**
      * Identify the current period of the match based on the specified time.
+     *
      * @param t
      */
     public static Period fromTime(Time t) {
@@ -228,9 +226,7 @@ public final class Constants {
       return Period.ENDGAME;
     }
 
-    /**
-     * Identify if the robot is within an active period.
-     */
+    /** Identify if the robot is within an active period. */
     public static boolean isActive() {
       Boolean victoryAuto = autonomousVictory();
       Period period = fromTime(Tempo.getTime());
@@ -250,9 +246,7 @@ public final class Constants {
       }
     }
 
-    /**
-     * Identify if the specified time is within an active period for the robot.
-     */
+    /** Identify if the specified time is within an active period for the robot. */
     public static boolean isTimeActive(Time t) {
       Boolean victoryAuto = autonomousVictory();
       Period period = fromTime(t);
@@ -272,16 +266,12 @@ public final class Constants {
       }
     }
 
-    /**
-     * Identify if the robot is within a warning period before a transition.
-     */
+    /** Identify if the robot is within a warning period before a transition. */
     public static boolean isWaning() {
       return isActive() && !isTimeActive(Tempo.getTime().plus(warning));
     }
 
-    /**
-     * Identify if the robot is within a warning period before a transition.
-     */
+    /** Identify if the robot is within a warning period before a transition. */
     public static boolean isWaxing() {
       return !isActive() && isTimeActive(Tempo.getTime().plus(warning));
     }
@@ -296,18 +286,14 @@ public final class Constants {
 
   public static final double lerp = 1.7;
 
-  /**
-   * Limelight configuration and constants.
-   */
+  /** Limelight configuration and constants. */
   public static class Limelight {
     public static final String[] localization = {"limelight-gamma", "limelight-alpha"};
     public static final String[] limelights = {"limelight-gamma", "limelight-alpha"};
     public static final Distance maxDistance = Inches.of(100);
   }
 
-  /**
-   * Match time periods.
-   */
+  /** Match time periods. */
   public static class Length {
     public static final Time autonomous = Seconds.of(20);
     public static final Time delay = Seconds.of(3);
@@ -340,6 +326,7 @@ public final class Constants {
 
   /**
    * Flip a pose based on alliance color.
+   *
    * @param pose
    */
   public static Pose2d allianceRelative(Pose2d pose) {
@@ -351,6 +338,7 @@ public final class Constants {
 
   /**
    * Flip an angle based on alliance color.
+   *
    * @param angle
    */
   public static Angle allianceRelative(Angle angle) {
@@ -364,9 +352,11 @@ public final class Constants {
     public static final Supplier<Pose2d> tower =
         () -> allianceRelative(new Pose2d(Meters.of(1.5653), Meters.of(4.146), Rotation2d.k180deg));
     public static final Supplier<Pose2d> hub =
-        () -> allianceRelative(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
+        () ->
+            allianceRelative(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
     public static final Supplier<Pose2d> lowerStart =
-        () -> allianceRelative(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
+        () ->
+            allianceRelative(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
@@ -375,6 +365,7 @@ public final class Constants {
 
   /**
    * Calculate shooter velocity from distance using an exponential regression.
+   *
    * @param distance Distance to the target.
    * @return Shooter velocity in RPM.
    */

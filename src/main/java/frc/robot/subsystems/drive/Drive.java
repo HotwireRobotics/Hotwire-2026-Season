@@ -141,34 +141,39 @@ public class Drive extends SubsystemBase {
             new SysIdRoutine.Mechanism(
                 (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
   }
+
   public Drive(Constants.Mode mode) {
+    // Mode m = switch (mode) {
+    //   case REAL -> new GyroIOPigeon2();
+    //   case SIM -> new GyroIO() {};
+    //   default -> new GyroIO() {};
+    // },
+    // switch (mode) {
+    //   case REAL -> new ModuleIO[] {
+    //       new ModuleIOTalonFX(TunerConstants.FrontLeft),
+    //       new ModuleIOTalonFX(TunerConstants.FrontRight),
+    //       new ModuleIOTalonFX(TunerConstants.BackLeft),
+    //       new ModuleIOTalonFX(TunerConstants.BackRight)
+    //   };
+    //   case SIM -> new ModuleIO[] {
+    //       new ModuleIOSim(TunerConstants.FrontLeft),
+    //       new ModuleIOSim(TunerConstants.FrontRight),
+    //       new ModuleIOSim(TunerConstants.BackLeft),
+    //       new ModuleIOSim(TunerConstants.BackRight)
+    //   };
+    //   default -> new ModuleIO[] {
+    //       new ModuleIO() {},
+    //       new ModuleIO() {},
+    //       new ModuleIO() {},
+    //       new ModuleIO() {}
+    //   };
+    // }
     this(
-        switch (mode) {
-          case REAL -> new GyroIOPigeon2();
-          case SIM -> new GyroIO() {};
-          default -> new GyroIO() {};
-        },
-        switch (mode) {
-          case REAL -> new ModuleIO[] {
-              new ModuleIOTalonFX(TunerConstants.FrontLeft),
-              new ModuleIOTalonFX(TunerConstants.FrontRight),
-              new ModuleIOTalonFX(TunerConstants.BackLeft),
-              new ModuleIOTalonFX(TunerConstants.BackRight)
-          };
-          case SIM -> new ModuleIO[] {
-              new ModuleIOSim(TunerConstants.FrontLeft),
-              new ModuleIOSim(TunerConstants.FrontRight),
-              new ModuleIOSim(TunerConstants.BackLeft),
-              new ModuleIOSim(TunerConstants.BackRight)
-          };
-          default -> new ModuleIO[] {
-              new ModuleIO() {},
-              new ModuleIO() {},
-              new ModuleIO() {},
-              new ModuleIO() {}
-          };
-        }
-    );
+        new GyroIOPigeon2(),
+        new ModuleIOTalonFX(TunerConstants.FrontLeft),
+        new ModuleIOTalonFX(TunerConstants.FrontRight),
+        new ModuleIOTalonFX(TunerConstants.BackLeft),
+        new ModuleIOTalonFX(TunerConstants.BackRight));
   }
 
   @Override
@@ -376,9 +381,7 @@ public class Drive extends SubsystemBase {
   }
 
   /** Adds a new timestamped vision measurement. */
-  public void addVisionMeasurement(
-      PoseEstimate estimate,
-      Matrix<N3, N1> visionMeasurementStdDevs) {
+  public void addVisionMeasurement(PoseEstimate estimate, Matrix<N3, N1> visionMeasurementStdDevs) {
     Pose2d visionRobotPoseMeters = estimate.pose;
     double timestampSeconds = estimate.timestampSeconds;
     poseEstimator.addVisionMeasurement(
