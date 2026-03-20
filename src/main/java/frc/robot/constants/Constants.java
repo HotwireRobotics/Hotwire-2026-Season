@@ -150,7 +150,7 @@ public final class Constants {
 
     // /**
     //  * Creates an alternating pattern of x lights on, x lights off; this is offset by p
-    //  * 
+    //  *
     //  * @param r Red
     //  * @param g Green
     //  * @param b Blue

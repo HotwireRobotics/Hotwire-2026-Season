@@ -73,9 +73,7 @@ public class LimelightArray extends SubsystemBase {
                 Meters.of(0.492125),
                 new Rotation3d(Degrees.of(0), Degrees.of(-10), Degrees.of(-174))));
 
-    static final String[] names = {
-      gamma.getName(), alpha.getName()
-    };
+    static final String[] names = {gamma.getName(), alpha.getName()};
   }
 
   /** Define assist mode for the internal IMU. */

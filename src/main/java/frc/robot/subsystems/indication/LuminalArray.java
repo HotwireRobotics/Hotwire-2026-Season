@@ -11,19 +11,13 @@ import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.StripTypeValue;
-
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import frc.robot.constants.Constants;
-
-import java.util.HashMap;
 import java.util.function.Supplier;
-
 import org.littletonrobotics.junction.Logger;
 
 public class LuminalArray extends SubsystemBase {
@@ -41,7 +35,8 @@ public class LuminalArray extends SubsystemBase {
     TELEDISABLED,
     EMERGENCY,
     VISION,
-    AUTODISABLED
+    AUTODISABLED,
+    // WARNING
   }
 
   // Handle static and animation control requests.
@@ -71,7 +66,7 @@ public class LuminalArray extends SubsystemBase {
   }
 
   // Predefined colors.
-  private class Colors  {
+  private class Colors {
     public static final SolidColor DISABLED = Constants.Indication.LEDColor(180, 0, 0);
     public static final SolidColor ACTIVE = Constants.Indication.LEDColor(0, 180, 0);
     public static final SolidColor INACTIVE = Constants.Indication.LEDColor(0, 0, 0);
@@ -85,31 +80,26 @@ public class LuminalArray extends SubsystemBase {
     public Supplier<Control> active = () -> Control.of(Colors.ACTIVE);
 
     public Supplier<Control> waning =
-        () -> Control.of(tick(
-          Colors.ACTIVE,
-          Colors.INACTIVE,
-          Hertz.of(2)).get());
+        () -> Control.of(tick(Colors.ACTIVE, Colors.INACTIVE, Hertz.of(2)).get());
 
-    public Supplier<Control> inactive =
-        () -> Control.of(Colors.INACTIVE);
+    public Supplier<Control> inactive = () -> Control.of(Colors.INACTIVE);
 
     public Supplier<Control> waxing =
-        () -> Control.of(toggle(
-          Colors.ACTIVE,
-          Colors.INACTIVE,
-          Hertz.of(2)).get());
+        () -> Control.of(toggle(Colors.ACTIVE, Colors.INACTIVE, Hertz.of(2)).get());
+
+    // public Supplier<Control> warning =
+    //     () -> Control.of(chase(Colors.ACTIVE, Colors.INACTIVE, 7).get());
 
     // Teleoperated disabled.
     public Supplier<Control> teledisabled =
-        () -> Control.of(Constants.Indication.LEDColor(255, 110, 0));
+        () -> Control.of(Constants.Indication.LEDColor(255, 90, 0));
 
     // Indicate vision measurement to setup.
     public Supplier<Control> visible =
-        () -> Control.of(Constants.Indication.LEDColor(255, 165, 100));
+        () -> Control.of(Constants.Indication.LEDColor(255, 45, 100));
 
     // Autonomous disabled.
-    public Supplier<Control> autodisabled =
-        () -> Control.of(Colors.DISABLED);
+    public Supplier<Control> autodisabled = () -> Control.of(Colors.DISABLED);
 
     // Autonomous enabled.
     public Supplier<Control> autoenabled =
@@ -129,7 +119,6 @@ public class LuminalArray extends SubsystemBase {
   private final Timer timer = new Timer();
   private Time time = Seconds.of(0);
 
-
   private Supplier<ControlRequest> toggle(ControlRequest t, ControlRequest f, Frequency frequency) {
     return () -> (((Math.floor(time.in(Seconds) * frequency.in(Hertz)) % 2) == 1) ? t : f);
   }
@@ -138,6 +127,10 @@ public class LuminalArray extends SubsystemBase {
       ControlRequest high, ControlRequest low, Frequency frequency) {
     return () -> ((((time.in(Seconds) * frequency.in(Hertz)) % 2) >= 1.7) ? high : low);
   }
+
+  // private Supplier<ControlRequest> chase(ControlRequest high, ControlRequest low, int wavelength) {
+  //   return () -> ((((time.in(Seconds) / wavelength) % 2) == 1) ? high : low);
+  // };
 
   // Get the correct control request for the active event.
   private Supplier<Control> getRequest(Event event) {
@@ -151,6 +144,7 @@ public class LuminalArray extends SubsystemBase {
       case VISION -> controls.visible;
       case AUTODISABLED -> controls.autodisabled;
       case AUTOENABLED -> controls.autoenabled;
+      // case WARNING -> controls.warning;
     };
   }
 
@@ -197,8 +191,10 @@ public class LuminalArray extends SubsystemBase {
         } else {
           if (Constants.Indication.isWaxing()) {
             updateLEDs(getRequest(Event.WAXING).get());
+            // updateLEDs(getRequest(Event.WARNING).get());
           } else {
             updateLEDs(getRequest(Event.INACTIVE).get());
+            // updateLEDs(getRequest(Event.WARNING).get());
           }
         }
       } else {
@@ -208,6 +204,7 @@ public class LuminalArray extends SubsystemBase {
   }
 
   private Control state_ = null;
+
   private void updateLEDs(Control state) {
     if (state != state_) {
       state.apply(candle);
