@@ -2,7 +2,7 @@ package frc.robot.constants;
 
 import static edu.wpi.first.units.Units.*;
 
-import com.ctre.phoenix6.controls.SolidColor;
+import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.signals.RGBWColor;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.path.PathConstraints;
@@ -147,6 +147,17 @@ public final class Constants {
     public static SolidColor LEDColor(int r, int g, int b) {
       return new SolidColor(0, 67).withColor(new RGBWColor(r, g, b));
     }
+
+    // /**
+    //  * Creates an alternating pattern of x lights on, x lights off; this is offset by p
+    //  * 
+    //  * @param r Red
+    //  * @param g Green
+    //  * @param b Blue
+    //  */
+    // public static SolidColor CHASEColor(int r, int g, int b) {
+    //   return new Color
+    // }
 
     /**
      * Determine if the robot is on track for an autonomous victory, based on the first character of
