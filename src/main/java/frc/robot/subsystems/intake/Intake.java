@@ -55,6 +55,12 @@ public class Intake extends ModularSubsystem implements Systerface {
     wrist = new Motor(this, Constants.MotorIDs.i_wrist, Amps.of(40));
     wrist.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
 
+    // Define devices.
+    defineDevice(
+      new DevicePointer(Device.ROLLERS, rollers),
+      new DevicePointer(Device.WRIST, wrist)
+    );
+
     // Initialize control loop.
     control = new PositionVoltage(Degrees.of(0));
 
