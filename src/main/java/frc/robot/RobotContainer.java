@@ -94,21 +94,20 @@ public class RobotContainer {
               // Conditional shooting.
               if (aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get()) {
                 return Constants.regress(
-                    Meters.of(
-                        drive
-                            .getPose()
-                            .minus(Constants.Poses.hub.get())
-                            .getTranslation()
-                            .getNorm()));
+                  Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
+                      .getTranslation()
+                      .getNorm()));
               } else {
                 return Constants.Shooter.kZero;
               }
             case TESTING:
-              // Allow testing of shooter velocity via dashboard input, for characterization
-              // purposes.
+              // Allow testing of shooter velocity via dashboard input, for characterization purposes.
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             case AUTO:
-              return RPM.of(1250);
+              return Constants.regress(
+                Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
+                    .getTranslation()
+                    .getNorm()));
             default:
               // Fallback velocity.
               return Constants.Shooter.kSpeed;
@@ -145,7 +144,7 @@ public class RobotContainer {
 
     // Shooter commands.
     final Command initializeFiring =
-        Commands.sequence(lockDrive, velocity(VelocityType.REGRESSION), shooter.run());
+        Commands.sequence(lockDrive, velocity(VelocityType.AUTO), shooter.run());
 
     final Command initializeFeeding =
         Commands.sequence(Commands.waitTime(Constants.Shooter.kChargeUpTime), hopper.run());
@@ -216,7 +215,7 @@ public class RobotContainer {
   private Rotation2d calculateHubRotation() {
     // Get poses.
     Pose2d robotPose = drive.getPose();
-    Pose2d hubPose = Constants.Poses.hub.get();
+    Pose2d hubPose = Constants.Poses.hub.getPose();
 
     // Pose differences.
     double dx = hubPose.getX() - robotPose.getX();

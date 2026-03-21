@@ -367,14 +367,56 @@ public final class Constants {
   }
 
   public static class Poses {
-    public static final Supplier<Pose2d> tower =
-        () -> allianceRelative(new Pose2d(Meters.of(1.5653), Meters.of(4.146), Rotation2d.k180deg));
-    public static final Supplier<Pose2d> hub =
-        () ->
-            allianceRelative(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
-    public static final Supplier<Pose2d> lowerStart =
-        () ->
-            allianceRelative(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
+    public static class AllianceRelativePose {
+      // Blue-origin relative pose.
+      private final Pose2d pose;
+
+      /**
+       * Assumes a blue-origin relative pose.
+       */
+      public AllianceRelativePose(Pose2d pose) {
+        this.pose = pose;
+      }
+
+      /**
+       * Assumes a set-origin relative pose.
+       * 
+       * @param alliance side of provided pose.
+       */
+      public AllianceRelativePose(Pose2d pose, Alliance alliance) {
+        this(alliance.equals(Alliance.Red) ? pose.rotateAround(middle, Rotation2d.k180deg) : pose);
+      }
+
+      /**
+       * Exposes relative pose.
+       */
+      public Pose2d getPose() {
+        return allianceRelative(pose);
+      }
+
+      /**
+       * Expose blue-origin relative pose.
+       */
+      public Pose2d getBluePose() {
+        return getPose();
+      }
+
+      /**
+       * Expose red-origin relative pose.
+       */
+      public Pose2d getRedPose() {
+        return getPose().rotateAround(middle, Rotation2d.k180deg);
+      }
+    }
+    
+    // Define relative poses.
+    public static final AllianceRelativePose tower = 
+        new AllianceRelativePose(new Pose2d(Meters.of(1.5653), Meters.of(4.146), Rotation2d.k180deg));
+    public static final AllianceRelativePose hub = 
+        new AllianceRelativePose(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
+    public static final AllianceRelativePose lowerStart = 
+        new AllianceRelativePose(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
+            
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).

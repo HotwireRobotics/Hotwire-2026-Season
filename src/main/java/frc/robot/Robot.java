@@ -123,9 +123,10 @@ public class Robot extends LoggedRobot {
     CommandScheduler.getInstance().run();
 
     // Log poses.
-    Logger.recordOutput("Hub Pose", Constants.Poses.hub.get());
-    Logger.recordOutput("Tower Pose", Constants.Poses.tower.get());
+    Logger.recordOutput("Hub Pose", Constants.Poses.hub.getPose());
+    Logger.recordOutput("Tower Pose", Constants.Poses.tower.getPose());
     Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
+    Logger.recordOutput("Is Neutral", robotContainer.drive.isNeutralZone());
 
     // Log shooter status.
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
