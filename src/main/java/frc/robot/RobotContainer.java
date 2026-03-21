@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -38,6 +39,7 @@ public class RobotContainer {
 
   // Static configuration.
   private final boolean firstPerson = false;
+  private final boolean testing = false;
 
   // Alignment supplier.
   public final BooleanSupplier aligned;
@@ -176,28 +178,33 @@ public class RobotContainer {
     NamedCommands.registerCommand("Stop", stopDrive);
 
     // Create autonomous selector and add options.
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+    autoChooser = new LoggedDashboardChooser<>("Auto Choices", new SendableChooser<Command>()); // new SendableChooser<Command>()
 
-    // Drivetrain characterization routines.
-    autoChooser.addOption(
-        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-    autoChooser.addOption(
-        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    if (testing) {
+      // Drivetrain characterization routines.
+      autoChooser.addOption(
+          "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+      autoChooser.addOption(
+          "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+      autoChooser.addOption(
+          "Drive SysId (Quasistatic Forward)",
+          drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+      autoChooser.addOption(
+          "Drive SysId (Quasistatic Reverse)",
+          drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+      autoChooser.addOption(
+          "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+      autoChooser.addOption(
+          "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-    // Shooter characterization routines.
-    autoChooser.addOption("Right Shooter SysId", shooter.sysIdRightAnalysis());
-    autoChooser.addOption("Left Shooter SysId", shooter.sysIdLeftAnalysis());
-    autoChooser.addOption("Feeder SysId", shooter.sysIdFeederAnalysis());
+      // Shooter characterization routines.
+      autoChooser.addOption("Right Shooter SysId", shooter.sysIdRightAnalysis());
+      autoChooser.addOption("Left Shooter SysId", shooter.sysIdLeftAnalysis());
+      autoChooser.addOption("Feeder SysId", shooter.sysIdFeederAnalysis());
+
+      /** Test autonomous firing sequence. */
+      autoChooser.addOption("Shooting Sequence", runFiringSequence);
+    }
 
     // Secondary autonomous routine.
     autoChooser.addOption("A-Bineutral Right", new PathPlannerAuto("A-Bineutral", false));
@@ -207,8 +214,8 @@ public class RobotContainer {
     autoChooser.addOption("A-Unineutral Right", new PathPlannerAuto("A-Unineutral", false));
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
 
-    /** Test autonomous firing sequence. */
-    autoChooser.addOption("Shooting Sequence", runFiringSequence);
+    // Tertiary autonomous routine.
+    autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
   }
 
   /** Returns the Rotation2d the robot needs to face the hub. */

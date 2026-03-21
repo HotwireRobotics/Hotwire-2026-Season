@@ -52,10 +52,6 @@ public class Logs {
     log(motor.getDeviceID(), motor);
   }
 
-  public static void log(String name, Motor motor) {
-    log(name, motor);
-  }
-
   /**
    * Log subsystem state to the Logger. This should be called periodically in the subsystem's
    * periodic method.
