@@ -9,6 +9,9 @@ import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.Motor;
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+
 public class Hopper extends ModularSubsystem implements Systerface {
   private final Motor hopper;
 
@@ -23,6 +26,7 @@ public class Hopper extends ModularSubsystem implements Systerface {
   public Hopper(Supplier<Double> speed) {
     // Initialize devices.
     hopper = new Motor(this, Constants.MotorIDs.h_hopper, Amps.of(40));
+    hopper.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
 
     // Define devices.
     defineDevice(Device.HOPPER, hopper);

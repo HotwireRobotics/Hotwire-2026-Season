@@ -3,9 +3,13 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -17,11 +21,12 @@ public class Motor extends TalonFX {
 
   private final SysIdRoutine sysIdRoutine;
   private final Subsystem subsystem;
+  private final TalonFXConfigurator configurator;
 
   public Motor(Subsystem subsystem, int deviceID, Current limit) {
     super(deviceID);
     // Identify TalonFX configuration.
-    TalonFXConfigurator config = this.getConfigurator();
+    configurator = this.getConfigurator();
 
     // Limit current to 40A to prevent damage to the motor and robot.
     CurrentLimitsConfigs current =
@@ -30,7 +35,7 @@ public class Motor extends TalonFX {
             .withSupplyCurrentLimitEnable(true);
 
     // Apply configuration settings.
-    config.apply(current);
+    configurator.apply(current);
 
     // Initialize SysId routine for this motor.
     VoltageOut control = new VoltageOut(0);
@@ -92,5 +97,19 @@ public class Motor extends TalonFX {
         sysIdQuasistatic(SysIdRoutine.Direction.kReverse),
         sysIdDynamic(SysIdRoutine.Direction.kForward),
         sysIdDynamic(SysIdRoutine.Direction.kReverse));
+  }
+
+  /**
+   * Configure motor output modifiers.
+   * 
+   * @param direction of motion.
+   * @param neutral mode.
+   */
+  public void setDirection(InvertedValue direction, NeutralModeValue neutral) {
+    MotorOutputConfigs output = new MotorOutputConfigs();
+    
+    output.withNeutralMode(neutral);
+    output.withInverted(direction);
+    configurator.apply(output);
   }
 }

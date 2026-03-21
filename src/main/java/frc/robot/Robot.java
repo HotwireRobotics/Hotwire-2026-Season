@@ -1,6 +1,8 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Hertz;
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -128,6 +130,7 @@ public class Robot extends LoggedRobot {
     // Log shooter status.
     Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
     Logger.recordOutput("Shooter/ready", robotContainer.shooter.isReady());
+    Logger.recordOutput("Shooter/target", robotContainer.velocity.get().in(RotationsPerSecond));
     Logs.write("Shooter/type", robotContainer.velocityType);
 
     // Update python pose estimate.

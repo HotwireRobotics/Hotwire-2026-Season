@@ -4,6 +4,9 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
@@ -47,7 +50,10 @@ public class Intake extends ModularSubsystem implements Systerface {
   public Intake(Supplier<Double> speed) {
     // Initialize devices.
     rollers = new Motor(this, Constants.MotorIDs.i_rollers, Amps.of(40));
-    wrist = new Motor(this, Constants.MotorIDs.i_arm, Amps.of(40));
+    rollers.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+
+    wrist = new Motor(this, Constants.MotorIDs.i_wrist, Amps.of(40));
+    wrist.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
 
     // Define devices.
     defineDevice(

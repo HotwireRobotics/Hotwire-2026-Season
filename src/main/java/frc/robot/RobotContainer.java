@@ -101,7 +101,7 @@ public class RobotContainer {
                             .getTranslation()
                             .getNorm()));
               } else {
-                return Constants.Shooter.kSpeed;
+                return Constants.Shooter.kZero;
               }
             case TESTING:
               // Allow testing of shooter velocity via dashboard input, for characterization
@@ -303,14 +303,14 @@ public class RobotContainer {
     // Run shooter at target velocity when right bumper is held, and halt when released.
     Constants.Joysticks.operator
         .rightBumper()
-        .whileTrue(shooter.run())
+        .whileTrue(
+          shooter.run().alongWith(Commands.either(
+            hopper.run(), hopper.halt(), () -> shooter.isReady())))
         .onFalse(
-            shooter.halt()
-            // .andThen(Commands.either(hopper.run(), hopper.halt(), () -> shooter.isReady()))
-            );
+          shooter.halt().alongWith(hopper.halt()));
 
     // Run feeding mechanism.
-    Constants.Joysticks.operator.leftBumper().whileFalse(hopper.halt()).onTrue(hopper.run());
+    Constants.Joysticks.operator.leftBumper().whileFalse(hopper.halt()).whileTrue(hopper.run());
 
     // Raise intake to avoid impact.
     Constants.Joysticks.operator.povRight().onFalse(intake.lowerWrist()).onTrue(intake.emergency());

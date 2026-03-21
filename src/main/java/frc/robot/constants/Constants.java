@@ -52,8 +52,8 @@ public final class Constants {
     public static final Time kDebounce = Seconds.of(0.1);
 
     // Static target velocities and tolerances.
-    public static final AngularVelocity kSpeed = RPM.of(1500);
-    public static final AngularVelocity kVelocityTolerance = RPM.of(200);
+    public static final AngularVelocity kSpeed = RPM.of(2300);
+    public static final AngularVelocity kVelocityTolerance = RotationsPerSecond.of(7);
     public static final AngularVelocity kZero = RPM.of(0);
 
     // Drivetrain alignment error tolerance.
@@ -325,7 +325,7 @@ public final class Constants {
     public static final Integer s_shooterR = 12;
     public static final Integer s_shooterL = 13;
     public static final Integer h_hopper = 14;
-    public static final Integer i_arm = 15;
+    public static final Integer i_wrist = 15;
   }
 
   public static final PathConstraints constraints =
