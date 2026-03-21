@@ -188,7 +188,7 @@ public final class Constants {
     public static Alliance getAlliance() {
       Optional<Alliance> alliance = DriverStation.getAlliance();
       if (alliance == null) return Alliance.Red;
-      return Alliance.Blue;
+      return alliance.get();
     }
 
     /** Control haptic indicators based on time remaining in the match. */
@@ -342,7 +342,7 @@ public final class Constants {
    * @param pose
    */
   public static Pose2d allianceRelative(Pose2d pose) {
-    if (Constants.Indication.getAlliance().equals(Alliance.Blue)) {
+    if (Constants.Indication.getAlliance().equals(Alliance.Red)) {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
@@ -354,7 +354,7 @@ public final class Constants {
    * @param angle
    */
   public static Angle allianceRelative(Angle angle) {
-    if (Constants.Indication.getAlliance().equals(Alliance.Blue)) {
+    if (Constants.Indication.getAlliance().equals(Alliance.Red)) {
       return angle.plus(Degrees.of(180));
     }
     return angle;
