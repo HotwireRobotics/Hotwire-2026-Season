@@ -28,9 +28,6 @@ public class Hopper extends ModularSubsystem implements Systerface {
     hopper = new Motor(this, Constants.MotorIDs.h_hopper, Amps.of(40));
     hopper.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
 
-    // Define devices.
-    defineDevice(Device.HOPPER, hopper);
-
     // Intialize suppliers.
     this.speed = speed;
   }
