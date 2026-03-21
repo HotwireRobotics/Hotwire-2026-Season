@@ -13,7 +13,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
@@ -189,7 +188,7 @@ public final class Constants {
     public static Alliance getAlliance() {
       Optional<Alliance> alliance = DriverStation.getAlliance();
       if (alliance == null) return Alliance.Red;
-      return Alliance.Blue;
+      return alliance.get();
     }
 
     /** Control haptic indicators based on time remaining in the match. */
@@ -373,7 +372,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1235.92838;
+  public static final double base = 1435.92838;
   public static final double exponential = 1.00529;
 
   /**

@@ -59,21 +59,21 @@ public class LimelightArray extends SubsystemBase {
         new Limelight(
             "limelight-gamma",
             new Pose3d(
-                Meters.of(-0.23495),
-                Meters.of(-0.24764999999999998),
-                Meters.of(0.492125),
-                new Rotation3d(Degrees.of(0), Degrees.of(23), Degrees.of(0))));
+                Meters.of(-0.250824),
+                Meters.of(0.2794),
+                Meters.of(0.2413),
+                new Rotation3d(Degrees.of(0), Degrees.of(30), Degrees.of(-90))));
 
     private static final Limelight alpha =
         new Limelight(
             "limelight-alpha",
             new Pose3d(
-                Meters.of(-0.3302),
-                Meters.of(0.2667),
-                Meters.of(0.492125),
-                new Rotation3d(Degrees.of(0), Degrees.of(-10), Degrees.of(-174))));
+                Meters.of(-0.1651),
+                Meters.of(-0.29209),
+                Meters.of(0.5206),
+                new Rotation3d(Degrees.of(0), Degrees.of(27), Degrees.of(0))));
 
-    static final String[] names = {gamma.getName(), alpha.getName()};
+    static final String[] names = {alpha.getName(), gamma.getName()};
   }
 
   /** Define assist mode for the internal IMU. */
@@ -183,7 +183,6 @@ public class LimelightArray extends SubsystemBase {
         // Supply measurement to consumer with defined standard deviations.
         Matrix<N3, N1> stdDevs = VecBuilder.fill(0.7, 0.7, Double.POSITIVE_INFINITY);
         if (Dashboard.visionEnabled.get()) this.supply.accept(MT2estimate, stdDevs);
-        break;
       } else {
         Logger.recordOutput(limelight + " Detecting", false);
       }

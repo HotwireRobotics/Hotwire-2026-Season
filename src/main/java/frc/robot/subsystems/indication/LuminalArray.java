@@ -128,7 +128,8 @@ public class LuminalArray extends SubsystemBase {
     return () -> ((((time.in(Seconds) * frequency.in(Hertz)) % 2) >= 1.7) ? high : low);
   }
 
-  // private Supplier<ControlRequest> chase(ControlRequest high, ControlRequest low, int wavelength) {
+  // private Supplier<ControlRequest> chase(ControlRequest high, ControlRequest low, int wavelength)
+  // {
   //   return () -> ((((time.in(Seconds) / wavelength) % 2) == 1) ? high : low);
   // };
 
@@ -144,7 +145,7 @@ public class LuminalArray extends SubsystemBase {
       case VISION -> controls.visible;
       case AUTODISABLED -> controls.autodisabled;
       case AUTOENABLED -> controls.autoenabled;
-      // case WARNING -> controls.warning;
+        // case WARNING -> controls.warning;
     };
   }
 
