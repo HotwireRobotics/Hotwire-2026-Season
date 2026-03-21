@@ -56,7 +56,7 @@ public class RobotContainer {
   public boolean inverse = false;
   public double testVelocity = 0;
   public final Supplier<Integer> kInverse = () -> (inverse ? -1 : 1);
-  public VelocityType velocityType = VelocityType.REGRESSION;
+  public VelocityType velocityType = VelocityType.STATIC;
 
   // Methodic toggles.
   private final Command velocity(VelocityType type) {
