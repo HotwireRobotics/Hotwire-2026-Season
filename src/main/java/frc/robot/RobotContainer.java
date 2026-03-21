@@ -273,7 +273,7 @@ public class RobotContainer {
     }
 
     // Hold wheel position.
-    Constants.Joysticks.driver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    Constants.Joysticks.driver.rightBumper().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     // Seed limelights and zero pose heading.
     Constants.Joysticks.driver
