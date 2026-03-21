@@ -288,7 +288,13 @@ public final class Constants {
       return !isActive() && isTimeActive(Tempo.getTime().plus(warning));
     }
 
+    /** Identify if the robot should begin shooting. */
+    public static boolean isPreping() {
+      return !isActive() && isTimeActive(Tempo.getTime().plus(preping));
+    }
+
     public static final Time warning = Seconds.of(7);
+    public static final Time preping = Seconds.of(2);
 
     public static final Time[] transitions = {
       Seconds.of(20), Seconds.of(30), Seconds.of(55),
@@ -372,7 +378,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1435.92838;
+  public static final double base = 1300.92838;
   public static final double exponential = 1.00529;
 
   /**

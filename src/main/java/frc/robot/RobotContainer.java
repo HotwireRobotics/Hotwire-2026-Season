@@ -294,23 +294,32 @@ public class RobotContainer {
     // Toggle intake between raised and lowered positions to aggitate fuel.
     Constants.Joysticks.operator
         .povUp()
-        .onFalse(intake.lowerWrist().alongWith(intake.halt()))
-        .onTrue(intake.raiseWrist(Degrees.of(60)).alongWith(intake.run()));
+        .onTrue(intake.raiseWrist(Degrees.of(60)).alongWith(intake.run().repeatedly()))
+        .onFalse(intake.lowerWrist().alongWith(intake.halt()));
 
     // Run intake rollers at full speed when left trigger is held, and halt when released.
-    Constants.Joysticks.operator.leftTrigger().onFalse(intake.halt()).onTrue(intake.run());
+    Constants.Joysticks.operator.leftTrigger()
+        .onTrue(intake.run().repeatedly())
+        .onFalse(intake.halt());
 
     // Run shooter at target velocity when right bumper is held, and halt when released.
     Constants.Joysticks.operator
-        .rightBumper()
+        .rightTrigger()
         .whileTrue(
-          shooter.run().alongWith(Commands.either(
-            hopper.run(), hopper.halt(), () -> shooter.isReady())))
+          shooter.run().repeatedly().alongWith(Commands.either(
+            hopper.run().repeatedly(), hopper.halt(), () -> shooter.isReady())))
         .onFalse(
           shooter.halt().alongWith(hopper.halt()));
 
+    Constants.Joysticks.operator
+        .rightBumper()
+        .whileTrue(
+          shooter.run().repeatedly())
+        .onFalse(
+          shooter.halt());
+
     // Run feeding mechanism.
-    Constants.Joysticks.operator.leftBumper().whileFalse(hopper.halt()).whileTrue(hopper.run());
+    Constants.Joysticks.operator.leftBumper().whileFalse(hopper.halt()).whileTrue(hopper.run().repeatedly());
 
     // Raise intake to avoid impact.
     Constants.Joysticks.operator.povRight().onFalse(intake.lowerWrist()).onTrue(intake.emergency());

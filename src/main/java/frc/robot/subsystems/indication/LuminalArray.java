@@ -36,7 +36,7 @@ public class LuminalArray extends SubsystemBase {
     EMERGENCY,
     VISION,
     AUTODISABLED,
-    // WARNING
+    WARNING
   }
 
   // Handle static and animation control requests.
@@ -80,15 +80,15 @@ public class LuminalArray extends SubsystemBase {
     public Supplier<Control> active = () -> Control.of(Colors.ACTIVE);
 
     public Supplier<Control> waning =
-        () -> Control.of(tick(Colors.ACTIVE, Colors.INACTIVE, Hertz.of(2)).get());
+        () -> Control.of(tick(Colors.INACTIVE, Colors.ACTIVE, Hertz.of(1.5)).get());
 
     public Supplier<Control> inactive = () -> Control.of(Colors.INACTIVE);
 
     public Supplier<Control> waxing =
-        () -> Control.of(toggle(Colors.ACTIVE, Colors.INACTIVE, Hertz.of(2)).get());
+        () -> Control.of(toggle(Colors.ACTIVE, Colors.INACTIVE, Hertz.of(1.5)).get());
 
-    // public Supplier<Control> warning =
-    //     () -> Control.of(chase(Colors.ACTIVE, Colors.INACTIVE, 7).get());
+    public Supplier<Control> warning =
+        () -> Control.of(toggle(Colors.INACTIVE, Colors.ACTIVE, Hertz.of(4)).get());
 
     // Teleoperated disabled.
     public Supplier<Control> teledisabled =
@@ -125,13 +125,8 @@ public class LuminalArray extends SubsystemBase {
 
   private Supplier<ControlRequest> tick(
       ControlRequest high, ControlRequest low, Frequency frequency) {
-    return () -> ((((time.in(Seconds) * frequency.in(Hertz)) % 2) >= 1.7) ? high : low);
+    return () -> ((((time.in(Seconds) * frequency.in(Hertz)) % 2) >= 1.87) ? high : low);
   }
-
-  // private Supplier<ControlRequest> chase(ControlRequest high, ControlRequest low, int wavelength)
-  // {
-  //   return () -> ((((time.in(Seconds) / wavelength) % 2) == 1) ? high : low);
-  // };
 
   // Get the correct control request for the active event.
   private Supplier<Control> getRequest(Event event) {
@@ -145,7 +140,7 @@ public class LuminalArray extends SubsystemBase {
       case VISION -> controls.visible;
       case AUTODISABLED -> controls.autodisabled;
       case AUTOENABLED -> controls.autoenabled;
-        // case WARNING -> controls.warning;
+      case WARNING -> controls.warning;
     };
   }
 
@@ -176,13 +171,9 @@ public class LuminalArray extends SubsystemBase {
     }
 
     if (DriverStation.isAutonomous()) {
-      if (DriverStation.isEnabled()) {
-        updateLEDs(getRequest(Event.AUTOENABLED).get());
-      } else {
-        updateLEDs(getRequest(Event.AUTODISABLED).get());
-      }
-    } else {
-      if (DriverStation.isEnabled()) {
+      if (DriverStation.isEnabled()) updateLEDs(getRequest(Event.AUTOENABLED).get());
+      else updateLEDs(getRequest(Event.AUTODISABLED).get());
+    } else if (DriverStation.isEnabled()) {
         if (Constants.Indication.isActive()) {
           if (Constants.Indication.isWaning()) {
             updateLEDs(getRequest(Event.WANING).get());
@@ -191,17 +182,11 @@ public class LuminalArray extends SubsystemBase {
           }
         } else {
           if (Constants.Indication.isWaxing()) {
-            updateLEDs(getRequest(Event.WAXING).get());
-            // updateLEDs(getRequest(Event.WARNING).get());
-          } else {
-            updateLEDs(getRequest(Event.INACTIVE).get());
-            // updateLEDs(getRequest(Event.WARNING).get());
-          }
+            if (Constants.Indication.isPreping()) updateLEDs(getRequest(Event.WARNING).get());
+            else updateLEDs(getRequest(Event.WAXING).get());
+          } else updateLEDs(getRequest(Event.INACTIVE).get());
         }
-      } else {
-        updateLEDs(getRequest(Event.TELEDISABLED).get());
-      }
-    }
+      } else updateLEDs(getRequest(Event.TELEDISABLED).get());
   }
 
   private Control state_ = null;
