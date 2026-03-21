@@ -31,10 +31,8 @@ public class Robot extends LoggedRobot {
 
   private final Field2d field = new Field2d();
 
-  // Orchestra music;
-
   public Robot() {
-    // Record metadata
+    // Record metadata.
     Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
     Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
     Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
@@ -48,19 +46,19 @@ public class Robot extends LoggedRobot {
           default -> "Unknown";
         });
 
-    // Set up data receivers and replay source
+    // Set up data receivers and replay source.
     switch (Constants.currentMode) {
-      case REAL: // Real robot
+      case REAL:
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
         break;
 
-      case SIM: // ! Not real
+      case SIM:
         Logger.addDataReceiver(new NT4Publisher());
         break;
 
       case REPLAY:
-        // Replaying a log, set up replay source
+        // Replaying a log, set up replay source.
         setUseTiming(false);
         String logPath = LogFileUtil.findReplayLog();
         Logger.setReplaySource(new WPILOGReader(logPath));
@@ -68,24 +66,16 @@ public class Robot extends LoggedRobot {
         break;
     }
 
+    // Start logging.
     Logger.start();
 
+    // Initialize robot container.
     robotContainer = new RobotContainer();
 
-    SmartDashboard.putNumber("Oscillate", Constants.Intake.kOscillationFrequency.in(Hertz));
+    // Robot test configuration.
     SmartDashboard.putNumber("Test Shooter RPM", robotContainer.testVelocity);
     SmartDashboard.setPersistent("Test Shooter RPM");
     SmartDashboard.putData("Robot Pose (Field)", field);
-
-    // music = new Orchestra();
-    // music.addInstrument(robotContainer.intake.rollers);
-    // music.addInstrument(robotContainer.shooter.m_feeder);
-    // music.addInstrument(robotContainer.shooter.m_rightShooter);
-    // music.addInstrument(robotContainer.shooter.m_leftShooter);
-
-    // music.loadMusic(
-    //
-    // "C:\\Users\\HotwireProgrammer\\Documents\\Repositories\\2026Hotwire\\src\\main\\deploy\\orchestra\\output.chrp");
   }
 
   private enum Indicate {
@@ -95,7 +85,6 @@ public class Robot extends LoggedRobot {
   }
 
   public void indicateLimelight(Indicate mode) {
-    Boolean b = (Math.floor(time.in(Seconds) * 10) % 2) == 1;
     switch (mode) {
       case DISABLED:
         for (String limelight : Constants.Limelight.limelights) {
@@ -170,8 +159,6 @@ public class Robot extends LoggedRobot {
     }
     Constants.Tempo.startTime();
   }
-
-  // "uwu" -brylee
 
   @Override
   public void autonomousPeriodic() {
