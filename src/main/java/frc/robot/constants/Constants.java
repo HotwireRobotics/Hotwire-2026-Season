@@ -372,7 +372,7 @@ public final class Constants {
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1235.92838;
+  public static final double base = 1435.92838;
   public static final double exponential = 1.00529;
 
   /**

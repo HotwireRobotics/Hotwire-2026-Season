@@ -60,9 +60,9 @@ public class LimelightArray extends SubsystemBase {
             "limelight-gamma",
             new Pose3d(
                 Meters.of(-0.250824),
-                Meters.of(-0.2794),
+                Meters.of(0.2794),
                 Meters.of(0.2413),
-                new Rotation3d(Degrees.of(0), Degrees.of(30), Degrees.of(90))));
+                new Rotation3d(Degrees.of(0), Degrees.of(30), Degrees.of(-90))));
 
     private static final Limelight alpha =
         new Limelight(
