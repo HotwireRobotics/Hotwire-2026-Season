@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
+import frc.robot.constants.Field;
 import frc.robot.constants.Constants.Mode;
 import frc.robot.constants.LimelightHelpers.PoseEstimate;
 import frc.robot.generated.TunerConstants;
@@ -142,38 +143,46 @@ public class Drive extends SubsystemBase {
                 (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
   }
 
-  public Drive(Constants.Mode mode) {
-    // Mode m = switch (mode) {
-    //   case REAL -> new GyroIOPigeon2();
-    //   case SIM -> new GyroIO() {};
-    //   default -> new GyroIO() {};
-    // },
-    // switch (mode) {
-    //   case REAL -> new ModuleIO[] {
-    //       new ModuleIOTalonFX(TunerConstants.FrontLeft),
-    //       new ModuleIOTalonFX(TunerConstants.FrontRight),
-    //       new ModuleIOTalonFX(TunerConstants.BackLeft),
-    //       new ModuleIOTalonFX(TunerConstants.BackRight)
-    //   };
-    //   case SIM -> new ModuleIO[] {
-    //       new ModuleIOSim(TunerConstants.FrontLeft),
-    //       new ModuleIOSim(TunerConstants.FrontRight),
-    //       new ModuleIOSim(TunerConstants.BackLeft),
-    //       new ModuleIOSim(TunerConstants.BackRight)
-    //   };
-    //   default -> new ModuleIO[] {
-    //       new ModuleIO() {},
-    //       new ModuleIO() {},
-    //       new ModuleIO() {},
-    //       new ModuleIO() {}
-    //   };
-    // }
+  public Drive(GyroIO gyro, ModuleIO[] modules) {
     this(
-        new GyroIOPigeon2(),
-        new ModuleIOTalonFX(TunerConstants.FrontLeft),
-        new ModuleIOTalonFX(TunerConstants.FrontRight),
-        new ModuleIOTalonFX(TunerConstants.BackLeft),
-        new ModuleIOTalonFX(TunerConstants.BackRight));
+      gyro,
+      modules[0], modules[1],
+      modules[2], modules[3]
+    );
+  }
+
+  public Drive(Constants.Mode mode) {
+    this(switch (mode) {
+      case REAL -> new GyroIOPigeon2();
+      case SIM -> new GyroIO() {};
+      default -> new GyroIO() {};
+    },
+    switch (mode) {
+      case REAL -> new ModuleIO[] {
+          new ModuleIOTalonFX(TunerConstants.FrontLeft),
+          new ModuleIOTalonFX(TunerConstants.FrontRight),
+          new ModuleIOTalonFX(TunerConstants.BackLeft),
+          new ModuleIOTalonFX(TunerConstants.BackRight)
+      };
+      case SIM -> new ModuleIO[] {
+          new ModuleIOSim(TunerConstants.FrontLeft),
+          new ModuleIOSim(TunerConstants.FrontRight),
+          new ModuleIOSim(TunerConstants.BackLeft),
+          new ModuleIOSim(TunerConstants.BackRight)
+      };
+      default -> new ModuleIO[] {
+          new ModuleIO() {},
+          new ModuleIO() {},
+          new ModuleIO() {},
+          new ModuleIO() {}
+      };
+    });
+    // this(
+    //     new GyroIOPigeon2(),
+    //     new ModuleIOTalonFX(TunerConstants.FrontLeft),
+    //     new ModuleIOTalonFX(TunerConstants.FrontRight),
+    //     new ModuleIOTalonFX(TunerConstants.BackLeft),
+    //     new ModuleIOTalonFX(TunerConstants.BackRight));
   }
 
   @Override
@@ -409,5 +418,13 @@ public class Drive extends SubsystemBase {
       new Translation2d(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
       new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
     };
+  }
+
+  public boolean isNeutralZone() {
+    return (
+      (getPose().getMeasureX().gt(Inches.of(180))) &&
+      (getPose().getMeasureX().lt(Constants.middle.getMeasureX().times(2)
+          .minus(Inches.of(180))))
+    );
   }
 }
