@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -140,7 +139,6 @@ public class Robot extends LoggedRobot {
     // Update field visualization.
     field.setRobotPose(robotContainer.drive.getPose());
   }
-
 
   @Override
   public void disabledInit() {
