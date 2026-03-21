@@ -188,7 +188,7 @@ public final class Constants {
     public static Alliance getAlliance() {
       Optional<Alliance> alliance = DriverStation.getAlliance();
       if (alliance == null) return Alliance.Red;
-      return Alliance.Blue;
+      return alliance.get();
     }
 
     /** Control haptic indicators based on time remaining in the match. */
