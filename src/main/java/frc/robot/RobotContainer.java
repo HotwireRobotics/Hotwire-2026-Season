@@ -223,14 +223,14 @@ public class RobotContainer {
     double dy = hubPose.getY() - robotPose.getY();
 
     // Angle from robot to hub
-    Angle toHub = Radians.of(Math.IEEEremainder(Math.atan2(dy, dx), Constants.Mathematics.TAU));
+    Angle toHub = Constants.allianceRelative(Radians.of(Math.IEEEremainder(Math.atan2(dy, dx), Constants.Mathematics.TAU)));
 
     // Log the pointer
     Pose2d pointer = new Pose2d(robotPose.getX(), robotPose.getY(), new Rotation2d(toHub));
     Logger.recordOutput("Hub Pointer", pointer);
 
     // Update drive target.
-    drive.setRotationTarget(new Rotation2d(toHub));
+    drive.setRotationTarget(new Rotation2d(toHub).rotateBy(Rotation2d.k180deg));
 
     return drive.getRotationTarget();
   }
