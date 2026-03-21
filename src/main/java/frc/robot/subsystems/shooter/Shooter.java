@@ -31,6 +31,13 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
   private final Supplier<AngularVelocity> velocity;
 
+  // Declare device enum.
+  public enum Device {
+    FEEDER,
+    RIGHT,
+    LEFT
+  }
+
   private final Debouncer debouncer = new Debouncer(Constants.Shooter.kDebounce.in(Seconds));
 
   public Shooter(Supplier<AngularVelocity> velocity) {
@@ -45,6 +52,13 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
     feeder = new Motor(this, Constants.MotorIDs.s_feeder, Amps.of(40));
     feeder.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+
+    // Define devices.
+    defineDevice(
+      new DevicePointer(Device.RIGHT, right),
+      new DevicePointer(Device.LEFT,  left),
+      new DevicePointer(Device.FEEDER, feeder)
+    );
 
     leftSlot.withKV(0.12009).withKS(0.24998).withKP(0.8);
     rightSlot.withKV(0.11965).withKS(0.34220).withKP(0.8);
@@ -82,10 +96,7 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
   @Override
   public void periodic() {
-
-    left.log();
-    right.log();
-    feeder.log();
+    logDevices();
 
     Logs.log(this, state);
   }

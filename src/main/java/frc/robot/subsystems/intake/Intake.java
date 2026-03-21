@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -24,7 +25,7 @@ import java.util.function.Supplier;
 public class Intake extends ModularSubsystem implements Systerface {
 
   // Declare devices.
-  public final Motor rollers, wrist;
+  public final Motor rollers, left, right;
 
   // Declare suppliers.
   private final Supplier<Double> speed;
@@ -36,7 +37,8 @@ public class Intake extends ModularSubsystem implements Systerface {
   // Declare device enum.
   public enum Device {
     ROLLERS,
-    WRIST
+    RIGHT,
+    LEFT,
   }
 
   public enum ArmState {
@@ -52,13 +54,18 @@ public class Intake extends ModularSubsystem implements Systerface {
     rollers = new Motor(this, Constants.MotorIDs.i_rollers, Amps.of(40));
     rollers.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
 
-    wrist = new Motor(this, Constants.MotorIDs.i_wrist, Amps.of(40));
-    wrist.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
+    left = new Motor(this, Constants.MotorIDs.i_wristL, Amps.of(45));
+    left.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
+
+    right = new Motor(this, Constants.MotorIDs.i_wristL, Amps.of(45));
+    right.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
+    right.setMaster(left, false);
 
     // Define devices.
     defineDevice(
       new DevicePointer(Device.ROLLERS, rollers),
-      new DevicePointer(Device.WRIST, wrist)
+      new DevicePointer(Device.LEFT, left),
+      new DevicePointer(Device.RIGHT, right)
     );
 
     // Initialize control loop.
@@ -68,8 +75,8 @@ public class Intake extends ModularSubsystem implements Systerface {
     configureProportional(18.0);
 
     // Configuration
-    wrist.setControl(control);
-    wrist.getConfigurator().apply(slot);
+    left.setControl(control);
+    left.getConfigurator().apply(slot);
 
     this.speed = speed;
   }
@@ -98,8 +105,8 @@ public class Intake extends ModularSubsystem implements Systerface {
   @Override
   public void periodic() {
     // Log devices and state.
-    rollers.log();
-    wrist.log();
+    logDevices();
+    
     Logs.log(this, state);
     Logs.write("Intake/ArmState", armState);
 
@@ -135,7 +142,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           configureProportional(18.0);
-          wrist.setControl(control.withPosition(angle));
+          left.setControl(control.withPosition(angle));
         });
   }
 
@@ -143,7 +150,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           configureProportional(18.0);
-          wrist.setControl(control.withPosition(Degrees.of(0)));
+          left.setControl(control.withPosition(Degrees.of(0)));
         });
   }
 
@@ -151,7 +158,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           configureProportional(28.0);
-          wrist.setControl(control.withPosition(Degrees.of(90)));
+          left.setControl(control.withPosition(Degrees.of(90)));
         });
   }
 }

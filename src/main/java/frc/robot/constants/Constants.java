@@ -331,7 +331,8 @@ public final class Constants {
     public static final Integer s_shooterR = 12;
     public static final Integer s_shooterL = 13;
     public static final Integer h_hopper = 14;
-    public static final Integer i_wrist = 15;
+    public static final Integer i_wristL = 15;
+    public static final Integer i_wristR = 18;
   }
 
   public static final PathConstraints constraints =

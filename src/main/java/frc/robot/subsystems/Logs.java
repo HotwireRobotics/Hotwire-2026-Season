@@ -17,35 +17,43 @@ public class Logs {
    *
    * @param motor
    */
-  public static void log(Motor motor) {
+  public static void log(Object fix, Motor motor) {
     Logger.recordOutput(
-        "Motors/" + motor.getSubsystem().getName() + '/' + motor.getDeviceID() + "/Position",
+        "Motors/" + motor.getSubsystem().getName() + '/' + fix + "/Position",
         motor.getPosition().getValue().in(Rotations),
         "rotations");
     Logger.recordOutput(
-        "Motors/" + motor.getSubsystem().getName() + '/' + motor.getDeviceID() + "/Velocity",
+        "Motors/" + motor.getSubsystem().getName() + '/' + fix + "/Velocity",
         motor.getVelocity().getValue().in(RotationsPerSecond),
         "RPS");
     Logger.recordOutput(
-        "Motors/" + motor.getSubsystem().getName() + '/' + motor.getDeviceID() + "/Acceleration",
+        "Motors/" + motor.getSubsystem().getName() + '/' + fix + "/Acceleration",
         motor.getAcceleration().getValue().in(RotationsPerSecondPerSecond),
         "RPS/s");
     Logger.recordOutput(
-        "Motors/" + motor.getSubsystem().getName() + '/' + motor.getDeviceID() + "/SupplyVoltage",
+        "Motors/" + motor.getSubsystem().getName() + '/' + fix + "/SupplyVoltage",
         motor.getSupplyVoltage().getValue().in(Volts),
         "V");
     Logger.recordOutput(
-        "Motors/" + motor.getSubsystem().getName() + '/' + motor.getDeviceID() + "/SupplyCurrent",
+        "Motors/" + motor.getSubsystem().getName() + '/' + fix + "/SupplyCurrent",
         motor.getSupplyCurrent().getValue().in(Amps),
         "A");
     Logger.recordOutput(
-        "Motors/" + motor.getSubsystem().getName() + '/' + motor.getDeviceID() + "/StatorCurrent",
+        "Motors/" + motor.getSubsystem().getName() + '/' + fix + "/StatorCurrent",
         motor.getStatorCurrent().getValue().in(Amps),
         "A");
     Logger.recordOutput(
-        "Motors/" + motor.getSubsystem().getName() + '/' + motor.getDeviceID() + "/Temperature",
+        "Motors/" + motor.getSubsystem().getName() + '/' + fix + "/Temperature",
         motor.getDeviceTemp().getValue().in(Celsius),
         "C");
+  }
+
+  public static void log(Motor motor) {
+    log(motor.getDeviceID(), motor);
+  }
+
+  public static void log(String name, Motor motor) {
+    log(name, motor);
   }
 
   /**

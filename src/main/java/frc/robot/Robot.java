@@ -117,6 +117,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
+    // Track time.
     time = Constants.Tempo.tick();
 
     // Control command scheduler and log data.

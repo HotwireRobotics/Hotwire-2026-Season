@@ -5,9 +5,11 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.units.measure.Current;
@@ -111,5 +113,14 @@ public class Motor extends TalonFX {
     output.withNeutralMode(neutral);
     output.withInverted(direction);
     configurator.apply(output);
+  }
+
+  public void setMaster(int id, boolean aligned) {
+    setControl(new Follower(id, aligned ? 
+        MotorAlignmentValue.Aligned : MotorAlignmentValue.Opposed));
+  }
+
+  public void setMaster(Motor motor, boolean aligned) {
+    setMaster(motor.getDeviceID(), aligned);
   }
 }

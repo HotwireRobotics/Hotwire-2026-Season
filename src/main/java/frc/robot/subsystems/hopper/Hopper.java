@@ -6,6 +6,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
+import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.Motor;
 import java.util.function.Supplier;
@@ -55,7 +56,9 @@ public class Hopper extends ModularSubsystem implements Systerface {
   @Override
   public void periodic() {
     // Log devices and state.
-    hopper.log();
+    logDevices();
+    
+    Logs.log(this, state);
 
     if (isActiveDevice(Device.HOPPER)) {
       state = State.FEEDING;

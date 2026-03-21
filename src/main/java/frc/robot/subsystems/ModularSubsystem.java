@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -127,8 +128,13 @@ public class ModularSubsystem extends SubsystemBase {
   public void logDevices() {
     for (Object device : devices.keySet()) {
       for (Motor d : getDevices(device)) {
-        Logs.log(d);
+        String name = device.toString();
+        Logs.log(name, d);
       }
     }
+  }
+
+  private void applyPercent(double percent, Motor... motors) {
+    for (var m : motors) m.set(percent);
   }
 }
