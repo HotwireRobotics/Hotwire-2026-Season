@@ -18,7 +18,9 @@ class State(Enum):
     TEST: int = None
 state: State = State.SIM
 
-NT.initialize(server=SERVER if (state == State.REAL) else "127.0.0.1")
+if (state == State.REAL): NT.initialize(server=SERVER)
+else:                NT.initialize(server="127.0.0.1")
+
 
 table: NetworkTable =       NT.getTable("AdvantageKit")
 driverStation =      table.getSubTable("DriverStation")
@@ -33,6 +35,7 @@ pg.mixer.init()
 sound: pg.Sound = pg.mixer.music.load(os.path.join(base, "assets", "rebuilt.mp3"))
 
 field: pg.Surface = pg.image.load(os.path.join(base, "assets", "field.png"))
+field = pg.transform.scale_by(pg.transform.flip(field, 1, 1), 0.5)
 width: float = 0.7112
 bumper: float = 0.2
 field_render = field.copy()
@@ -54,7 +57,7 @@ clock: pg.Clock = pg.Clock()
 
 screen: pg.Surface = pg.display.set_mode(size, pg.RESIZABLE|pg.SRCALPHA)
 
-origin = [0.5537142857142857] * 2
+origin = [0.0] * 2
 
 def sarr(*arrays: list, integer: bool = False) -> list:
     return list(sum((round(array[i]) if integer else array[i]) for array in arrays) for i in range(len(arrays[0])))
@@ -90,7 +93,7 @@ while RUNNING:
     screen.blit(field_render, (0, 0))
 
     if ((state == State.REAL) or (state == State.SIM)):
-        robotPose: list[int, int] = dashboard.getNumberArray("robot-pose", [0, 0])
+        robotPose: list[int, int] = dashboard.getNumberArray("robot-pose", [1, 1])
         # source: str = "http://limelight-one.local:5800/"
         # stream = requests.get(source, stream=True)
     elif (state == State.TEST):
