@@ -2,9 +2,9 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.*;
 
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -13,6 +13,7 @@ import frc.robot.constants.Constants;
 import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.Motor;
+import frc.robot.subsystems.Motor.Configuration;
 import java.util.function.Supplier;
 
 public class Shooter extends ModularSubsystem implements Systerface {
@@ -35,9 +36,21 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
     this.velocity = velocity;
 
-    left = new Motor(this, Constants.MotorIDs.s_shooterL, Amps.of(60));
-    right = new Motor(this, Constants.MotorIDs.s_shooterR, Amps.of(60));
-    feeder = new Motor(this, Constants.MotorIDs.s_feeder, Amps.of(40));
+    left =
+        new Motor(
+            this,
+            Constants.MotorIDs.s_shooterL,
+            new Configuration(Amps.of(60), InvertedValue.Clockwise_Positive));
+    right =
+        new Motor(
+            this,
+            Constants.MotorIDs.s_shooterR,
+            new Configuration(Amps.of(60), InvertedValue.CounterClockwise_Positive));
+    feeder =
+        new Motor(
+            this,
+            Constants.MotorIDs.s_feeder,
+            new Configuration(Amps.of(40), InvertedValue.Clockwise_Positive));
 
     leftSlot.withKV(0.12009).withKS(0.24998).withKP(0.8);
     rightSlot.withKV(0.11965).withKS(0.34220).withKP(0.8);

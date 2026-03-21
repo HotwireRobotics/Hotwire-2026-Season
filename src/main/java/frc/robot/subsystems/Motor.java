@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -18,7 +19,7 @@ public class Motor extends TalonFX {
   private final SysIdRoutine sysIdRoutine;
   private final Subsystem subsystem;
 
-  public Motor(Subsystem subsystem, int deviceID, Current limit) {
+  public Motor(Subsystem subsystem, int deviceID, Configuration configuration) {
     super(deviceID);
     // Identify TalonFX configuration.
     TalonFXConfigurator config = this.getConfigurator();
@@ -26,7 +27,7 @@ public class Motor extends TalonFX {
     // Limit current to 40A to prevent damage to the motor and robot.
     CurrentLimitsConfigs current =
         new CurrentLimitsConfigs()
-            .withSupplyCurrentLimit(limit.in(Amps))
+            .withSupplyCurrentLimit(configuration.getCurrentLimit().in(Amps))
             .withSupplyCurrentLimitEnable(true);
 
     // Apply configuration settings.
@@ -92,5 +93,29 @@ public class Motor extends TalonFX {
         sysIdQuasistatic(SysIdRoutine.Direction.kReverse),
         sysIdDynamic(SysIdRoutine.Direction.kForward),
         sysIdDynamic(SysIdRoutine.Direction.kReverse));
+  }
+
+  /** Define a motor configuration. */
+  public static class Configuration {
+    public final Current current;
+    public final InvertedValue direction;
+
+    public Configuration() {
+      this.current = Amps.of(20);
+      this.direction = InvertedValue.Clockwise_Positive;
+    }
+
+    public Configuration(Current current, InvertedValue direction) {
+      this.current = current;
+      this.direction = direction;
+    }
+
+    public Current getCurrentLimit() {
+      return this.current;
+    }
+
+    public InvertedValue getDirection() {
+      return this.direction;
+    }
   }
 }

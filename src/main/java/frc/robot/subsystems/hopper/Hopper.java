@@ -2,11 +2,13 @@ package frc.robot.subsystems.hopper;
 
 import static edu.wpi.first.units.Units.Amps;
 
+import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.Motor;
+import frc.robot.subsystems.Motor.Configuration;
 import java.util.function.Supplier;
 
 public class Hopper extends ModularSubsystem implements Systerface {
@@ -22,10 +24,11 @@ public class Hopper extends ModularSubsystem implements Systerface {
 
   public Hopper(Supplier<Double> speed) {
     // Initialize devices.
-    hopper = new Motor(this, Constants.MotorIDs.h_hopper, Amps.of(40));
-
-    // Define devices.
-    defineDevice(Device.HOPPER, hopper);
+    hopper =
+        new Motor(
+            this,
+            Constants.MotorIDs.h_hopper,
+            new Configuration(Amps.of(40), InvertedValue.Clockwise_Positive));
 
     // Intialize suppliers.
     this.speed = speed;
