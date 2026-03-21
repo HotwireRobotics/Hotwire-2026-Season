@@ -343,7 +343,7 @@ public final class Constants {
    * @param pose
    */
   public static Pose2d allianceRelative(Pose2d pose) {
-    if (Constants.Indication.getAlliance().equals(Alliance.Red)) {
+    if (Constants.Indication.getAlliance().equals(Alliance.Blue)) {
       return pose.rotateAround(middle, Rotation2d.k180deg);
     }
     return pose;
@@ -355,7 +355,7 @@ public final class Constants {
    * @param angle
    */
   public static Angle allianceRelative(Angle angle) {
-    if (Constants.Indication.getAlliance().equals(Alliance.Red)) {
+    if (Constants.Indication.getAlliance().equals(Alliance.Blue)) {
       return angle.plus(Degrees.of(180));
     }
     return angle;
