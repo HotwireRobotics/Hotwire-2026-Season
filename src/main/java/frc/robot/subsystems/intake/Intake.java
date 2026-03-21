@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
@@ -17,7 +19,6 @@ import frc.robot.constants.Constants;
 import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.Motor;
-import frc.robot.subsystems.Motor.Configuration;
 import java.util.function.Supplier;
 
 public class Intake extends ModularSubsystem implements Systerface {
@@ -48,16 +49,11 @@ public class Intake extends ModularSubsystem implements Systerface {
 
   public Intake(Supplier<Double> speed) {
     // Initialize devices.
-    wrist =
-        new Motor(
-            this,
-            Constants.MotorIDs.i_wrist,
-            new Configuration(Amps.of(40), InvertedValue.CounterClockwise_Positive));
-    rollers =
-        new Motor(
-            this,
-            Constants.MotorIDs.i_rollers,
-            new Configuration(Amps.of(40), InvertedValue.Clockwise_Positive));
+    rollers = new Motor(this, Constants.MotorIDs.i_rollers, Amps.of(40));
+    rollers.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+
+    wrist = new Motor(this, Constants.MotorIDs.i_wrist, Amps.of(40));
+    wrist.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
 
     // Initialize control loop.
     control = new PositionVoltage(Degrees.of(0));
