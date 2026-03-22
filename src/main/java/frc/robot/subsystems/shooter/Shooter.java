@@ -14,21 +14,30 @@ import frc.robot.Systerface;
 import frc.robot.constants.Constants;
 import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
-import frc.robot.subsystems.Motor;
+import frc.robot.subsystems.motors.Motor;
+import frc.robot.subsystems.motors.Motor.Feedback;
+import frc.robot.subsystems.motors.Motor.Feedforward;
+import frc.robot.subsystems.motors.MotorBase;
+import frc.robot.subsystems.motors.Motor.Application;
+import frc.robot.subsystems.motors.TalonFXIO;
+import frc.robot.subsystems.motors.MotorBase.Direction;
+import frc.robot.subsystems.motors.MotorBase.NeutralMode;
+import frc.robot.subsystems.motors.MotorLogs;
+
 import java.util.function.Supplier;
 
 public class Shooter extends ModularSubsystem implements Systerface {
 
+  // Abstraction
+  private final ShooterBase io;
+  private final ShooterLogs inputs = new ShooterLogs();
+
+  // Declare devices.
   public final Motor feeder;
   public final Motor left;
   public final Motor right;
 
-  private final VelocityVoltage velControl = new VelocityVoltage(0);
-
-  private final Slot0Configs leftSlot = new Slot0Configs();
-  private final Slot0Configs rightSlot = new Slot0Configs();
-  private final Slot0Configs feedSlot = new Slot0Configs();
-
+  // Declare suppliers.
   private final Supplier<AngularVelocity> velocity;
 
   // Declare device enum.
@@ -38,20 +47,25 @@ public class Shooter extends ModularSubsystem implements Systerface {
     LEFT
   }
 
+  // Deboucner for shooter readiness.
   private final Debouncer debouncer = new Debouncer(Constants.Shooter.kDebounce.in(Seconds));
 
-  public Shooter(Supplier<AngularVelocity> velocity) {
+  public Shooter(ShooterBase base) {
+    // Initialize abstraction.
+    this.io = base;
 
-    this.velocity = velocity;
+    // Initialize devices.
+    right = new Motor(this, new TalonFXIO(Constants.MotorIDs.s_shooterR));
+    right.apply(
+      new Application(Direction.FORWARD, NeutralMode.COAST, Amps.of(60)));
 
-    left = new Motor(this, Constants.MotorIDs.s_shooterL, Amps.of(60));
-    left.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
+    left = new Motor(this, new TalonFXIO(Constants.MotorIDs.s_shooterL));
+    left.apply(
+      new Application(Direction.REVERSE, NeutralMode.COAST, Amps.of(60)));
 
-    right = new Motor(this, Constants.MotorIDs.s_shooterR, Amps.of(60));
-    right.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
-
-    feeder = new Motor(this, Constants.MotorIDs.s_feeder, Amps.of(40));
-    feeder.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+    feeder = new Motor(this, new TalonFXIO(Constants.MotorIDs.s_feeder));
+    feeder.apply(
+      new Application(Direction.FORWARD, NeutralMode.COAST, Amps.of(40)));
 
     // Define devices.
     defineDevice(
@@ -60,11 +74,19 @@ public class Shooter extends ModularSubsystem implements Systerface {
       new DevicePointer(Device.FEEDER, feeder)
     );
 
-    leftSlot.withKV(0.12009).withKS(0.24998).withKP(0.8);
-    rightSlot.withKV(0.11965).withKS(0.34220).withKP(0.8);
-    feedSlot.withKV(0.12009).withKS(0.24998).withKP(0.8);
-
-    configureControl();
+    // Apply control constants.
+    left.apply(
+      new Feedforward(0.8, 0, 0), 
+      new Feedback(0.24998, 0.12009, 0)
+    );
+    right.apply(
+      new Feedforward(0.8, 0, 0), 
+      new Feedback(0.34220, 0.11965, 0)
+    );
+    feeder.apply(
+      new Feedforward(0.8, 0, 0), 
+      new Feedback(0.24998, 0.12009, 0)
+    );
 
     // var file = Filesystem.getDeployDirectory()
     //     .toPath()
@@ -102,11 +124,11 @@ public class Shooter extends ModularSubsystem implements Systerface {
   }
 
   private void applyVelocity(AngularVelocity velocity, Motor... motors) {
-    for (var m : motors) m.setControl(velControl.withVelocity(velocity));
+    for (var m : motors) m.runVelocity(velocity);
   }
 
   private void applyPercent(double percent, Motor... motors) {
-    for (var m : motors) m.set(percent);
+    for (var m : motors) m.runPercent(percent);
   }
 
   public void start() {
@@ -129,8 +151,8 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
   public boolean isReady() {
     return debouncer.calculate(
-        left.getVelocity().getValue().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance) &&
-        right.getVelocity().getValue().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance));
+        left.getVelocity().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance) &&
+        right.getVelocity().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance));
   }
 
   public Command run() {
@@ -139,12 +161,6 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
   public Command halt() {
     return runOnce(() -> stall());
-  }
-
-  private void configureControl() {
-    left.getConfigurator().apply(leftSlot);
-    right.getConfigurator().apply(rightSlot);
-    feeder.getConfigurator().apply(feedSlot);
   }
 
   public Command sysIdRightAnalysis() {

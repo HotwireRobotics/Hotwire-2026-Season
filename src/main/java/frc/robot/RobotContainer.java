@@ -23,6 +23,8 @@ import frc.robot.subsystems.indication.LuminalArray;
 import frc.robot.subsystems.indication.limelights.LimelightArray;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterReal;
+
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -117,7 +119,9 @@ public class RobotContainer {
         };
 
     // Initialize shooter subsystem.
-    shooter = new Shooter(() -> velocity.get().times(kInverse.get()));
+    shooter = new Shooter(new ShooterReal(
+      () -> velocity.get().times(kInverse.get())
+    ));
 
     // Initialize fuel intake and storage subsystems.
     intake = new Intake(() -> Constants.Intake.kSpeed * kInverse.get());
@@ -125,7 +129,11 @@ public class RobotContainer {
 
     // Initialize indicator subsystems.
     lights = new LuminalArray();
-    vision = new LimelightArray(drive::getPose, drive::getRotation, drive::addVisionMeasurement);
+    vision = new LimelightArray(
+      drive::getPose, 
+      drive::getRotation, 
+      drive::addVisionMeasurement
+    );
 
     // Configure button bindings.
     configureButtonBindings();

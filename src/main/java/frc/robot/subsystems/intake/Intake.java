@@ -19,7 +19,8 @@ import frc.robot.Systerface;
 import frc.robot.constants.Constants;
 import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
-import frc.robot.subsystems.Motor;
+import frc.robot.subsystems.motors.Motor;
+
 import java.util.function.Supplier;
 
 public class Intake extends ModularSubsystem implements Systerface {

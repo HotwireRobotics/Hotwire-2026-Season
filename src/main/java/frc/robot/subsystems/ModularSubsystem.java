@@ -5,6 +5,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.motors.Motor;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +48,7 @@ public class ModularSubsystem extends SubsystemBase {
     return Commands.runOnce(
         () -> {
           for (Motor d : getDevices(device)) {
-            d.set(speed);
+            d.runPercent(speed);
           }
           if (speed == 0) {
             specifyInactiveDevice(device);
@@ -66,7 +68,7 @@ public class ModularSubsystem extends SubsystemBase {
     return Commands.runOnce(
         () -> {
           for (Motor d : getDevices(device)) {
-            d.set(speed.get());
+            d.runPercent(speed.get());
           }
           if (speed.get() == 0) {
             specifyInactiveDevice(device);
@@ -135,6 +137,6 @@ public class ModularSubsystem extends SubsystemBase {
   }
 
   private void applyPercent(double percent, Motor... motors) {
-    for (var m : motors) m.set(percent);
+    for (var m : motors) m.runPercent(percent);
   }
 }
