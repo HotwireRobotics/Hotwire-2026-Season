@@ -52,7 +52,7 @@ public final class Constants {
     public static final Time kDebounce = Seconds.of(0.1);
 
     // Static target velocities and tolerances.
-    public static final AngularVelocity kSpeed = RPM.of(2300);
+    public static final AngularVelocity kSpeed = RPM.of(2400);
     public static final AngularVelocity kVelocityTolerance = RotationsPerSecond.of(7);
     public static final AngularVelocity kZero = RPM.of(0);
 
@@ -356,6 +356,15 @@ public final class Constants {
   }
 
   /**
+   * Mirror pose.
+   *
+   * @param pose
+   */
+  public static Pose2d mirror(Pose2d pose) {
+    return new Pose2d(middle.getMeasureX().times(2).minus(pose.getMeasureX()), pose.getMeasureY(), pose.getRotation());
+  }
+
+  /**
    * Flip an angle based on alliance color.
    *
    * @param angle
@@ -417,11 +426,12 @@ public final class Constants {
         new AllianceRelativePose(new Pose2d(Meters.of(4.625594), Meters.of(3.965), Rotation2d.k180deg));
     public static final AllianceRelativePose lowerStart = 
         new AllianceRelativePose(new Pose2d(Meters.of(3.583), Meters.of(1.965326), Rotation2d.k180deg));
-            
+    public static final AllianceRelativePose pointer = 
+        new AllianceRelativePose(new Pose2d(Meters.of(0.5), Meters.of(0.5), Rotation2d.k180deg));
   }
 
   // Derived from relationship between distance (m) and rotation (RPM).
-  public static final double base = 1300.92838;
+  public static final double base = 1350.92838;
   public static final double exponential = 1.00529;
 
   /**

@@ -241,9 +241,31 @@ public class RobotContainer {
     return drive.getRotationTarget();
   }
 
+  private Rotation2d calculatePassingRotation() {
+    // Get poses.
+    Pose2d robotPose = drive.getPose();
+    Pose2d pointer = Constants.Poses.pointer.getPose();
+
+    // pointer = (drive.isRightSide()) ? pointer : Constants.mirror(pointer);
+    
+    // Pose differences.
+    double dx = pointer.getX() - robotPose.getX();
+    double dy = pointer.getY() - robotPose.getY();
+
+    // Angle from robot to hub
+    Angle toPass = (Radians.of(Math.IEEEremainder(Math.atan2(dy, dx), Constants.Mathematics.TAU)));
+    
+    // Update drive target.
+    drive.setRotationTarget(new Rotation2d(toPass));
+
+    return drive.getRotationTarget();
+  }
+
   /** Orient robot to face the hub. */
   private Command firingOrientation() {
-    return pointToAngle(this::calculateHubRotation);
+    return drive.isNeutralZone() 
+      ? pointToAngle(this::calculatePassingRotation)
+      : pointToAngle(this::calculateHubRotation);
   }
 
   /**

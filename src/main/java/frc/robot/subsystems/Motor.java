@@ -115,11 +115,23 @@ public class Motor extends TalonFX {
     configurator.apply(output);
   }
 
+  /**
+   * Configure follower target.
+   * 
+   * @param id
+   * @param aligned
+   */
   public void setMaster(int id, boolean aligned) {
     setControl(new Follower(id, aligned ? 
         MotorAlignmentValue.Aligned : MotorAlignmentValue.Opposed));
   }
 
+  /**
+   * Configure follower target from primary motor.
+   * 
+   * @param motor
+   * @param aligned
+   */
   public void setMaster(Motor motor, boolean aligned) {
     setMaster(motor.getDeviceID(), aligned);
   }

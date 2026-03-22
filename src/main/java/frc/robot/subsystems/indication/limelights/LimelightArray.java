@@ -56,24 +56,30 @@ public class LimelightArray extends SubsystemBase {
     }
 
     private static final Limelight gamma =
-        new Limelight(
-            "limelight-gamma",
-            new Pose3d(
-                Meters.of(-0.250824),
-                Meters.of(0.2794),
-                Meters.of(0.2413),
-                new Rotation3d(Degrees.of(0), Degrees.of(30), Degrees.of(-90))));
+        new Limelight("limelight-gamma",
+          new Pose3d(
+            Meters.of(-0.250824), 
+            Meters.of(0.2794), 
+            Meters.of(0.2413),
+            new Rotation3d(
+              Degrees.of(0), 
+              Degrees.of(30), 
+              Degrees.of(-90)
+            )));
 
     private static final Limelight alpha =
-        new Limelight(
-            "limelight-alpha",
-            new Pose3d(
-                Meters.of(-0.1651),
-                Meters.of(-0.29209),
-                Meters.of(0.5206),
-                new Rotation3d(Degrees.of(0), Degrees.of(27), Degrees.of(0))));
+        new Limelight("limelight-alpha",
+          new Pose3d(
+            Meters.of(-0.1651), 
+            Meters.of(-0.29209), 
+            Meters.of(0.5206),
+            new Rotation3d(
+              Degrees.of(0), 
+              Degrees.of(27), 
+              Degrees.of(0)
+            )));
 
-    static final String[] names = {alpha.getName(), gamma.getName()};
+    static final String[] keys = {alpha.getName(), gamma.getName()};
   }
 
   /** Define assist mode for the internal IMU. */
@@ -118,7 +124,7 @@ public class LimelightArray extends SubsystemBase {
     // Consumer
     this.supply = supplyMeasurement;
     // Initialize limelights
-    for (String limelight : Configuration.names) {
+    for (String limelight : Configuration.keys) {
       LimelightHelpers.setPipelineIndex(limelight, 0);
       LimelightHelpers.SetIMUAssistAlpha(limelight, 0.005);
     }
@@ -131,7 +137,7 @@ public class LimelightArray extends SubsystemBase {
    * @param alpha
    */
   public void setIMUAssistAlpha(double alpha) {
-    for (String limelight : Configuration.names) {
+    for (String limelight : Configuration.keys) {
       LimelightHelpers.SetIMUAssistAlpha(limelight, alpha);
     }
   }
@@ -161,7 +167,7 @@ public class LimelightArray extends SubsystemBase {
 
     Logger.recordOutput("Limelight/Heading", heading);
 
-    for (String limelight : Configuration.names) {
+    for (String limelight : Configuration.keys) {
 
       // Configure periodically.
       LimelightHelpers.SetIMUMode(limelight, mode);
