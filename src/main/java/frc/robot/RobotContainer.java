@@ -21,6 +21,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.indication.LuminalArray;
 import frc.robot.subsystems.indication.limelights.LimelightArray;
+import frc.robot.subsystems.indication.limelights.LimelightArray.IMUMode;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.BooleanSupplier;
@@ -39,7 +40,7 @@ public class RobotContainer {
 
   // Static configuration.
   private final boolean firstPerson = false;
-  private final boolean testing = false;
+  private final boolean testing = true;
 
   // Alignment supplier.
   public final BooleanSupplier aligned;
@@ -229,14 +230,17 @@ public class RobotContainer {
     double dy = hubPose.getY() - robotPose.getY();
 
     // Angle from robot to hub
-    Angle toHub = Constants.allianceRelative(Radians.of(Math.IEEEremainder(Math.atan2(dy, dx), Constants.Mathematics.TAU)));
+    Rotation2d rotation = new Rotation2d(
+        Radians.of(Math.IEEEremainder(
+            Math.atan2(dy, dx), 
+            Constants.Mathematics.TAU)));
 
     // Log the pointer
-    Pose2d pointer = new Pose2d(robotPose.getX(), robotPose.getY(), new Rotation2d(toHub));
+    Pose2d pointer = new Pose2d(robotPose.getX(), robotPose.getY(), rotation);
     Logger.recordOutput("Hub Pointer", pointer);
 
     // Update drive target.
-    drive.setRotationTarget(new Rotation2d(toHub).rotateBy(Rotation2d.k180deg));
+    drive.setRotationTarget(rotation);
 
     return drive.getRotationTarget();
   }
@@ -263,9 +267,10 @@ public class RobotContainer {
 
   /** Orient robot to face the hub. */
   private Command firingOrientation() {
-    return drive.isNeutralZone() 
-      ? pointToAngle(this::calculatePassingRotation)
-      : pointToAngle(this::calculateHubRotation);
+    // return drive.isNeutralZone() 
+    //   ? pointToAngle(this::calculatePassingRotation)
+    //   : pointToAngle(this::calculateHubRotation);
+    return pointToAngle(this::calculateHubRotation);
   }
 
   /**
@@ -303,21 +308,13 @@ public class RobotContainer {
     // Hold wheel position.
     Constants.Joysticks.driver.rightBumper().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    // Seed limelights and zero pose heading.
+    // Zero pose heading.
     Constants.Joysticks.driver
         .a()
-        .onTrue(
-            Commands.runOnce(
-                    () -> {
-                      drive.setPose(new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero));
-                      for (String limelight : Constants.Limelight.localization) {
-                        LimelightHelpers.SetIMUMode(limelight, 0);
-                        LimelightHelpers.SetRobotOrientation(limelight, 0, 0, 0, 0, 0, 0);
-                        LimelightHelpers.SetIMUMode(limelight, 2);
-                      }
-                    },
-                    drive)
-                .ignoringDisable(true));
+        .onTrue(Commands.runOnce(
+          () -> drive.setPose(new Pose2d(drive.getPose()
+              .getTranslation(), Rotation2d.kZero)), drive)
+              .ignoringDisable(true));
 
     // Toggle intake between raised and lowered positions to aggitate fuel.
     Constants.Joysticks.operator
