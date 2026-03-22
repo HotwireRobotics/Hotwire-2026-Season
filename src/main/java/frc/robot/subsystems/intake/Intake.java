@@ -75,11 +75,10 @@ public class Intake extends ModularSubsystem implements Systerface {
     configureProportional(14);
 
     // Configuration
-    left.setControl(control);
-    left.getConfigurator().apply(slot);
+    right.setControl(control);
+    right.getConfigurator().apply(slot);
 
-    right.setControl(new Follower(Constants.MotorIDs.i_wristL, MotorAlignmentValue.Opposed));
-    right.setMaster(left, false);
+    left.setMaster(right, false);
 
     this.speed = speed;
   }
