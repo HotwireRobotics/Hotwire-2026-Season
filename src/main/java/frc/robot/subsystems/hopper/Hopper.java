@@ -1,60 +1,79 @@
 package frc.robot.subsystems.hopper;
 
-import com.ctre.phoenix6.hardware.TalonFX;
+import static edu.wpi.first.units.Units.Amps;
+
+import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
+import frc.robot.subsystems.Logs;
+import frc.robot.subsystems.ModularSubsystem;
+import frc.robot.subsystems.Motor;
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
+
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class Hopper extends ModularSubsystem implements Systerface {
-  private final TalonFX hopper;
+  private final Motor hopper;
 
+  // Declare suppliers.
+  private final Supplier<Double> speed;
+
+  // Declare device enum.
   public enum Device {
     HOPPER
   }
 
-  public Hopper() {
-    hopper = new TalonFX(Constants.MotorIDs.h_hopper);
+  public Hopper(Supplier<Double> speed) {
+    // Initialize devices.
+    hopper = new Motor(this, Constants.MotorIDs.h_hopper, Amps.of(60));
+    hopper.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+
+    // Define devices.
     defineDevice(Device.HOPPER, hopper);
+
+    // Intialize suppliers.
+    this.speed = speed;
   }
 
+  public Hopper() {
+    this(() -> Constants.Hopper.kSpeed);
+  }
+
+  // State system.
   private enum State {
-    STOPPED
+    STOPPED,
+    FEEDING
   }
 
   State state = State.STOPPED;
 
+  // Supply state.
   public Object getState() {
     return state;
   }
 
   @Override
   public void periodic() {
-    Logger.recordOutput(
-        "Hopper/upperFeed/Position", hopper.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Velocity", hopper.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Voltage", hopper.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Current", hopper.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Hopper/upperFeed/Temperature", hopper.getDeviceTemp().getValueAsDouble(), "°C");
+    // Log devices and state.
+    logDevices();
+    
+    Logs.log(this, state);
+
+    if (isActiveDevice(Device.HOPPER)) {
+      state = State.FEEDING;
+    } else {
+      state = State.STOPPED;
+    }
   }
 
-  public Command runHopper() {
-    return runDevice(Device.HOPPER, Constants.Hopper.kSpeed);
+  /** Run the hopper at the specified speed. */
+  public Command run() {
+    return runDevice(Device.HOPPER, speed, this);
   }
 
-  public Command runHopper(Supplier<Boolean> inverse) {
-    return runDevice(Device.HOPPER, () -> (Constants.Hopper.kSpeed * (inverse.get() ? -1 : 1)));
-  }
-
-  public Command stopHopper() {
-    Command command = runDevice(Device.HOPPER, 0);
-    command.addRequirements(this);
-    return command;
+  /** Halt the hopper. */
+  public Command halt() {
+    return runDevice(Device.HOPPER, 0, this);
   }
 }

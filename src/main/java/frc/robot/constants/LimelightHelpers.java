@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.constants;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Shape;
