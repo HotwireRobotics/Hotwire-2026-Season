@@ -51,6 +51,7 @@ public final class Constants {
     public static final Time k60Time = Seconds.of(3);
     public static final Time kDebounce = Seconds.of(0.1);
 
+    // Physical constants for shooter mechanism.
     public static final Distance kWheelRadius = Inches.of(2);
 
     // Static target velocities and tolerances.
