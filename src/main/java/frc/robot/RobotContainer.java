@@ -20,6 +20,7 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.constants.Constants;
 import frc.robot.constants.LimelightHelpers;
 import frc.robot.simulation.Gamepiece;
+import frc.robot.simulation.Handler;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.indication.LuminalArray;
@@ -47,13 +48,13 @@ public class RobotContainer {
   private final boolean firstPerson = false;
   private final boolean testing = true;
 
-  // Simulation.
-  final Gamepiece gamepieceSimulation;
-
   // Alignment supplier.
   public final BooleanSupplier aligned;
   // Velocity supplier.
   public final Supplier<AngularVelocity> velocity;
+
+  // Simulation
+  public final Handler simulation;
 
   // Velocity control states.
   public enum VelocityType {
@@ -140,6 +141,12 @@ public class RobotContainer {
       drive::getPose, 
       drive::getRotation, 
       drive::addVisionMeasurement
+    );
+
+    simulation = new Handler(
+      velocity,
+      drive::getPose,
+      drive::getChassisSpeeds
     );
 
     // Configure button bindings.
@@ -231,21 +238,6 @@ public class RobotContainer {
 
     // Tertiary autonomous routine.
     autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
-
-    gamepieceSimulation = new Gamepiece();
-    gamepieceSimulation.clearFuel();
-
-    // Register a robot for collision with fuel
-    gamepieceSimulation.registerRobot(
-            Inches.of(35),
-            Inches.of(35),
-            Inches.of(4),
-            drive::getPose,
-            drive::getChassisSpeeds);
-    
-    gamepieceSimulation.setSubticks(5);
-    gamepieceSimulation.enableAirResistance();
-    gamepieceSimulation.start();
   }
 
   /** Returns the Rotation2d the robot needs to face the hub. */
@@ -361,16 +353,14 @@ public class RobotContainer {
         .rightTrigger()
         .whileTrue(
           shooter.run().repeatedly().alongWith(Commands.either(
-            hopper.run().repeatedly(), hopper.halt(), () -> shooter.isReady())))
+            hopper.run(), hopper.halt(), () -> shooter.isReady()).repeatedly()))
         .onFalse(
           shooter.halt().alongWith(hopper.halt()));
 
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
-           Commands.runOnce(() -> {
-            gamepieceSimulation.launchFuel(lineate(velocity.get(), Constants.Shooter.kAverageWheelRadius));
-            }))
+           shooter.run().repeatedly())
         .onFalse(
           shooter.halt());
 
@@ -417,13 +407,7 @@ public class RobotContainer {
 
     drive.setPose(startingPose);
     Logger.recordOutput("AutoSeedPose", startingPose);
-  }
-
-  
-  private LinearVelocity lineate(AngularVelocity velocity, Distance radius) {
-    return radius.times(Constants.Mathematics.TAU).per(Second).times(velocity.in(RotationsPerSecond));
-  }
-  
+  }  
 }
 
 // ./gradlew deploy --no-daemon

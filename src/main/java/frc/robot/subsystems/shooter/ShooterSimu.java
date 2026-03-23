@@ -14,4 +14,6 @@ public class ShooterSimu {
     public AngularVelocity getTarget() {
         return velocity.get();
     }
+
+    public Command run
 }

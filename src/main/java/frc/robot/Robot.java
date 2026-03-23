@@ -35,7 +35,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 public class Robot extends LoggedRobot {
   private Command autonomousCommand;
-  private final RobotContainer robotContainer;
+  private final RobotContainer container;
   public Pose2d poseEstimate = new Pose2d();
 
   private Time time = Seconds.of(0);
@@ -82,10 +82,10 @@ public class Robot extends LoggedRobot {
     Logger.start();
 
     // Initialize robot container.
-    robotContainer = new RobotContainer();
+    container = new RobotContainer();
 
     // Robot test configuration.
-    SmartDashboard.putNumber("Test Shooter RPM", robotContainer.testVelocity);
+    SmartDashboard.putNumber("Test Shooter RPM", container.testVelocity);
     SmartDashboard.setPersistent("Test Shooter RPM");
     SmartDashboard.putData("Robot Pose (Field)", field);
   }
@@ -127,24 +127,24 @@ public class Robot extends LoggedRobot {
     // Log poses.
     Logger.recordOutput("Hub Pose", Constants.Poses.hub.getPose());
     Logger.recordOutput("Tower Pose", Constants.Poses.tower.getPose());
-    Logger.recordOutput("Robot Pose", robotContainer.drive.getPose());
-    Logger.recordOutput("Is Neutral", robotContainer.drive.isNeutralZone());
+    Logger.recordOutput("Robot Pose", container.drive.getPose());
+    Logger.recordOutput("Is Neutral", container.drive.isNeutralZone());
 
     // Log shooter status.
-    Logger.recordOutput("Shooter/aligned", robotContainer.aligned);
-    Logger.recordOutput("Shooter/ready", robotContainer.shooter.isReady());
-    Logger.recordOutput("Shooter/target", robotContainer.velocity.get().in(RotationsPerSecond));
-    Logs.write("Shooter/type", robotContainer.velocityType);
+    Logger.recordOutput("Shooter/aligned", container.aligned);
+    Logger.recordOutput("Shooter/ready", container.shooter.isReady());
+    Logger.recordOutput("Shooter/target", container.velocity.get().in(RotationsPerSecond));
+    Logs.write("Shooter/type", container.velocityType);
 
     // Update python pose estimate.
     Double[] robotpose = {
-      robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()
+      container.drive.getPose().getX(), container.drive.getPose().getX()
     };
     SmartDashboard.putNumberArray("robot-pose", robotpose);
 
     // Update field visualization.
-    field.setRobotPose(robotContainer.drive.getPose());
-    robotContainer.gamepieceSimulation.updateSim();
+    field.setRobotPose(container.drive.getPose());
+    container.simulation.tick();
   }
 
   @Override
@@ -155,14 +155,14 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledPeriodic() {
     indicateLimelight(Indicate.DISABLED);
-    robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
+    container.vision.setIMUMode(LimelightArray.IMUMode.OFF);
   }
 
   @Override
   public void autonomousInit() {
     Logger.recordOutput("Robot/Mode", "Autonomous");
-    autonomousCommand = robotContainer.getAutonomousCommand();
-    robotContainer.seedAutonomousPose(autonomousCommand);
+    autonomousCommand = container.getAutonomousCommand();
+    container.seedAutonomousPose(autonomousCommand);
 
     if (autonomousCommand != null) {
       Logger.recordOutput("Robot/AutonomousCommand", autonomousCommand.getName());
@@ -176,13 +176,13 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousPeriodic() {
     indicateLimelight(Indicate.AUTO);
-    robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
+    container.vision.setIMUMode(LimelightArray.IMUMode.OFF);
   }
 
   @Override
   public void teleopInit() {
     Logger.recordOutput("Robot/Mode", "Teleop");
-    robotContainer.inverse = false;
+    container.inverse = false;
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
@@ -195,7 +195,7 @@ public class Robot extends LoggedRobot {
       LimelightHelpers.SetThrottle(limelight, 0);
     }
     indicateLimelight(Indicate.ENABLED);
-    robotContainer.vision.setIMUMode(LimelightArray.IMUMode.OFF);
+    container.vision.setIMUMode(LimelightArray.IMUMode.OFF);
   }
 
   @Override
