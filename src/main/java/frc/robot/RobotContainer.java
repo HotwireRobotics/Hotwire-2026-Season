@@ -369,9 +369,7 @@ public class RobotContainer {
         .rightBumper()
         .whileTrue(
            Commands.runOnce(() -> {
-            gamepieceSimulation.launchFuel(
-              lineate(velocity.get(), Constants.Shooter.kAverageWheelRadius), 
-              Degrees.of(70.4333), Degrees.of(0), Inches.of(14));
+            gamepieceSimulation.launchFuel(lineate(velocity.get(), Constants.Shooter.kAverageWheelRadius));
             }))
         .onFalse(
           shooter.halt());

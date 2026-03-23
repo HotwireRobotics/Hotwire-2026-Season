@@ -1,6 +1,8 @@
 // https://github.com/hammerheads5000/FuelSim
 package frc.robot.simulation;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Radians;
@@ -22,6 +24,8 @@ import edu.wpi.first.wpilibj.Timer;
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+
+import com.google.flatbuffers.Constants;
 
 public class Gamepiece {
     protected static final double PERIOD = 0.02; // sec
@@ -552,6 +556,12 @@ public class Gamepiece {
         yVel += fieldSpeeds.vyMetersPerSecond;
 
         spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
+    }
+
+    public void launchFuel(LinearVelocity launchVelocity) {
+        launchFuel(
+            launchVelocity, 
+            Degrees.of(70.4333), Degrees.of(0), Inches.of(14));
     }
 
     protected void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {
