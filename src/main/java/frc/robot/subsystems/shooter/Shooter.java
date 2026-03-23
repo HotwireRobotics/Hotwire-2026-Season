@@ -44,6 +44,7 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
     this.velocity = velocity;
 
+    // Initialize devices.
     left = new Motor(this, Constants.MotorIDs.s_shooterL, Amps.of(60));
     left.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
 
