@@ -370,7 +370,7 @@ public class RobotContainer {
         .whileTrue(
            Commands.runOnce(() -> {
             gamepieceSimulation.launchFuel(
-              lineate(velocity.get(), Constants.Shooter.kWheelRadius), 
+              lineate(velocity.get(), Constants.Shooter.kAverageWheelRadius), 
               Degrees.of(70.4333), Degrees.of(0), Inches.of(14));
             }))
         .onFalse(
@@ -423,7 +423,7 @@ public class RobotContainer {
 
   
   private LinearVelocity lineate(AngularVelocity velocity, Distance radius) {
-    return radius.times(Constants.Mathematics.TAU).per(Second).times(velocity.in(RotationsPerSecond)).times(0.56);
+    return radius.times(Constants.Mathematics.TAU).per(Second).times(velocity.in(RotationsPerSecond));
   }
   
 }
