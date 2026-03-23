@@ -129,12 +129,12 @@ public class Shooter extends ModularSubsystem implements Systerface {
   }
 
   public void start() {
-    if (velocity.get().equals(RPM.of(0))) {
+    if (io.getTarget().equals(RPM.of(0))) {
       applyPercent(Constants.Shooter.kZero.in(RPM), left, right, feeder);
 
       setState(State.STOPPED);
     } else {
-      applyVelocity(velocity.get(), left, right, feeder);
+      applyVelocity(io.getTarget(), left, right, feeder);
 
       setState(State.FIRING);
     }
@@ -148,8 +148,8 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
   public boolean isReady() {
     return debouncer.calculate(
-        left.getVelocity().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance) &&
-        right.getVelocity().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance));
+        left.getVelocity().isNear(io.getTarget(), Constants.Shooter.kVelocityTolerance) &&
+        right.getVelocity().isNear(io.getTarget(), Constants.Shooter.kVelocityTolerance));
   }
 
   public Command run() {

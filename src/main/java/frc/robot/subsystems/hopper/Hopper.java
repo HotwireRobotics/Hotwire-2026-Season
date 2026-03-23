@@ -4,11 +4,15 @@ import static edu.wpi.first.units.Units.Amps;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
 import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.motors.Motor;
+import frc.robot.subsystems.motors.TalonFXIO;
+import frc.robot.subsystems.motors.MotorBase.Direction;
+import frc.robot.subsystems.motors.MotorBase.NeutralMode;
 
 import java.util.function.Supplier;
 
@@ -27,8 +31,10 @@ public class Hopper extends ModularSubsystem implements Systerface {
 
   public Hopper(Supplier<Double> speed) {
     // Initialize devices.
-    hopper = new Motor(this, Constants.MotorIDs.h_hopper, Amps.of(60));
-    hopper.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+    hopper = new Motor(this, new TalonFXIO(Constants.MotorIDs.h_hopper));
+    hopper.setCurrentLimit(Amps.of(60));
+    hopper.setNeutralMode(NeutralMode.COAST);
+    hopper.setDirection(Direction.FORWARD);
 
     // Define devices.
     defineDevice(Device.HOPPER, hopper);
@@ -70,11 +76,13 @@ public class Hopper extends ModularSubsystem implements Systerface {
 
   /** Run the hopper at the specified speed. */
   public Command run() {
-    return runDevice(Device.HOPPER, speed, this);
+    return Commands.runOnce(() -> {
+      hopper.runPercent(speed.get());
+    });
   }
 
   /** Halt the hopper. */
   public Command halt() {
-    return runDevice(Device.HOPPER, 0, this);
+    return Commands.runOnce(() -> hopper.runPercent(0));
   }
 }

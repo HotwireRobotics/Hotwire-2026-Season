@@ -8,7 +8,9 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 
@@ -25,6 +27,7 @@ public class TalonFXIO implements MotorBase {
   // Control loops.
   private final VoltageOut voltageOut = new VoltageOut(0);
   private final PositionVoltage positionVoltage = new PositionVoltage(0);
+  private final Follower follower = new Follower(0, MotorAlignmentValue.Aligned);
 
   // Configurator.
   private final TalonFXConfigurator configurator;
@@ -135,6 +138,23 @@ public class TalonFXIO implements MotorBase {
         new MotorOutputConfigs()
             .withNeutralMode(neutral));
   }
+
+  /** Set the motor follower target. */
+  @Override
+  public void follow(int id, FollowerMode mode) {
+    MotorAlignmentValue value = (mode == FollowerMode.ALIGNED) 
+      ? MotorAlignmentValue.Aligned
+      : MotorAlignmentValue.Opposed;
+    motor.setControl(follower
+      .withLeaderID(id)
+      .withMotorAlignment(value));
+  }
+
+   /** Set the motor follower target from id. */
+   @Override
+   public void follow(Motor lead, FollowerMode mode) {
+    follow(lead.getID(), mode);
+   }
 
   /** Get measured velocity. */
   @Override

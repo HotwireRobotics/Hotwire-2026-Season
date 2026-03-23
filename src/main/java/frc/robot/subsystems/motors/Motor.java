@@ -224,6 +224,16 @@ public class Motor {
   public void setNeutralMode(MotorBase.NeutralMode mode) {
     io.setNeutralMode(mode);
   }
+  
+  /** Set this motor to follow a leader motor. */
+  public void follow(Motor leader, MotorBase.FollowerMode mode) {
+    io.follow(leader.getID(), mode);
+  }
+
+  /** Set this motor to follow a leader motor by id. */
+  public void follow(int leader, MotorBase.FollowerMode mode) {
+    io.follow(leader, mode);
+  }
 
   /**
    * Get the current velocity of the motor.

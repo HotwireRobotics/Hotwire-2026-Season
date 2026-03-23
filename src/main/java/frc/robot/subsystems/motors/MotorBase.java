@@ -19,19 +19,28 @@ public interface MotorBase {
   /** Limit current. */
   void setCurrentLimit(Current limit);
 
-  /** Set direction. */
   public static enum Direction {
     FORWARD,
     REVERSE
   }
+  /** Set direction. */
   void setDirection(Direction direction);
 
-  /** Set neutral mode. */
   public static enum NeutralMode {
     COAST,
     BRAKE
   }
+  /** Set neutral mode. */
   void setNeutralMode(NeutralMode mode);
+
+  public static enum FollowerMode {
+    ALIGNED,
+    INVERSE
+  }
+  /** Set motor follower target. */
+  void follow(Motor leader, FollowerMode mode);
+  /** Set motor follower target from id. */
+  void follow(int leader, FollowerMode mode);
 
   // Configure feedback and feedforward values.
   void configureProportional(double kP);

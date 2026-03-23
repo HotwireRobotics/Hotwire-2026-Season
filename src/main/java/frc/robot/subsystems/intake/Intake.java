@@ -2,13 +2,6 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.*;
 
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
@@ -21,20 +14,21 @@ import frc.robot.constants.Constants;
 import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.motors.Motor;
+import frc.robot.subsystems.motors.Motor.Feedforward;
+import frc.robot.subsystems.motors.TalonFXIO;
+import frc.robot.subsystems.motors.MotorBase.Direction;
+import frc.robot.subsystems.motors.MotorBase.FollowerMode;
+import frc.robot.subsystems.motors.MotorBase.NeutralMode;
 
 import java.util.function.Supplier;
 
 public class Intake extends ModularSubsystem implements Systerface {
 
   // Declare devices.
-  public final Motor rollers, left, right;
+  public final Motor rollers, follower, wrist;
 
   // Declare suppliers.
   private final Supplier<Double> speed;
-
-  // Declare control loop.
-  private final PositionVoltage control;
-  private final Slot0Configs slot;
 
   // Declare device enum.
   public enum Device {
@@ -53,43 +47,38 @@ public class Intake extends ModularSubsystem implements Systerface {
 
   public Intake(Supplier<Double> speed) {
     // Initialize devices.
-    rollers = new Motor(this, Constants.MotorIDs.i_rollers, Amps.of(40));
-    rollers.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+    rollers = new Motor(this, new TalonFXIO(Constants.MotorIDs.i_rollers));
+    rollers.setCurrentLimit(Amps.of(40));
+    rollers.setDirection(Direction.FORWARD);
+    rollers.setNeutralMode(NeutralMode.COAST);
 
-    left = new Motor(this, Constants.MotorIDs.i_wristL, Amps.of(45));
-    left.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
+    follower = new Motor(this, new TalonFXIO(Constants.MotorIDs.i_wristL));
+    follower.setCurrentLimit(Amps.of(45));
+    follower.setDirection(Direction.REVERSE);
+    follower.setNeutralMode(NeutralMode.COAST);
 
-    right = new Motor(this, Constants.MotorIDs.i_wristR, Amps.of(45));
-    right.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+    wrist = new Motor(this, new TalonFXIO(Constants.MotorIDs.i_wristR));
+    wrist.setCurrentLimit(Amps.of(45));
+    wrist.setDirection(Direction.FORWARD);
+    wrist.setNeutralMode(NeutralMode.COAST);
     
     // Define devices.
     defineDevice(
       new DevicePointer(Device.ROLLERS, rollers),
-      new DevicePointer(Device.LEFT, left),
-      new DevicePointer(Device.RIGHT, right)
+      new DevicePointer(Device.LEFT, follower),
+      new DevicePointer(Device.RIGHT, wrist)
     );
 
     // Initialize control loop.
-    control = new PositionVoltage(Degrees.of(0));
+    wrist.apply(new Feedforward(14, 0, 0));
 
-    slot = new Slot0Configs();
-    configureProportional(14);
-
-    // Configuration
-    right.setControl(control);
-    right.getConfigurator().apply(slot);
-
-    left.setMaster(right, false);
+    follower.follow(wrist, FollowerMode.INVERSE);
 
     this.speed = speed;
   }
 
   public Intake() {
     this(() -> Constants.Intake.kSpeed);
-  }
-
-  public void configureProportional(double kP) {
-    slot.withKP(kP);
   }
 
   // State system.
@@ -143,28 +132,16 @@ public class Intake extends ModularSubsystem implements Systerface {
 
   public Command raiseWrist(Angle angle) {
     return Commands.runOnce(
-        () -> {
-          configureProportional(14);
-          left.setControl(control.withPosition(angle));
-          right.setControl(control.withPosition(angle));
-        });
+        () -> wrist.runPosition(angle));
   }
 
   public Command lowerWrist() {
     return Commands.runOnce(
-        () -> {
-          configureProportional(14);
-          left.setControl(control.withPosition(Degrees.of(0)));
-          right.setControl(control.withPosition(Degrees.of(0)));
-        });
+        () -> wrist.runPosition(Degrees.of(0)));
   }
 
   public Command emergency() {
     return Commands.runOnce(
-        () -> {
-          configureProportional(14);
-          left.setControl(control.withPosition(Degrees.of(90)));
-          right.setControl(control.withPosition(Degrees.of(90)));
-        });
+        () -> wrist.runPosition(Degrees.of(90)));
   }
 }

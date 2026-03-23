@@ -11,4 +11,8 @@ public class ShooterReal implements ShooterBase {
     public ShooterReal(Supplier<AngularVelocity> velocity) {
         this.velocity = velocity;
     }
+
+    public AngularVelocity getTarget() {
+        return velocity.get();
+    }
 }
