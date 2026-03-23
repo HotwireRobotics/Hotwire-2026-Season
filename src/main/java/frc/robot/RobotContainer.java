@@ -9,6 +9,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -17,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.constants.Constants;
 import frc.robot.constants.LimelightHelpers;
+import frc.robot.simulation.Gamepiece;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.indication.LuminalArray;
@@ -43,6 +46,9 @@ public class RobotContainer {
   // Static configuration.
   private final boolean firstPerson = false;
   private final boolean testing = true;
+
+  // Simulation.
+  final Gamepiece gamepieceSimulation;
 
   // Alignment supplier.
   public final BooleanSupplier aligned;
@@ -225,6 +231,21 @@ public class RobotContainer {
 
     // Tertiary autonomous routine.
     autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
+
+    gamepieceSimulation = new Gamepiece();
+    gamepieceSimulation.clearFuel();
+
+    // Register a robot for collision with fuel
+    gamepieceSimulation.registerRobot(
+            Inches.of(35),
+            Inches.of(35),
+            Inches.of(4),
+            drive::getPose,
+            drive::getChassisSpeeds);
+    
+    gamepieceSimulation.setSubticks(5);
+    gamepieceSimulation.enableAirResistance();
+    gamepieceSimulation.start();
   }
 
   /** Returns the Rotation2d the robot needs to face the hub. */
@@ -347,7 +368,11 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
-          shooter.run().repeatedly())
+           Commands.runOnce(() -> {
+            gamepieceSimulation.launchFuel(
+              lineate(velocity.get(), Constants.Shooter.kWheelRadius), 
+              Degrees.of(70.4333), Degrees.of(0), Inches.of(14));
+            }))
         .onFalse(
           shooter.halt());
 
@@ -395,6 +420,12 @@ public class RobotContainer {
     drive.setPose(startingPose);
     Logger.recordOutput("AutoSeedPose", startingPose);
   }
+
+  
+  private LinearVelocity lineate(AngularVelocity velocity, Distance radius) {
+    return radius.times(Constants.Mathematics.TAU).per(Second).times(velocity.in(RotationsPerSecond)).times(0.56);
+  }
+  
 }
 
 // ./gradlew deploy --no-daemon

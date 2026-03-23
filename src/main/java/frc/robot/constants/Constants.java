@@ -51,6 +51,8 @@ public final class Constants {
     public static final Time k60Time = Seconds.of(3);
     public static final Time kDebounce = Seconds.of(0.1);
 
+    public static final Distance kWheelRadius = Inches.of(2);
+
     // Static target velocities and tolerances.
     public static final AngularVelocity kSpeed = RPM.of(2400);
     public static final AngularVelocity kVelocityTolerance = RotationsPerSecond.of(7);
