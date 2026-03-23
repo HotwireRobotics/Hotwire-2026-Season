@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.units.measure.Angle;
@@ -58,10 +59,9 @@ public class Intake extends ModularSubsystem implements Systerface {
     left = new Motor(this, Constants.MotorIDs.i_wristL, Amps.of(45));
     left.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
 
-    right = new Motor(this, Constants.MotorIDs.i_wristL, Amps.of(45));
-    right.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
-    right.setMaster(left, false);
-
+    right = new Motor(this, Constants.MotorIDs.i_wristR, Amps.of(45));
+    right.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+    
     // Define devices.
     defineDevice(
       new DevicePointer(Device.ROLLERS, rollers),
@@ -73,11 +73,13 @@ public class Intake extends ModularSubsystem implements Systerface {
     control = new PositionVoltage(Degrees.of(0));
 
     slot = new Slot0Configs();
-    configureProportional(18.0);
+    configureProportional(14);
 
     // Configuration
-    left.setControl(control);
-    left.getConfigurator().apply(slot);
+    right.setControl(control);
+    right.getConfigurator().apply(slot);
+
+    left.setMaster(right, false);
 
     this.speed = speed;
   }
@@ -142,24 +144,27 @@ public class Intake extends ModularSubsystem implements Systerface {
   public Command raiseWrist(Angle angle) {
     return Commands.runOnce(
         () -> {
-          configureProportional(18.0);
+          configureProportional(14);
           left.setControl(control.withPosition(angle));
+          right.setControl(control.withPosition(angle));
         });
   }
 
   public Command lowerWrist() {
     return Commands.runOnce(
         () -> {
-          configureProportional(18.0);
+          configureProportional(14);
           left.setControl(control.withPosition(Degrees.of(0)));
+          right.setControl(control.withPosition(Degrees.of(0)));
         });
   }
 
   public Command emergency() {
     return Commands.runOnce(
         () -> {
-          configureProportional(28.0);
+          configureProportional(14);
           left.setControl(control.withPosition(Degrees.of(90)));
+          right.setControl(control.withPosition(Degrees.of(90)));
         });
   }
 }
