@@ -37,9 +37,6 @@ public class Shooter extends ModularSubsystem implements Systerface {
   public final Motor left;
   public final Motor right;
 
-  // Declare suppliers.
-  private final Supplier<AngularVelocity> velocity;
-
   // Declare device enum.
   public enum Device {
     FEEDER,
