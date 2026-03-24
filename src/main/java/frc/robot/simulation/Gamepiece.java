@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -400,12 +401,18 @@ public class Gamepiece {
     }
 
     protected StructArrayPublisher<Translation3d> fuelPublisher;
+    Translation3d[] buffer = new Translation3d[500];
 
     /**
      * Adds array of `Translation3d`'s to NetworkTables at tableKey + "/Fuels"
      */
     public void logFuels() {
-        fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
+        for (int i = 0; i < fuels.size(); i++) {
+            buffer[i] = fuels.get(i).pos;
+        }
+        fuelPublisher.set(Arrays.copyOf(buffer, fuels.size()));
+
+        // fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
     }
 
     /**
