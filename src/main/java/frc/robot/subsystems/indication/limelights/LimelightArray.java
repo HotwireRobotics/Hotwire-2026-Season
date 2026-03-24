@@ -55,6 +55,7 @@ public class LimelightArray extends SubsystemBase {
       }
     }
 
+    // Configure robot realtive limelight poses.
     private static final Limelight gamma =
         new Limelight("limelight-gamma",
           new Pose3d(
