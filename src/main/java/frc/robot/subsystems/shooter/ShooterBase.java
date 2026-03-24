@@ -7,6 +7,6 @@ public interface ShooterBase {
 
     AngularVelocity getTarget();
 
-    Command run();
-    Command halt();
+    // Command run();
+    // Command halt();
 }

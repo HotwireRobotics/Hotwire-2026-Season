@@ -3,8 +3,10 @@ package frc.robot.simulation;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.InchesPerSecond;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -22,6 +24,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -560,8 +563,8 @@ public class Gamepiece {
 
     public void launchFuel(LinearVelocity launchVelocity) {
         launchFuel(
-            launchVelocity, 
-            Degrees.of(70.4333), Degrees.of(0), Inches.of(14));
+            launchVelocity.plus(InchesPerSecond.of((Math.random() - 0.5) * 32)), 
+            Degrees.of(70.4333), Degrees.of(0).plus(Degrees.of((Math.random() - 0.5) * 40)), Inches.of(14));
     }
 
     protected void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {

@@ -145,6 +145,7 @@ public class RobotContainer {
 
     simulation = new Handler(
       velocity,
+      () -> Constants.Joysticks.operator.leftTrigger().getAsBoolean(),
       drive::getPose,
       drive::getChassisSpeeds
     );
@@ -360,7 +361,7 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
-           shooter.run().repeatedly())
+           (shooter.run().alongWith(Commands.runOnce(() -> simulation.shoot()))).repeatedly())
         .onFalse(
           shooter.halt());
 

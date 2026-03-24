@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -20,6 +21,7 @@ public class Handler {
 
     // Hopper count.
     private int counter = 0;
+    private final int limit = 35;
     // Declare supplier for shooting.
     private final Supplier<AngularVelocity> velocity;
 
@@ -31,16 +33,23 @@ public class Handler {
     
     public Handler(
         Supplier<AngularVelocity> velocity,
+        BooleanSupplier intake,
         Supplier<Pose2d> pose,
         Supplier<ChassisSpeeds> chassisSpeeds
     ) {
         this.velocity = velocity;
 
+        BooleanSupplier toggle = intake;
+
+        intake = () -> {
+            return toggle.getAsBoolean() && (counter < limit);
+        };
+
         this.pose = pose;
         this.chassisSpeeds = chassisSpeeds;
 
         gamepieceSimulation = new Gamepiece();
-        gamepieceSimulation.clearFuel();
+        gamepieceSimulation.spawnStartingFuel();
 
         // Register a robot for collision with fuel
         gamepieceSimulation.registerRobot(
@@ -48,6 +57,9 @@ public class Handler {
                 Inches.of(35),
                 Inches.of(4),
                 this.pose, this.chassisSpeeds);
+
+        gamepieceSimulation.registerIntake(
+            Inches.of(17.5), Inches.of(23), Inches.of(-17.5), Inches.of(17.5), intake, this::intake);
         
         gamepieceSimulation.setSubticks(5);
         gamepieceSimulation.enableAirResistance();
@@ -55,13 +67,13 @@ public class Handler {
     }
 
     /** Attempt to decrement the gamepiece counter. */
-    public void shoot(
-        AngularVelocity velocity
-    ) {
+    public void shoot() {
         // Random chance of not firing based on the fact that we usually only shoot ~4 per second.
         Time time = Constants.Tempo.getTime();
-        if (counter > 0 && time.in(Seconds) % 0.25 < 0.05) {
-            gamepieceSimulation.launchFuel(lineate(velocity, Constants.Shooter.kAverageWheelRadius));
+        if (
+            ((counter > 0) && ((time.in(Seconds) % (1/7.5)) + (Math.random()/10)) < 0.05)
+        ) {
+            gamepieceSimulation.launchFuel(lineate(velocity.get(), Constants.Shooter.kAverageWheelRadius));
             counter --;
         }
     }
