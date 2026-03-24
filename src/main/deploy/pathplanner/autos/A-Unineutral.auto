@@ -39,6 +39,18 @@
           "data": {
             "name": "Firing Sequence"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Start Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Unineutral Second Lower Endolateral"
+          }
         }
       ]
     }

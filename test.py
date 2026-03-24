@@ -18,8 +18,8 @@ print("forward: ", constant * forward, "m")
 
 # GAMMA
 # 19.375in UP
-# 13.5 - 3.75in RIGHT
-# 13.5 - 4.25in FORWARD
+# 13.5 - 2.5in RIGHT
+# 13.5 - (3 + 5/8)in FORWARD
 
 # ALPHA
 # 17.25in UP

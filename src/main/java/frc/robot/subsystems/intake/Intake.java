@@ -1,12 +1,14 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Hertz;
-import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.Time;
@@ -14,22 +16,30 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.robot.ModularSubsystem;
 import frc.robot.Systerface;
 import frc.robot.constants.Constants;
+import frc.robot.subsystems.Logs;
+import frc.robot.subsystems.ModularSubsystem;
+import frc.robot.subsystems.Motor;
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
 
 public class Intake extends ModularSubsystem implements Systerface {
 
-  public final TalonFX rollers;
-  public final TalonFX arm;
-  private final PositionVoltage m_PositionVoltage;
+  // Declare devices.
+  public final Motor rollers, left, right;
+
+  // Declare suppliers.
+  private final Supplier<Double> speed;
+
+  // Declare control loop.
+  private final PositionVoltage control;
   private final Slot0Configs slot;
 
+  // Declare device enum.
   public enum Device {
     ROLLERS,
-    ARM
+    RIGHT,
+    LEFT,
   }
 
   public enum ArmState {
@@ -40,49 +50,67 @@ public class Intake extends ModularSubsystem implements Systerface {
 
   private ArmState armState = ArmState.ZERO;
 
-  public Intake() {
-    rollers = new TalonFX(Constants.MotorIDs.i_rollers);
-    arm = new TalonFX(Constants.MotorIDs.i_arm);
-    defineDevice(new DevicePointer(Device.ROLLERS, rollers), new DevicePointer(Device.ARM, arm));
+  public Intake(Supplier<Double> speed) {
+    // Initialize devices.
+    rollers = new Motor(this, Constants.MotorIDs.i_rollers, Amps.of(40));
+    rollers.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
 
-    m_PositionVoltage = new PositionVoltage(Degrees.of(0));
+    left = new Motor(this, Constants.MotorIDs.i_wristL, Amps.of(45));
+    left.setDirection(InvertedValue.CounterClockwise_Positive, NeutralModeValue.Coast);
+
+    right = new Motor(this, Constants.MotorIDs.i_wristR, Amps.of(45));
+    right.setDirection(InvertedValue.Clockwise_Positive, NeutralModeValue.Coast);
+    
+    // Define devices.
+    defineDevice(
+      new DevicePointer(Device.ROLLERS, rollers),
+      new DevicePointer(Device.LEFT, left),
+      new DevicePointer(Device.RIGHT, right)
+    );
+
+    // Initialize control loop.
+    control = new PositionVoltage(Degrees.of(0));
 
     slot = new Slot0Configs();
-    configureProportional(18.0);
+    configureProportional(14);
 
     // Configuration
-    arm.setControl(m_PositionVoltage);
-    arm.getConfigurator().apply(slot);
+    right.setControl(control);
+    right.getConfigurator().apply(slot);
+
+    left.setMaster(right, false);
+
+    this.speed = speed;
+  }
+
+  public Intake() {
+    this(() -> Constants.Intake.kSpeed);
   }
 
   public void configureProportional(double kP) {
     slot.withKP(kP);
   }
 
+  // State system.
   private enum State {
     STOPPED,
-    INTAKING // Running rollers
+    INTAKING
   }
 
   State state = State.STOPPED;
 
+  // Supply state.
   public Object getState() {
     return state;
   }
 
   @Override
   public void periodic() {
-    Logger.recordOutput("Intake/State", state.toString());
-
-    Logger.recordOutput("Intake/Rollers/Position", rollers.getPosition().getValueAsDouble(), "rot");
-    Logger.recordOutput(
-        "Intake/Rollers/Velocity", rollers.getVelocity().getValueAsDouble() * 60, "rpm");
-    Logger.recordOutput(
-        "Intake/Rollers/Voltage", rollers.getMotorVoltage().getValueAsDouble(), "V");
-    Logger.recordOutput(
-        "Intake/Rollers/Current", rollers.getSupplyCurrent().getValueAsDouble(), "A");
-    Logger.recordOutput(
-        "Intake/Rollers/Temperature", rollers.getDeviceTemp().getValueAsDouble(), "°C");
+    // Log devices and state.
+    logDevices();
+    
+    Logs.log(this, state);
+    Logs.write("Intake/ArmState", armState);
 
     if (isActiveDevice(Device.ROLLERS)) {
       state = State.INTAKING;
@@ -91,106 +119,51 @@ public class Intake extends ModularSubsystem implements Systerface {
     }
   }
 
-  // Device control methods
-  /**
-   * Allows you to limit the voltage of the intake rollers
-   *
-   * @param device
-   * @param volts
-   */
-  public void runDeviceVoltage(Device device, double volts) {
-    for (TalonFX d : getDevices(device)) {
-      d.setVoltage(volts);
-    }
-
-    if (volts == 0) {
-      specifyInactiveDevice(device);
-    } else {
-      specifyActiveDevice(device);
-    }
+  /** Run the hopper at the specified speed. */
+  public Command run() {
+    return runDevice(Device.ROLLERS, speed, this);
   }
 
-  public Command runIntake() {
-    return runDevice(Device.ROLLERS, Constants.Intake.kSpeed);
-  }
-
-  public Command runIntake(Supplier<Boolean> inverse) {
-    return runDevice(Device.ROLLERS, () -> (Constants.Hopper.kSpeed * (inverse.get() ? -1 : 1)));
-  }
-
-  public Command stopIntake() {
-    return runDevice(Device.ROLLERS, 0);
-  }
-
-  public Command controlArm(ArmState state) {
-    return Commands.runOnce(
-        () -> {
-          armState = state;
-        });
+  /** Halt the hopper. */
+  public Command halt() {
+    return runDevice(Device.ROLLERS, 0, this);
   }
 
   public Command oscillateArm(Angle angle, Frequency frequency) {
     Time period = Seconds.of(1 / (2 * frequency.in(Hertz)));
     RepeatCommand group =
         new SequentialCommandGroup(
-                lowerArm(), Commands.waitTime(period),
-                raiseArm(angle), Commands.waitTime(period))
+                lowerWrist(), Commands.waitTime(period),
+                raiseWrist(angle), Commands.waitTime(period))
             .repeatedly();
     group.addRequirements(this);
     return group;
   }
 
-  public Command raiseArm(Angle angle) {
+  public Command raiseWrist(Angle angle) {
     return Commands.runOnce(
         () -> {
-          configureProportional(18.0);
-          arm.setControl(m_PositionVoltage.withPosition(angle));
+          configureProportional(14);
+          left.setControl(control.withPosition(angle));
+          right.setControl(control.withPosition(angle));
         });
   }
 
-  public Command lowerArm() {
+  public Command lowerWrist() {
     return Commands.runOnce(
         () -> {
-          configureProportional(18.0);
-          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(0)));
+          configureProportional(14);
+          left.setControl(control.withPosition(Degrees.of(0)));
+          right.setControl(control.withPosition(Degrees.of(0)));
         });
   }
 
   public Command emergency() {
     return Commands.runOnce(
         () -> {
-          configureProportional(28.0);
-          arm.setControl(m_PositionVoltage.withPosition(Degrees.of(90)));
+          configureProportional(14);
+          left.setControl(control.withPosition(Degrees.of(90)));
+          right.setControl(control.withPosition(Degrees.of(90)));
         });
   }
-
-  /**
-   * Commands mentioned above for m_sysIdRoutineRight and m_sysIdRoutineLeft
-   *
-   * @param direction
-   * @return m_sysIdRoutineRight, m_sysIdRoutineLeft
-   */
-  // public Command sysIdQuasistaticRight(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineRight.quasistatic(direction);
-  // }
-
-  // public Command sysIdDynamicRight(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineRight.dynamic(direction);
-  // }
-
-  // public Command sysIdQuasistaticLeft(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineLeft.quasistatic(direction);
-  // }
-
-  // public Command sysIdDynamicLeft(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineLeft.dynamic(direction);
-  // }
-
-  // public Command sysIdQuasistaticARM(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineARM.quasistatic(direction);
-  // }
-
-  // public Command sysIdDynamicARM(SysIdRoutine.Direction direction) {
-  //   return m_sysIdRoutineARM.dynamic(direction);
-  // }
 }

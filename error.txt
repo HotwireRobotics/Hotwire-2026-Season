@@ -1,27 +1,17 @@
-"edu.wpi.first.util.datalog.DataLogWriter.close()" because "this.log" is null ﻿
-﻿﻿﻿﻿﻿﻿ 	at org.littletonrobotics.junction.wpilog.WPILOGWriter.end(WPILOGWriter.java:167) ﻿
-﻿﻿﻿﻿﻿﻿ 	at org.littletonrobotics.junction.ReceiverThread.run(ReceiverThread.java:57) ﻿
-﻿﻿﻿﻿﻿﻿﻿﻿ERROR ﻿﻿ 1 ﻿﻿ Unhandled exception: java.lang.NullPointerException: Cannot invoke "edu.wpi.first.math.geometry.Pose2d.getTranslation()" because "initial" is null ﻿﻿ frc.robot.RobotContainer.lambda$new$7(RobotContainer.java:170) ﻿﻿﻿
-﻿﻿﻿﻿﻿﻿ Error at frc.robot.RobotContainer.lambda$new$7(RobotContainer.java:170): Unhandled exception: java.lang.NullPointerException: Cannot invoke "edu.wpi.first.math.geometry.Pose2d.getTranslation()" because "initial" is null ﻿
-﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.math.geometry.Transform2d.<init>(Transform2d.java:43) ﻿
-﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.math.geometry.Pose2d.relativeTo(Pose2d.java:237) ﻿
-﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.math.geometry.Pose2d.minus(Pose2d.java:123) ﻿
-﻿﻿﻿﻿﻿﻿ 	at frc.robot.RobotContainer.lambda$new$7(RobotContainer.java:170) ﻿
-﻿﻿﻿﻿﻿﻿ 	at frc.robot.subsystems.shooter.Shooter.lambda$runMechanismVelocity$6(Shooter.java:262) ﻿
+﻿﻿﻿﻿﻿﻿ Error at frc.robot.subsystems.ModularSubsystem.lambda$runDevice$0(ModularSubsystem.java:48): Unhandled exception: java.lang.NullPointerException: Cannot invoke "frc.robot.subsystems.Motor.set(double)" because "d" is null ﻿
+﻿﻿﻿﻿﻿﻿ 	at frc.robot.subsystems.ModularSubsystem.lambda$runDevice$0(ModularSubsystem.java:48) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.FunctionalCommand.initialize(FunctionalCommand.java:52) ﻿
-﻿﻿﻿﻿﻿﻿﻿﻿Warning ﻿﻿ 1 ﻿﻿ The robot program quit unexpectedly. This is usually due to a code error.
-  The above stacktrace can help determine where the error occurred.
-  See https://wpilib.org/stacktrace for more information. ﻿﻿ edu.wpi.first.wpilibj.RobotBase.runRobot(RobotBase.java:450) ﻿﻿﻿
+﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.ConditionalCommand.initialize(ConditionalCommand.java:54) ﻿
+﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.ParallelCommandGroup.initialize(ParallelCommandGroup.java:70) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.CommandScheduler.initCommand(CommandScheduler.java:169) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.CommandScheduler.schedule(CommandScheduler.java:212) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.CommandScheduler.schedule(CommandScheduler.java:243) ﻿
-﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.button.Trigger.lambda$onTrue$1(Trigger.java:114) ﻿
+﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.button.Trigger.lambda$whileTrue$3(Trigger.java:152) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.button.Trigger$1.run(Trigger.java:79) ﻿
-﻿﻿﻿﻿﻿﻿﻿﻿ERROR ﻿﻿ 1 ﻿﻿ The startCompetition() method (or methods called by it) should have handled the exception above. ﻿﻿ edu.wpi.first.wpilibj.RobotBase.runRobot(RobotBase.java:457) ﻿﻿﻿
 ﻿﻿﻿﻿﻿﻿ 	at java.base/java.lang.Iterable.forEach(Unknown Source) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj.event.EventLoop.poll(EventLoop.java:38) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj2.command.CommandScheduler.run(CommandScheduler.java:280) ﻿
-﻿﻿﻿﻿﻿﻿ 	at frc.robot.Robot.robotPeriodic(Robot.java:120) ﻿
+﻿﻿﻿﻿﻿﻿ 	at frc.robot.Robot.robotPeriodic(Robot.java:123) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj.IterativeRobotBase.loopFunc(IterativeRobotBase.java:400) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at org.littletonrobotics.junction.LoggedRobot.startCompetition(LoggedRobot.java:113) ﻿
 ﻿﻿﻿﻿﻿﻿ 	at edu.wpi.first.wpilibj.RobotBase.runRobot(RobotBase.java:436) ﻿
