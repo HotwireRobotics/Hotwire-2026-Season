@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.115701754385965,
-        "y": 1.5155482456140352
+        "x": 2.9480679785330945,
+        "y": 1.6579785330948118
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.2707908271349213,
-        "y": 2.3917199808555383
+        "x": 3.103157051282051,
+        "y": 2.534150268336315
       },
       "isLocked": false,
       "linkedName": "Lowest Firing Location"
@@ -48,7 +48,7 @@
   "folder": "Bineutral",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 59.95822272735132
+    "rotation": 55.06068979532298
   },
   "useDefaultConstraints": true
 }

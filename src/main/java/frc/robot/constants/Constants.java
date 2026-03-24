@@ -46,9 +46,9 @@ public final class Constants {
   public static class Shooter {
     // Static time intervals for firing states.
     public static final Time kChargeUpTime = Seconds.of(0.1);
-    public static final Time kFiringTime = Seconds.of(8.2);
-    public static final Time k35Time = Seconds.of(3);
-    public static final Time k60Time = Seconds.of(3);
+    public static final Time kFiringTime = Seconds.of(7);
+    public static final Time kUntilSecondMagnitude = Seconds.of(2);
+    public static final Time kUntilThirdMagnitude = Seconds.of(2);
     public static final Time kDebounce = Seconds.of(0.1);
 
     // Static target velocities and tolerances.

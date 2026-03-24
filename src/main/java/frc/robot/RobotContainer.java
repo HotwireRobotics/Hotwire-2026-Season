@@ -134,12 +134,12 @@ public class RobotContainer {
     // Wrist commands.
     final Command raiseWrist = intake.raiseWrist(Degrees.of(60));
     final Command lowerWrist = intake.lowerWrist().andThen(Commands.waitTime(Seconds.of(0.5)));
-    final Command oscillateIntakek35 =
-        intake.oscillateArm(Degrees.of(35), Constants.Intake.kOscillationFrequency);
-    final Command oscillateIntakek60 =
-        intake.oscillateArm(Degrees.of(60), Constants.Intake.kOscillationFrequency);
-    final Command oscillateIntakek20 =
-        intake.oscillateArm(Degrees.of(20), Constants.Intake.kOscillationFrequency);
+    final Command ThirdMagnitude =
+        intake.oscillateArm(Rotations.of(0.17), Constants.Intake.kOscillationFrequency);
+    final Command SecondMagnitude =
+        intake.oscillateArm(Rotations.of(0.12), Constants.Intake.kOscillationFrequency);
+    final Command FirstMagnitude =
+        intake.oscillateArm(Rotations.of(0.0), Constants.Intake.kOscillationFrequency);
 
     // Drivetrain commands.
     final Command stopDrive = Commands.runOnce(() -> drive.stop());
@@ -153,10 +153,10 @@ public class RobotContainer {
         Commands.sequence(Commands.waitTime(Constants.Shooter.kChargeUpTime), hopper.run());
 
     final Command oscillateIntakeSequence =
-        oscillateIntakek20
-            .raceWith(Commands.waitTime(Constants.Shooter.k35Time))
-            .andThen(oscillateIntakek35.raceWith(Commands.waitTime(Constants.Shooter.k60Time)))
-            .andThen(oscillateIntakek60);
+        FirstMagnitude
+            .raceWith(Commands.waitTime(Constants.Shooter.kUntilSecondMagnitude))
+            .andThen(SecondMagnitude.raceWith(Commands.waitTime(Constants.Shooter.kUntilThirdMagnitude)))
+            .andThen(ThirdMagnitude);
 
     final Command terminateFiring =
         Commands.parallel(shooter.halt(), hopper.halt(), lowerWrist, velocity(VelocityType.STATIC));

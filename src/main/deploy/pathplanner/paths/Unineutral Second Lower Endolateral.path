@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.115701754385965,
-        "y": 1.5155482456140352
+        "x": 2.9480679785330945,
+        "y": 1.6579785330948118
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.056722222222222,
-        "y": 0.458788888888888
+        "x": 2.889088446369352,
+        "y": 0.6012191763696646
       },
       "isLocked": false,
       "linkedName": "Lowest Firing Location"
@@ -46,7 +46,7 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.2929460580912806,
+      "waypointRelativePos": 0.12299465240641724,
       "rotationDegrees": 180.0
     },
     {
@@ -54,7 +54,21 @@
       "rotationDegrees": 180.0
     }
   ],
-  "constraintZones": [],
+  "constraintZones": [
+    {
+      "name": "Constraints Zone",
+      "minWaypointRelativePos": 0,
+      "maxWaypointRelativePos": 0.8271186440677966,
+      "constraints": {
+        "maxVelocity": 1.0,
+        "maxAcceleration": 3.0,
+        "maxAngularVelocity": 100.0,
+        "maxAngularAcceleration": 300.0,
+        "nominalVoltage": 12.0,
+        "unlimited": false
+      }
+    }
+  ],
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
@@ -73,7 +87,7 @@
   "folder": "Unineutral",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 59.95822272735132
+    "rotation": 55.06068979532298
   },
   "useDefaultConstraints": false
 }
