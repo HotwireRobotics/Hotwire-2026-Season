@@ -564,7 +564,7 @@ public class Gamepiece {
     public void launchFuel(LinearVelocity launchVelocity) {
         launchFuel(
             launchVelocity.plus(InchesPerSecond.of((Math.random() - 0.5) * 32)), 
-            Degrees.of(70.4333), Degrees.of(0).plus(Degrees.of((Math.random() - 0.5) * 40)), Inches.of(14));
+            Degrees.of(70.4333), Degrees.of(0).plus(Degrees.of((Math.random() - 0.5) * 18)), Inches.of(14));
     }
 
     protected void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {

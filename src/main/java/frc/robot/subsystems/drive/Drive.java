@@ -113,7 +113,7 @@ public class Drive extends SubsystemBase {
     // Configure AutoBuilder for PathPlanner
     AutoBuilder.configure(
         this::getPose,
-        this::setPose,
+        (Pose2d p) -> {},
         this::getChassisSpeeds,
         this::runVelocity,
         new PPHolonomicDriveController(

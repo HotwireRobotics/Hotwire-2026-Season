@@ -59,7 +59,7 @@ public class Handler {
                 this.pose, this.chassisSpeeds);
 
         gamepieceSimulation.registerIntake(
-            Inches.of(17.5), Inches.of(23), Inches.of(-17.5), Inches.of(17.5), intake, this::intake);
+            Inches.of(17.5), Inches.of(25.118), Inches.of(-17.5), Inches.of(17.5), intake, this::intake);
         
         gamepieceSimulation.setSubticks(5);
         gamepieceSimulation.enableAirResistance();

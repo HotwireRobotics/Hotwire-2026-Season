@@ -17,9 +17,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "race",
           "data": {
-            "pathName": "Unineutral Lower Exolateral"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Unineutral Lower Exolateral"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 5.29
+                }
+              }
+            ]
           }
         },
         {

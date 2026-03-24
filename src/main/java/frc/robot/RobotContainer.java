@@ -188,7 +188,7 @@ public class RobotContainer {
             initializeFiring,
             initializeFeeding,
             Commands.waitTime(Constants.Shooter.kFiringTime).raceWith(oscillateIntakeSequence),
-            terminateFiring);
+            terminateFiring).alongWith(Commands.run(() -> simulation.shoot()));
 
     // Register commands for pathplanner.
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
@@ -201,9 +201,10 @@ public class RobotContainer {
     NamedCommands.registerCommand("Stop", stopDrive);
 
     // Create autonomous selector and add options.
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices", new SendableChooser<Command>()); // new SendableChooser<Command>()
+     // new SendableChooser<Command>()
 
     if (testing) {
+      autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
       // Drivetrain characterization routines.
       autoChooser.addOption(
           "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
@@ -227,6 +228,8 @@ public class RobotContainer {
 
       /** Test autonomous firing sequence. */
       autoChooser.addOption("Shooting Sequence", runFiringSequence);
+    } else {
+      autoChooser = new LoggedDashboardChooser<>("Auto Choices", new SendableChooser<Command>());
     }
 
     // Secondary autonomous routine.
