@@ -98,7 +98,7 @@ public class Shooter extends ModularSubsystem implements Systerface {
     // }
   }
 
-  private enum State {
+  public enum State {
     STOPPED,
     FIRING
   }
@@ -151,6 +151,10 @@ public class Shooter extends ModularSubsystem implements Systerface {
     return debouncer.calculate(
         left.getVelocity().isNear(io.getTarget(), Constants.Shooter.kVelocityTolerance) &&
         right.getVelocity().isNear(io.getTarget(), Constants.Shooter.kVelocityTolerance));
+  }
+
+  public AngularVelocity getTarget() {
+    return io.getTarget();
   }
 
   public Command run() {

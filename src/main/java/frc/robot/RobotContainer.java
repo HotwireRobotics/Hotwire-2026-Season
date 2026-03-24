@@ -144,8 +144,9 @@ public class RobotContainer {
     );
 
     simulation = new Handler(
-      velocity,
-      () -> Constants.Joysticks.operator.leftTrigger().getAsBoolean(),
+      () -> shooter.getTarget(),
+      () -> shooter.getState().equals(Shooter.State.FIRING),
+      () -> intake.getState().equals(Intake.State.INTAKING),
       drive::getPose,
       drive::getChassisSpeeds
     );
@@ -188,7 +189,7 @@ public class RobotContainer {
             initializeFiring,
             initializeFeeding,
             Commands.waitTime(Constants.Shooter.kFiringTime).raceWith(oscillateIntakeSequence),
-            terminateFiring).alongWith(Commands.run(() -> simulation.shoot()));
+            terminateFiring);
 
     // Register commands for pathplanner.
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
@@ -364,7 +365,7 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .rightBumper()
         .whileTrue(
-           (shooter.run().alongWith(Commands.runOnce(() -> simulation.shoot()))).repeatedly())
+           shooter.run().repeatedly())
         .onFalse(
           shooter.halt());
 

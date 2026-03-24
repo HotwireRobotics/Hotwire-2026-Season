@@ -82,7 +82,7 @@ public class Intake extends ModularSubsystem implements Systerface {
   }
 
   // State system.
-  private enum State {
+  public enum State {
     STOPPED,
     INTAKING
   }
@@ -93,6 +93,10 @@ public class Intake extends ModularSubsystem implements Systerface {
   public Object getState() {
     return state;
   }
+  
+  public void setState(State newState) {
+    state = newState;
+  }
 
   @Override
   public void periodic() {
@@ -101,22 +105,28 @@ public class Intake extends ModularSubsystem implements Systerface {
     
     Logs.log(this, state);
     Logs.write("Intake/ArmState", armState);
+  }
 
-    if (isActiveDevice(Device.ROLLERS)) {
-      state = State.INTAKING;
-    } else {
-      state = State.STOPPED;
-    }
+  private void start() {
+    rollers.runPercent(speed.get());
+
+    setState(State.INTAKING);
+  }
+
+  private void stall() {
+    rollers.runPercent(0);
+
+    setState(State.STOPPED);
   }
 
   /** Run the hopper at the specified speed. */
   public Command run() {
-    return runDevice(Device.ROLLERS, speed, this);
+    return Commands.runOnce(() -> start());
   }
 
   /** Halt the hopper. */
   public Command halt() {
-    return runDevice(Device.ROLLERS, 0, this);
+    return Commands.runOnce(() -> stall());
   }
 
   public Command oscillateArm(Angle angle, Frequency frequency) {
