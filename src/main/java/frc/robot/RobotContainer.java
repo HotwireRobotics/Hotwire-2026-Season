@@ -332,7 +332,7 @@ public class RobotContainer {
         .rightTrigger()
         .whileTrue(
           shooter.run().repeatedly().alongWith(Commands.either(
-            hopper.run().repeatedly(), hopper.halt(), () -> shooter.isReady())))
+            hopper.run(), hopper.halt(), () -> shooter.isReady()).repeatedly()))
         .onFalse(
           shooter.halt().alongWith(hopper.halt()));
 
