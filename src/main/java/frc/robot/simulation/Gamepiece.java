@@ -544,13 +544,13 @@ public class Gamepiece {
      * @param launchHeight Height of the fuel to launch at. Make sure this is higher than your robot's bumper height, or else it will collide with your robot immediately.
      * @throws IllegalStateException if robot is not registered
      */
-    public void launchFuel(LinearVelocity launchVelocity, Angle hoodAngle, Angle turretYaw, Distance launchHeight, Distance launchForward) {
+    public void launchFuel(LinearVelocity launchVelocity, Angle hoodAngle, Angle turretYaw, Distance launchHeight, Distance launchForward, Distance launchRight) {
         if (robotPoseSupplier == null || robotFieldSpeedsSupplier == null) {
             throw new IllegalStateException("Robot must be registered before launching fuel.");
         }
 
         Pose3d launchPose = new Pose3d(this.robotPoseSupplier.get())
-                .plus(new Transform3d(new Translation3d(launchForward, Meters.zero(), launchHeight), Rotation3d.kZero));
+                .plus(new Transform3d(new Translation3d(launchForward, launchRight, launchHeight), Rotation3d.kZero));
         ChassisSpeeds fieldSpeeds = this.robotFieldSpeedsSupplier.get();
 
         double horizontalVel = Math.cos(hoodAngle.in(Radians)) * launchVelocity.in(MetersPerSecond);
@@ -571,8 +571,8 @@ public class Gamepiece {
     public void launchFuel(LinearVelocity launchVelocity) {
         launchFuel(
             launchVelocity.plus(InchesPerSecond.of((Math.random() - 0.5) * 32)), 
-            Degrees.of(70.4333), Degrees.of(0).plus(Degrees.of((Math.random() - 0.5) * 18)), 
-            Inches.of(14), Inches.of(-8));
+            Degrees.of(70.4333), Degrees.of(0).plus(Degrees.of((Math.random() - 0.5) * 10)), 
+            Inches.of(14), Inches.of(-8), Inches.of(3 * (Math.random() > 0.5 ? 1 : -1)));
     }
 
     protected void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {

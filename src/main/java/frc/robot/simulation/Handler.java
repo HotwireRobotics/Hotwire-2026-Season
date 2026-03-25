@@ -45,7 +45,7 @@ public class Handler {
         this.velocity = velocity;
 
         doIntake = () -> {
-            return intake.getAsBoolean() && (counter < limit);
+            return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.17);
         };
 
         doShoot = shooter;
@@ -64,7 +64,7 @@ public class Handler {
                 this.pose, this.chassisSpeeds);
 
         gamepieceSimulation.registerIntake(
-            Inches.of(17.5), Inches.of(25.118), Inches.of(-17.5), Inches.of(17.5), doIntake, this::intake);
+            Inches.of(17.5), Inches.of(25.118), Inches.of(-14.5), Inches.of(15.5), doIntake, this::intake);
         
         gamepieceSimulation.setSubticks(5);
         gamepieceSimulation.enableAirResistance();
@@ -107,6 +107,9 @@ public class Handler {
     public void restart() {
         gamepieceSimulation.clearFuel();
         gamepieceSimulation.spawnStartingFuel(); 
+
+        Gamepiece.Hub.BLUE_HUB.resetScore();
+        Gamepiece.Hub.RED_HUB.resetScore();
     }
 
     private LinearVelocity lineate(AngularVelocity velocity, Distance radius) {
