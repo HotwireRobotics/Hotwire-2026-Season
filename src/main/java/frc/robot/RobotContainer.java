@@ -181,6 +181,8 @@ public class RobotContainer {
     // Create autonomous selector and add options.
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", new SendableChooser<Command>()); // new SendableChooser<Command>()
 
+    // do a flip
+
     if (testing) {
       // Drivetrain characterization routines.
       autoChooser.addOption(
