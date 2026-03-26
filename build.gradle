@@ -150,17 +150,10 @@ task(eventDeploy) {
             def commitMessage = "Update at '${new Date().toString()}'"
 
             if (branch.startsWith(branchPrefix)) {
-                exec {
-                    workingDir(projectDir)
-                    executable 'git'
-                    args 'add', '-A'
-                }
-                exec {
-                    workingDir(projectDir)
-                    executable 'git'
-                    args 'commit', '-m', commitMessage
-                    ignoreExitValue = true
-                }
+                def addProcess = ['git', 'add', '-A'].execute(null, projectDir)
+                addProcess.waitFor()
+                def commitProcess = ['git', 'commit', '-m', commitMessage].execute(null, projectDir)
+                commitProcess.waitFor()
 
                 println "Committed to branch: '$branch'"
                 println "Commit message: '$commitMessage'"

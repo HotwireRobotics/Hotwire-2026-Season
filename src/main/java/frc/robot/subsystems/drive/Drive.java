@@ -53,7 +53,7 @@ public class Drive extends SubsystemBase {
               Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
 
   // PathPlanner config constants
-  private static final double ROBOT_MASS_KG = 74.088;
+  private static final double ROBOT_MASS_KG = 57.334076;
   private static final double ROBOT_MOI = 6.883;
   private static final double WHEEL_COF = 1.2;
   private static final RobotConfig PP_CONFIG =
@@ -237,11 +237,11 @@ public class Drive extends SubsystemBase {
       }
 
       // Flip for red alliance to match vision coordinate system
-      // if (!Constants.currentMode.equals(Constants.Mode.SIM)
-      //     && DriverStation.getAlliance().isPresent()
-      //     && DriverStation.getAlliance().get() == Alliance.Red) {
-      //   rawGyroRotation = rawGyroRotation.plus(Rotation2d.kPi);
-      // }
+      if (!Constants.currentMode.equals(Constants.Mode.SIM)
+          && DriverStation.getAlliance().isPresent()
+          && DriverStation.getAlliance().get() == Alliance.Red) {
+        rawGyroRotation = rawGyroRotation.plus(Rotation2d.kPi);
+      }
 
       // Apply update
       poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);

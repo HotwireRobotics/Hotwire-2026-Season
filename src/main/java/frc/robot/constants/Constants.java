@@ -91,8 +91,7 @@ public final class Constants {
 
     /** Start the timer from zero. */
     public static void startTime() {
-      timer.reset();
-      timer.start();
+      timerOffset = -Timer.getTimestamp();
     }
 
     /**
@@ -101,13 +100,12 @@ public final class Constants {
      * @param offset
      */
     public static void startTime(Time offset) {
-      startTime();
-      timerOffset = offset.in(Seconds);
+      timerOffset = offset.in(Seconds) - Timer.getTimestamp();
     }
 
     /** Update time measurement. */
     public static Time tick() {
-      time = Seconds.of(timer.get() + timerOffset);
+      time = Seconds.of(Timer.getTimestamp() + timerOffset);
       Logger.recordOutput("Time", time.in(Seconds));
 
       return time;
