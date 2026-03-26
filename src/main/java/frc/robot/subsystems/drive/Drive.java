@@ -237,7 +237,9 @@ public class Drive extends SubsystemBase {
       }
 
       // Flip for red alliance to match vision coordinate system
-      if (DriverStation.getAlliance().get() == Alliance.Red) {
+      if (!Constants.currentMode.equals(Constants.Mode.SIM)
+          && DriverStation.getAlliance().isPresent()
+          && DriverStation.getAlliance().get() == Alliance.Red) {
         rawGyroRotation = rawGyroRotation.plus(Rotation2d.kPi);
       }
 
@@ -341,7 +343,7 @@ public class Drive extends SubsystemBase {
 
   /** Returns the measured chassis speeds of the robot. */
   @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
-  public ChassisSpeeds getChassisSpeeds() {
+  private ChassisSpeeds getChassisSpeeds() {
     return kinematics.toChassisSpeeds(getModuleStates());
   }
 
