@@ -147,7 +147,7 @@ public class RobotContainer {
 
     // Shooter commands.
     final Command initializeFiring =
-        Commands.sequence(lockDrive, velocity(VelocityType.AUTO), shooter.run());
+        Commands.sequence(lockDrive, velocity(VelocityType.AUTO), shooter.run(), intake.run());
 
     final Command initializeFeeding =
         Commands.sequence(Commands.waitTime(Constants.Shooter.kChargeUpTime), hopper.run());
@@ -216,7 +216,8 @@ public class RobotContainer {
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
 
     // Tertiary autonomous routine.
-    autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
+    // autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
+    autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
   }
 
   /** Returns the Rotation2d the robot needs to face the hub. */
