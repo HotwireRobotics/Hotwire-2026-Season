@@ -45,7 +45,7 @@ public class Handler {
         this.velocity = velocity;
 
         doIntake = () -> {
-            return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.17);
+            return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.97);
         };
 
         doShoot = shooter;
