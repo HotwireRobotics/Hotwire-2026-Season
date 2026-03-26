@@ -1,0 +1,11 @@
+{
+    "name": "Cindy",
+    "isFTC": false,
+    "disableSimplification": false,
+    "rotations": [
+        {"axis": "x", "degrees": 90}
+    ],
+    "position": [1, 0.1, -0.265],
+    "cameras": [],
+    "components": []
+  }
