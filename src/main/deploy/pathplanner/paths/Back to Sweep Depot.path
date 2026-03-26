@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.796947218252297,
-        "y": 6.655078459336357
+        "x": 2.1692486583184256,
+        "y": 3.5563506261180677
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.041790133909025,
-        "y": 6.6127688597910925
+        "x": 2.6804992867332373,
+        "y": 6.266918687589158
       },
       "isLocked": false,
-      "linkedName": "Upper Firing Location"
+      "linkedName": "Backup Centre"
     },
     {
       "anchor": {
@@ -20,12 +20,12 @@
         "y": 6.823281027104137
       },
       "prevControl": {
-        "x": 0.6361911554921535,
-        "y": 7.548711101553431
+        "x": 0.700884450784593,
+        "y": 8.311226818830242
       },
       "nextControl": {
-        "x": 0.6361911554921537,
-        "y": 5.839942938659058
+        "x": 0.5973253153598459,
+        "y": 5.929366704061063
       },
       "isLocked": false,
       "linkedName": null
@@ -36,8 +36,8 @@
         "y": 5.568231098430813
       },
       "prevControl": {
-        "x": 0.6620684736091292,
-        "y": 6.38336661911555
+        "x": 0.6122677711947215,
+        "y": 6.2928311786398465
       },
       "nextControl": null,
       "isLocked": false,
@@ -50,21 +50,7 @@
       "rotationDegrees": -119.99999999999999
     }
   ],
-  "constraintZones": [
-    {
-      "name": "Constraints Zone",
-      "minWaypointRelativePos": 0.794058068872398,
-      "maxWaypointRelativePos": 2.0,
-      "constraints": {
-        "maxVelocity": 1.0,
-        "maxAcceleration": 3.0,
-        "maxAngularVelocity": 540.0,
-        "maxAngularAcceleration": 720.0,
-        "nominalVoltage": 12.0,
-        "unlimited": false
-      }
-    }
-  ],
+  "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
@@ -83,7 +69,7 @@
   "folder": "Neutral-Depot",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -55.275358164878135
+    "rotation": 11.309932474020208
   },
   "useDefaultConstraints": true
 }

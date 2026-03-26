@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -172,6 +173,9 @@ public class RobotContainer {
     final Command initializeFiring =
         Commands.sequence(lockDrive, velocity(VelocityType.AUTO), shooter.run(), intake.run());
 
+    final Command initializePassing =
+        Commands.sequence(lockDrive, velocity(VelocityType.STATIC), shooter.run(), intake.run());
+
     final Command initializeFeeding =
         Commands.sequence(Commands.waitTime(Constants.Shooter.kChargeUpTime), hopper.run());
 
@@ -191,8 +195,16 @@ public class RobotContainer {
             Commands.waitTime(Constants.Shooter.kFiringTime).raceWith(oscillateIntakeSequence),
             terminateFiring);
 
+    final Command runPassingSequence =
+        Commands.sequence(
+            initializePassing,
+            initializeFeeding,
+            Commands.waitTime(Constants.Shooter.kFiringTime).raceWith(oscillateIntakeSequence),
+            terminateFiring);
+
     // Register commands for pathplanner.
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
+    NamedCommands.registerCommand("Passing Sequence", runPassingSequence);
     NamedCommands.registerCommand("Start Intaking", intake.run());
     NamedCommands.registerCommand("Stop Intaking", intake.halt());
     NamedCommands.registerCommand(
