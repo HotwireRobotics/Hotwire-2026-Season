@@ -107,13 +107,13 @@ public class Intake extends ModularSubsystem implements Systerface {
     Logs.write("Intake/ArmState", armState);
   }
 
-  private void start() {
+  public void start() {
     rollers.runPercent(speed.get());
 
     setState(State.INTAKING);
   }
 
-  private void stall() {
+  public void stall() {
     rollers.runPercent(0);
 
     setState(State.STOPPED);

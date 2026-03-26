@@ -23,7 +23,7 @@ public class Handler {
 
     // Hopper count.
     private int counter = 0;
-    private final int limit = 35;
+    private final int limit = 28;
     // Declare supplier for shooting.
     private final Supplier<AngularVelocity> velocity;
     private final BooleanSupplier doShoot;
@@ -45,7 +45,7 @@ public class Handler {
         this.velocity = velocity;
 
         doIntake = () -> {
-            return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.97);
+            return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.99);
         };
 
         doShoot = shooter;
@@ -64,7 +64,7 @@ public class Handler {
                 this.pose, this.chassisSpeeds);
 
         gamepieceSimulation.registerIntake(
-            Inches.of(17.5), Inches.of(25.118), Inches.of(-14.5), Inches.of(15.5), doIntake, this::intake);
+            Inches.of(17.5), Inches.of(24.118), Inches.of(-12.5), Inches.of(13.5), doIntake, this::intake);
         
         gamepieceSimulation.setSubticks(5);
         gamepieceSimulation.enableAirResistance();

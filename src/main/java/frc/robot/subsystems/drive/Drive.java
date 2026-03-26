@@ -237,9 +237,7 @@ public class Drive extends SubsystemBase {
       }
 
       // Flip for red alliance to match vision coordinate system
-      if (!Constants.currentMode.equals(Constants.Mode.SIM)
-          && DriverStation.getAlliance().isPresent()
-          && DriverStation.getAlliance().get() == Alliance.Red) {
+      if (DriverStation.getAlliance().get() == Alliance.Red) {
         rawGyroRotation = rawGyroRotation.plus(Rotation2d.kPi);
       }
 

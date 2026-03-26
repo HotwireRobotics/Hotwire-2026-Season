@@ -153,9 +153,8 @@ public class Robot extends LoggedRobot {
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
 
-    container.shooter.halt();
-    container.intake.halt();
-    
+    container.shooter.stall();
+    container.intake.stall();
   }
 
   @Override
