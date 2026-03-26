@@ -27,6 +27,7 @@ import frc.robot.simulation.Gamepiece;
 import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.indication.limelights.LimelightArray;
 import frc.robot.subsystems.intake.Intake;
+
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -151,6 +152,10 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
+
+    container.shooter.halt();
+    container.intake.halt();
+    
   }
 
   @Override

@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.318216833095578,
-        "y": 5.518
+        "x": 0.6361911554921535,
+        "y": 5.568231098430813
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.583969658900821,
-        "y": 5.909224809340691
+        "x": 1.579899136015742,
+        "y": 5.057221944600217
       },
       "isLocked": false,
-      "linkedName": "Depot_"
+      "linkedName": "Depot Sweep End"
     },
     {
       "anchor": {
-        "x": 1.868,
-        "y": 4.162
+        "x": 2.7969472182596284,
+        "y": 5.270641940085593
       },
       "prevControl": {
-        "x": 1.868,
-        "y": 3.7233917417586277
+        "x": 1.6351940017346949,
+        "y": 5.430251621087932
       },
       "nextControl": null,
       "isLocked": false,
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 90.0
+    "rotation": -33.59344741602761
   },
   "reversed": false,
-  "folder": null,
+  "folder": "Neutral-Depot",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -33.18202585397233
+    "rotation": -122.82939403267345
   },
   "useDefaultConstraints": true
 }

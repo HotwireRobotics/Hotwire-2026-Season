@@ -4,6 +4,7 @@
   "holonomicMode": true,
   "pathFolders": [
     "Bineutral",
+    "Neutral-Depot",
     "Unineutral"
   ],
   "autoFolders": [

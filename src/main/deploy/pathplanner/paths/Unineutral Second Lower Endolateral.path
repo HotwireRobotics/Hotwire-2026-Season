@@ -93,24 +93,6 @@
       }
     }
   ],
-<<<<<<< HEAD
-  "constraintZones": [
-    {
-      "name": "Constraints Zone",
-      "minWaypointRelativePos": 0,
-      "maxWaypointRelativePos": 0.8271186440677966,
-      "constraints": {
-        "maxVelocity": 1.0,
-        "maxAcceleration": 3.0,
-        "maxAngularVelocity": 100.0,
-        "maxAngularAcceleration": 300.0,
-        "nominalVoltage": 12.0,
-        "unlimited": false
-      }
-    }
-  ],
-=======
->>>>>>> event_march_23_shop_test
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
@@ -123,21 +105,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-<<<<<<< HEAD
-    "rotation": 90.0
-=======
     "rotation": 46.40862873533844
->>>>>>> event_march_23_shop_test
   },
   "reversed": false,
   "folder": "Unineutral",
   "idealStartingState": {
     "velocity": 0,
-<<<<<<< HEAD
-    "rotation": 55.06068979532298
-=======
     "rotation": 55.060689795322986
->>>>>>> event_march_23_shop_test
   },
   "useDefaultConstraints": false
 }
