@@ -144,8 +144,6 @@ gversion {
 // Create commit with working changes on event branches
 task(eventDeploy) {
     doLast {
-        // Disabled for it causes a deploy misfire.
-
         if (project.gradle.startParameter.taskNames.any({ it.toLowerCase().contains("deploy") })) {
             def branchPrefix = "event"
             def branch = 'git branch --show-current'.execute().text.trim()
