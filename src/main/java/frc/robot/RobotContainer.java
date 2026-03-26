@@ -242,7 +242,6 @@ public class RobotContainer {
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
 
     // Tertiary autonomous routine.
-    autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
     // autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
     autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
   }
