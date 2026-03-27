@@ -186,6 +186,7 @@ public class LimelightArray extends SubsystemBase {
         Logger.recordOutput(limelight + " Detecting", true);
         Logger.recordOutput("Limelight/" + limelight + "/IMU", mode);
         Logger.recordOutput("Limelight/" + limelight + "/Pose", MT2estimate.pose);
+        Logger.recordOutput("Limelight/" + limelight + "/dist", MT2estimate.avgTagDist);
 
         // Supply measurement to consumer with defined standard deviations.
         Matrix<N3, N1> stdDevs = VecBuilder.fill(0.7, 0.7, Double.POSITIVE_INFINITY);
