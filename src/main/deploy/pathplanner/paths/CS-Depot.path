@@ -4,71 +4,59 @@
     {
       "anchor": {
         "x": 3.5321824686940966,
-        "y": 0.6049555555555548
+        "y": 7.4572753209700435
       },
       "prevControl": null,
       "nextControl": {
-        "x": 9.434479315263907,
-        "y": 0.36689015691868687
+        "x": 2.6416833095577745,
+        "y": 6.616262482168331
       },
       "isLocked": false,
-      "linkedName": "Lowest Start Location"
+      "linkedName": "CS-Upper"
     },
     {
       "anchor": {
-        "x": 7.804208273894435,
-        "y": 3.5368616262482178
+        "x": 0.6491298145506419,
+        "y": 6.862097004279601
       },
       "prevControl": {
-        "x": 8.040447731798498,
-        "y": 2.906889738504045
+        "x": 0.6491298145506419,
+        "y": 7.112097004279601
       },
       "nextControl": {
-        "x": 7.687760342368046,
-        "y": 3.8473894436519256
+        "x": 0.649129814550642,
+        "y": 5.438609278938215
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "CS-Depot-Start"
     },
     {
       "anchor": {
-        "x": 6.31626248216833,
-        "y": 2.048915834522112
+        "x": 0.6491298145506419,
+        "y": 5.387089871611984
       },
       "prevControl": {
-        "x": 8.360570613409415,
-        "y": 2.1136091298145514
+        "x": 0.6363204821686989,
+        "y": 5.661977750443235
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "CS-Depot-End"
     }
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.16631130063965735,
-      "rotationDegrees": 180.0
-    },
-    {
-      "waypointRelativePos": 0.29424307036247693,
-      "rotationDegrees": 100.0
-    },
-    {
-      "waypointRelativePos": 0.8272921108742,
-      "rotationDegrees": 100.0
-    },
-    {
-      "waypointRelativePos": 1.198294243070353,
-      "rotationDegrees": -100.0
+      "waypointRelativePos": 0.9658848614072455,
+      "rotationDegrees": -130.0
     }
   ],
   "constraintZones": [
     {
       "name": "Constraints Zone",
-      "minWaypointRelativePos": 0.49696151249155573,
-      "maxWaypointRelativePos": 1.685347738014846,
+      "minWaypointRelativePos": 0.5455773126266074,
+      "maxWaypointRelativePos": 2.0,
       "constraints": {
-        "maxVelocity": 1.7,
+        "maxVelocity": 1.5,
         "maxAcceleration": 3.0,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,
@@ -89,7 +77,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": -135.0
   },
   "reversed": false,
   "folder": "Cinderstorm",

@@ -100,9 +100,7 @@ public class RobotContainer {
     velocity =
         () -> {
           switch (velocityType) {
-            case STATIC:
-              // Ferrying static velocity.
-              return Constants.Shooter.kSpeed;
+            case STATIC: return Constants.Shooter.kSpeed;
             case REGRESSION:
               // Conditional shooting.
               if (aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get()) {
@@ -110,9 +108,7 @@ public class RobotContainer {
                   Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
                       .getTranslation()
                       .getNorm()));
-              } else {
-                return Constants.Shooter.kZero;
-              }
+              } else return Constants.Shooter.kZero;
             case TESTING:
               // Allow testing of shooter velocity via dashboard input, for characterization purposes.
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
@@ -121,9 +117,7 @@ public class RobotContainer {
                 Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
                     .getTranslation()
                     .getNorm()));
-            default:
-              // Fallback velocity.
-              return Constants.Shooter.kSpeed;
+            default: return Constants.Shooter.kSpeed;
           }
         };
 
@@ -173,9 +167,6 @@ public class RobotContainer {
     final Command initializeFiring =
         Commands.sequence(lockDrive, velocity(VelocityType.AUTO), shooter.run(), intake.run());
 
-    final Command initializePassing =
-        Commands.sequence(lockDrive, velocity(VelocityType.STATIC), shooter.run(), intake.run());
-
     final Command initializeFeeding =
         Commands.sequence(Commands.waitTime(Constants.Shooter.kChargeUpTime), hopper.run());
 
@@ -195,16 +186,9 @@ public class RobotContainer {
             Commands.waitTime(Constants.Shooter.kFiringTime).raceWith(oscillateIntakeSequence),
             terminateFiring);
 
-    final Command runPassingSequence =
-        Commands.sequence(
-            initializePassing,
-            initializeFeeding,
-            Commands.waitTime(Constants.Shooter.kFiringTime).raceWith(oscillateIntakeSequence),
-            terminateFiring);
 
     // Register commands for pathplanner.
     NamedCommands.registerCommand("Firing Sequence", runFiringSequence);
-    NamedCommands.registerCommand("Passing Sequence", runPassingSequence);
     NamedCommands.registerCommand("Start Intaking", intake.run());
     NamedCommands.registerCommand("Stop Intaking", intake.halt());
     NamedCommands.registerCommand(
@@ -245,16 +229,11 @@ public class RobotContainer {
       autoChooser = new LoggedDashboardChooser<>("Auto Choices", new SendableChooser<Command>());
     }
 
-    // Secondary autonomous routine.
-    autoChooser.addOption("A-Bineutral Right", new PathPlannerAuto("A-Bineutral", false));
-    autoChooser.addOption("A-Bineutral Left", new PathPlannerAuto("A-Bineutral", true));
-
     // Primary autonomous routine.
     autoChooser.addOption("A-Unineutral Right", new PathPlannerAuto("A-Unineutral", false));
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
 
     // Tertiary autonomous routine.
-    // autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
     autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
   }
 
