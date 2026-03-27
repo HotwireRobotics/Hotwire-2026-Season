@@ -132,6 +132,7 @@ public class Robot extends LoggedRobot {
 
     // Update field visualization.
     field.setRobotPose(robotContainer.drive.getPose());
+    robotContainer.simulation.tick();
   }
 
   @Override
