@@ -188,5 +188,6 @@ src/main/java/frc/robot/BuildConstants.java
 
 # CAD files
 model.glb
-.glb
-.obj
+model_0.glb
+*.glb
+*.obj
