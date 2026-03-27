@@ -49,7 +49,7 @@ public final class Constants {
     public static final Time kFiringTime = Seconds.of(7);
     public static final Time kUntilSecondMagnitude = Seconds.of(0.75); // 0.75
     public static final Time kUntilThirdMagnitude = Seconds.of(2.5); // 2.5
-    public static final Time kDebounce = Seconds.of(0.1);
+    public static final Time kDebounce = Seconds.of(0.18);
 
     // Static target velocities and tolerances.
     public static final AngularVelocity kSpeed = RPM.of(2400);
