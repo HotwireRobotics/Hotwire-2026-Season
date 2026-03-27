@@ -6,6 +6,9 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+
+import static edu.wpi.first.units.Units.Degrees;
+
 import org.littletonrobotics.junction.Logger;
 
 public class Motor {
@@ -16,6 +19,8 @@ public class Motor {
 
   private final SysIdRoutine sysIdRoutine;
   private final Subsystem subsystem;
+
+  private Angle target = Degrees.of(0);
 
   public Motor(Subsystem subsystem, MotorBase io) {
     this.io = io;
@@ -58,6 +63,16 @@ public class Motor {
    */
   public void runPosition(Angle position) {
     io.runPosition(position);
+    target = position;
+  }
+
+  /**
+   * Return target position.
+   * 
+   * @param position
+   */
+  public Angle getTargetPose() {
+    return target;
   }
 
   /**

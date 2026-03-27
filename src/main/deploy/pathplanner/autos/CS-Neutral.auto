@@ -13,7 +13,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "CS-Neutral"
+            "pathName": "CS-Neutral-Upper"
           }
         },
         {
@@ -25,7 +25,37 @@
         {
           "type": "path",
           "data": {
-            "pathName": "CS-Neutral-Shoot"
+            "pathName": "CS-Neutral-Upper-Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Firing Sequence"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Start Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CS-Shoot-Depot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CS-Depot-Shoot"
           }
         },
         {

@@ -1,5 +1,6 @@
 package frc.robot.simulation;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Second;
@@ -13,6 +14,7 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -23,11 +25,14 @@ public class Handler {
 
     // Hopper count.
     private int counter = 0;
+    private Angle motion = Degrees.of(0);
+    private Angle pitch = Degrees.of(0);
     private final int limit = 28;
     // Declare supplier for shooting.
     private final Supplier<AngularVelocity> velocity;
     private final BooleanSupplier doShoot;
     private final BooleanSupplier doIntake;
+    private final Supplier<Angle> target;
 
     // Drive suppliers.
     private final Supplier<Pose2d> pose;
@@ -39,14 +44,17 @@ public class Handler {
         Supplier<AngularVelocity> velocity,
         BooleanSupplier shooter,
         BooleanSupplier intake,
+        Supplier<Angle> wrist,
         Supplier<Pose2d> pose,
         Supplier<ChassisSpeeds> chassisSpeeds
     ) {
         this.velocity = velocity;
 
         doIntake = () -> {
-            return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.99);
+            return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.99) && (pitch.lte(Degrees.of(3)));
         };
+
+        target = wrist;
 
         doShoot = shooter;
 
@@ -72,11 +80,11 @@ public class Handler {
     }
 
     /** Attempt to decrement the gamepiece counter. */
-    public void shoot() {
+    private void shoot() {
         // Random chance of not firing based on the fact that we usually only shoot ~4 per second.
         Time time = Constants.Tempo.getTime();
         if (
-            ((counter > 0) && ((time.in(Seconds) % (1/7.5)) + (Math.random()/10)) < 0.05)
+            ((counter > 0) && ((time.in(Seconds) % ((10 / ((-50 * motion.in(Degrees)) + (3 * counter))))) + (Math.random()/10)) < 0.05)
         ) {
             gamepieceSimulation.launchFuel(lineate(velocity.get(), Constants.Shooter.kAverageWheelRadius));
             counter --;
@@ -102,6 +110,13 @@ public class Handler {
 
         Logger.recordOutput("Simulation/Score/Blue", Gamepiece.Hub.BLUE_HUB.getScore());
         Logger.recordOutput("Simulation/Score/Red",  Gamepiece.Hub.RED_HUB.getScore());
+        Logger.recordOutput("Simulation/Pitch", pitch);
+        Logger.recordOutput("Simulation/Motion", motion);
+
+        motion = (pitch.minus(target.get().times(-1))).times(0.1).plus(
+            (pitch.gt(Degrees.of(0)) ? Degrees.of(Math.random() * 0.03) : Degrees.of(0)));
+        
+        pitch = pitch.minus(motion);
     }
 
     public void restart() {
@@ -110,6 +125,10 @@ public class Handler {
 
         Gamepiece.Hub.BLUE_HUB.resetScore();
         Gamepiece.Hub.RED_HUB.resetScore();
+    }
+
+    public Angle getWristPitch() {
+        return pitch;
     }
 
     private LinearVelocity lineate(AngularVelocity velocity, Distance radius) {

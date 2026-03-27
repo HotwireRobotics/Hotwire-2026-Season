@@ -3,39 +3,60 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.6491298145506419,
-        "y": 5.387089871611984
-      },
-      "prevControl": null,
-      "nextControl": {
-        "x": 1.6195292439372322,
-        "y": 5.270641940085593
-      },
-      "isLocked": false,
-      "linkedName": "CS-Depot-End"
-    },
-    {
-      "anchor": {
         "x": 2.5122967189728955,
         "y": 5.309457917261056
       },
+      "prevControl": null,
+      "nextControl": {
+        "x": 2.564051355206847,
+        "y": 7.263195435092724
+      },
+      "isLocked": false,
+      "linkedName": "CS-Upper-Shoot"
+    },
+    {
+      "anchor": {
+        "x": 0.6491298145506419,
+        "y": 6.862097004279601
+      },
       "prevControl": {
-        "x": 1.4310756050149944,
-        "y": 5.240183149005521
+        "x": 0.6491298145506419,
+        "y": 7.112097004279601
+      },
+      "nextControl": {
+        "x": 0.649129814550642,
+        "y": 5.438609278938215
+      },
+      "isLocked": false,
+      "linkedName": "CS-Depot-Start"
+    },
+    {
+      "anchor": {
+        "x": 0.6491298145506419,
+        "y": 5.387089871611984
+      },
+      "prevControl": {
+        "x": 0.6363204821686989,
+        "y": 5.661977750443235
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "CS-Upper-Shoot"
+      "linkedName": "CS-Depot-End"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.9658848614072455,
+      "rotationDegrees": -130.0
+    }
+  ],
   "constraintZones": [
     {
       "name": "Constraints Zone",
-      "minWaypointRelativePos": 0.5536799459824495,
-      "maxWaypointRelativePos": 1.0,
+      "minWaypointRelativePos": 0.5455773126266074,
+      "maxWaypointRelativePos": 2.0,
       "constraints": {
-        "maxVelocity": 1.1,
+        "maxVelocity": 1.5,
         "maxAcceleration": 3.0,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,
@@ -56,13 +77,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -30.91171678297471
+    "rotation": -135.0
   },
   "reversed": false,
   "folder": "Cinderstorm",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -135.0
+    "rotation": -30.91171678297471
   },
   "useDefaultConstraints": false
 }

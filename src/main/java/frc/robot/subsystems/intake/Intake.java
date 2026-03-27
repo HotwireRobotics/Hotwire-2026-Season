@@ -154,4 +154,8 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> wrist.runPosition(Degrees.of(90)));
   }
+
+  public Angle getWristTarget() {
+    return wrist.getTargetPose();
+  }
 }

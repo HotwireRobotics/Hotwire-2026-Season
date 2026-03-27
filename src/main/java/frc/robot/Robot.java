@@ -5,17 +5,21 @@ import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -147,6 +151,14 @@ public class Robot extends LoggedRobot {
     // Update field visualization.
     field.setRobotPose(container.drive.getPose());
     container.simulation.tick();
+
+    Logger.recordOutput("RobotPose", container.drive.getPose());
+    Logger.recordOutput("ZeroedComponentPoses", new Pose3d[] {new Pose3d()});
+    Logger.recordOutput("FinalComponentPoses", 
+      new Pose3d[] {
+        new Pose3d(
+          0.1958, 0.0, 0.21, new Rotation3d(
+            Rotations.of(0), container.simulation.getWristPitch(), Rotations.of(0)))});
   }
 
   @Override

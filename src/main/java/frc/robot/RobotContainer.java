@@ -6,6 +6,8 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.util.PathPlannerLogging;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
@@ -142,6 +144,7 @@ public class RobotContainer {
       () -> shooter.getTarget(),
       () -> shooter.getState().equals(Shooter.State.FIRING),
       () -> intake.getState().equals(Intake.State.INTAKING),
+      () -> intake.getWristTarget(),
       drive::getPose,
       drive::getChassisSpeeds
     );
@@ -337,7 +340,7 @@ public class RobotContainer {
     // Toggle intake between raised and lowered positions to aggitate fuel.
     Constants.Joysticks.operator
         .povUp()
-        .onTrue(intake.raiseWrist(Degrees.of(60)).alongWith(intake.run().repeatedly()))
+        .whileTrue(intake.raiseWrist(Degrees.of(60)).alongWith(intake.run().repeatedly()))
         .onFalse(intake.lowerWrist().alongWith(intake.halt()));
 
     // Run intake rollers at full speed when left trigger is held, and halt when released.

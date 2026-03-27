@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.6491298145506419,
-        "y": 5.387089871611984
+        "x": 4.453095577746077,
+        "y": 7.4572753209700435
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.6195292439372322,
-        "y": 5.270641940085593
+        "x": 1.6065909593731478,
+        "y": 7.617715409618991
       },
       "isLocked": false,
-      "linkedName": "CS-Depot-End"
+      "linkedName": "CS-Neutral-Upper-End"
     },
     {
       "anchor": {
@@ -20,22 +20,27 @@
         "y": 5.309457917261056
       },
       "prevControl": {
-        "x": 1.4310756050149944,
-        "y": 5.240183149005521
+        "x": 2.0076920557071385,
+        "y": 6.111656691146934
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": "CS-Upper-Shoot"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.1791044776119404,
+      "rotationDegrees": 0.0
+    }
+  ],
   "constraintZones": [
     {
       "name": "Constraints Zone",
-      "minWaypointRelativePos": 0.5536799459824495,
+      "minWaypointRelativePos": 0.8345712356515826,
       "maxWaypointRelativePos": 1.0,
       "constraints": {
-        "maxVelocity": 1.1,
+        "maxVelocity": 1.5,
         "maxAcceleration": 3.0,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,
@@ -61,8 +66,8 @@
   "reversed": false,
   "folder": "Cinderstorm",
   "idealStartingState": {
-    "velocity": 0,
-    "rotation": -135.0
+    "velocity": 5.0,
+    "rotation": 0.0
   },
   "useDefaultConstraints": false
 }
