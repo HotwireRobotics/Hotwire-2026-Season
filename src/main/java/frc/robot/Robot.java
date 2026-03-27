@@ -151,14 +151,6 @@ public class Robot extends LoggedRobot {
     // Update field visualization.
     field.setRobotPose(container.drive.getPose());
     container.simulation.tick();
-
-    Logger.recordOutput("RobotPose", container.drive.getPose());
-    Logger.recordOutput("ZeroedComponentPoses", new Pose3d[] {new Pose3d()});
-    Logger.recordOutput("FinalComponentPoses", 
-      new Pose3d[] {
-        new Pose3d(
-          0.1958, 0.0, 0.21, new Rotation3d(
-            Rotations.of(0), container.simulation.getWristPitch(), Rotations.of(0)))});
   }
 
   @Override
