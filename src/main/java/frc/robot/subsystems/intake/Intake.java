@@ -27,6 +27,7 @@ public class Intake extends ModularSubsystem implements Systerface {
 
   // Declare devices.
   public final Motor rollers, left, right;
+  private Angle target = Degrees.of(0);
 
   // Declare suppliers.
   private final Supplier<Double> speed;
@@ -92,7 +93,7 @@ public class Intake extends ModularSubsystem implements Systerface {
   }
 
   // State system.
-  private enum State {
+  public enum State {
     STOPPED,
     INTAKING
   }
@@ -143,6 +144,7 @@ public class Intake extends ModularSubsystem implements Systerface {
   public Command raiseWrist(Angle angle) {
     return Commands.runOnce(
         () -> {
+          target = angle;
           configureProportional(14);
           left.setControl(control.withPosition(angle));
           right.setControl(control.withPosition(angle));
@@ -152,10 +154,15 @@ public class Intake extends ModularSubsystem implements Systerface {
   public Command lowerWrist() {
     return Commands.runOnce(
         () -> {
+          target = Degrees.of(0);
           configureProportional(14);
           left.setControl(control.withPosition(Degrees.of(0)));
           right.setControl(control.withPosition(Degrees.of(0)));
         });
+  }
+
+  public Angle getTarget() {
+    return target;
   }
 
   public Command emergency() {
