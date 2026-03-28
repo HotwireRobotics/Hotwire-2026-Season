@@ -8,7 +8,6 @@ import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
@@ -78,6 +77,7 @@ public class Handler {
             Inches.of(17.5), Inches.of(24.118), Inches.of(-14.5), Inches.of(15.5), doIntake, this::intake);
         
         gamepieceSimulation.setSubticks(5);
+        gamepieceSimulation.setLoggingFrequency(30);
         gamepieceSimulation.enableAirResistance();
         gamepieceSimulation.start();
     }
