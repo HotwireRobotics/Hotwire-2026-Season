@@ -2,6 +2,7 @@ package frc.robot.simulation;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
@@ -14,6 +15,8 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -46,6 +49,7 @@ public class Handler {
 
     // Drive suppliers.
     private final Supplier<Pose2d> pose;
+    private final Consumer<Pose2d> supp;
     private final Supplier<ChassisSpeeds> chassisSpeeds;
 
     private final Gamepiece gamepieceSimulation;
@@ -62,6 +66,8 @@ public class Handler {
         Consumer<Pose2d> supp
     ) {
         this.velocity = velocity;
+
+        this.supp = supp;
 
         doIntake = () -> {
             return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.99) && (pitch.lte(Degrees.of(3)));
@@ -86,7 +92,7 @@ public class Handler {
             ROBOT_MASS_KG
         );
 
-        // Register a robot for collision with fuel
+        // Register a robot for collision with fuel.
         gamepieceSimulation.registerRobot(
                 Inches.of(35),
                 Inches.of(35),
@@ -140,6 +146,19 @@ public class Handler {
             (pitch.gt(Degrees.of(0)) ? Degrees.of(Math.random() * 0.03) : Degrees.of(0)));
         
         pitch = pitch.minus(motion);
+        
+        Logger.recordOutput("RobotPose", pose.get());
+        Logger.recordOutput("ZeroedComponentPoses", new Pose3d[] {new Pose3d()});
+        Logger.recordOutput("Intake", new Pose3d[] {
+            new Pose3d(
+                0.1958, 0.0, 0.21, 
+                new Rotation3d(
+                    Rotations.of(0), 
+                    getWristPitch(), 
+                    Rotations.of(0)
+                ))
+        });
+        physics.resolveFieldBoundaryCollision(pose.get(), chassisSpeeds.get(), supp);
     }
 
     public void restart() {
