@@ -7,32 +7,13 @@
         {
           "type": "named",
           "data": {
-            "name": "Lower Intake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
             "name": "Start Intaking"
           }
         },
         {
-          "type": "race",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "Unineutral Lower Exolateral"
-                }
-              },
-              {
-                "type": "wait",
-                "data": {
-                  "waitTime": 5.29
-                }
-              }
-            ]
+            "pathName": "CS-Neutral-Upper"
           }
         },
         {
@@ -44,7 +25,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Unineutral Lower Endolateral"
+            "pathName": "CS-Neutral-Upper-Shoot"
           }
         },
         {
@@ -62,13 +43,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Unineutral Second Lower Endolateral"
+            "pathName": "CS-Shoot-Depot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CS-Depot-Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Firing Sequence"
           }
         }
       ]
     }
   },
   "resetOdom": true,
-  "folder": "A",
+  "folder": "CS",
   "choreoAuto": false
 }

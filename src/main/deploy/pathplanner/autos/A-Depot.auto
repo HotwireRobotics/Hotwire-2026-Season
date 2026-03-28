@@ -5,28 +5,39 @@
     "data": {
       "commands": [
         {
-          "type": "race",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "Collect from Depot"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Intake Period"
-                }
-              }
-            ]
+            "pathName": "Backup"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Firing Sequence"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Start Intaking"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Shoot from Depot"
+            "pathName": "Back to Sweep Depot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "To Shoot"
           }
         },
         {

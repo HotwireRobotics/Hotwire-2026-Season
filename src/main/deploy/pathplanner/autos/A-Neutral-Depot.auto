@@ -17,22 +17,9 @@
           }
         },
         {
-          "type": "race",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "Unineutral Lower Exolateral"
-                }
-              },
-              {
-                "type": "wait",
-                "data": {
-                  "waitTime": 5.29
-                }
-              }
-            ]
+            "pathName": "Upper Exolateral"
           }
         },
         {
@@ -44,7 +31,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Unineutral Lower Endolateral"
+            "pathName": "Upper Endolateral"
           }
         },
         {
@@ -62,7 +49,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Unineutral Second Lower Endolateral"
+            "pathName": "Sweep Depot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "To Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Firing Sequence"
           }
         }
       ]
