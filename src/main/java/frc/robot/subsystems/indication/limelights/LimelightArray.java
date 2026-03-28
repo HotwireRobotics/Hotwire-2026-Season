@@ -191,6 +191,7 @@ public class LimelightArray extends SubsystemBase {
         // Supply measurement to consumer with defined standard deviations.
         Matrix<N3, N1> stdDevs = VecBuilder.fill(0.7, 0.7, Double.POSITIVE_INFINITY);
         if (Dashboard.visionEnabled.get()) this.supply.accept(MT2estimate, stdDevs);
+        break;
       } else {
         Logger.recordOutput(limelight + " Detecting", false);
       }
