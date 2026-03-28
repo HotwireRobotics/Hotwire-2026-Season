@@ -202,7 +202,7 @@ public class Handler {
     private static final double TILT_STIFFNESS = 42.0;
     private static final double TILT_DAMPING = 11.0;
     private static final double COLLISION_YAW_GAIN = 0.22;
-    private static final double COLLISION_TILT_RATE_GAIN = 20.8;
+    private static final double COLLISION_TILT_RATE_GAIN = 0.0208;
     private static final double HUB_COLLISION_TILT_MULTIPLIER = 2.5;
     private static final double MAX_COLLISION_TILT_RATE_RADPS = Math.toRadians(1200);
     private static final double MAX_COLLISION_YAW_STEP_RAD = Math.toRadians(28.0);
@@ -387,9 +387,9 @@ public class Handler {
     private Pose2d resolveRectangleCollision(
         Pose2d pose, ColliderRect rect, double halfLength, double halfWidth) {
       // Let robots traverse bump lanes without trench block sidewalls hard-locking movement.
-      if (isTrenchBlockRect(rect) && isInBumpTraversalWindow(pose, halfLength, halfWidth)) {
-        return pose;
-      }
+    //   if (isTrenchBlockRect(rect) && isInBumpTraversalWindow(pose, halfLength, halfWidth)) {
+    //     return pose;
+    //   }
 
       double heading = pose.getRotation().getRadians();
       double projectedHalfX = Math.abs(Math.cos(heading)) * halfLength + Math.abs(Math.sin(heading)) * halfWidth;
@@ -596,8 +596,7 @@ public class Handler {
       double normalLongitudinal = normal.getX() * headingCos + normal.getY() * headingSin;
       double normalLateral = -normal.getX() * headingSin + normal.getY() * headingCos;
 
-      double hubBoost = isNearHub(corrected.getX(), corrected.getY()) ? HUB_COLLISION_TILT_MULTIPLIER : 1.0;
-      double tiltRateImpulse = normalSpeedIntoSurface * COLLISION_TILT_RATE_GAIN * hubBoost;
+      double tiltRateImpulse = normalSpeedIntoSurface * COLLISION_TILT_RATE_GAIN;
 
       pitchRateRadPerSec =
           MathUtil.clamp(
