@@ -159,6 +159,9 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("Robot/AutonomousCommand", "None");
     }
     Constants.Tempo.startTime();
+
+    robotContainer.simulation.restart();
+    robotContainer.simulation.setCounter(8);
   }
 
   @Override

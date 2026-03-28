@@ -792,7 +792,7 @@ public class Gamepiece {
                 new Translation3d(FIELD_LENGTH - 5.3, FIELD_WIDTH / 2, 0.89),
                 -1);
 
-        protected static final double ENTRY_HEIGHT = 1.83;
+        protected static final double ENTRY_HEIGHT = 1.43;
         protected static final double ENTRY_RADIUS = 0.56;
 
         protected static final double SIDE = 1.2;
@@ -816,7 +816,11 @@ public class Gamepiece {
 
         protected void handleHubInteraction(Fuel fuel, int subticks) {
             if (didFuelScore(fuel, subticks)) {
-                fuel.pos = exit;
+                Distance offset = Inches.of(9.4);
+                Translation3d spawn = new Translation3d(
+                    exit.getMeasureX(), exit.getMeasureY().plus(offset.times((Math.random() * 4) - 2).plus(Inches.of(2.5))), exit.getMeasureZ()
+                );
+                fuel.pos = spawn;
                 fuel.vel = getDispersalVelocity();
                 score++;
             }
