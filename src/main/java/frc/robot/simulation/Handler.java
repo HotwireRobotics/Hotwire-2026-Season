@@ -2,7 +2,6 @@ package frc.robot.simulation;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
@@ -13,8 +12,6 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -120,19 +117,6 @@ public class Handler {
             (pitch.gt(Degrees.of(0)) ? Degrees.of(Math.random() * 0.03) : Degrees.of(0)));
         
         pitch = pitch.minus(motion);
-
-        
-        Logger.recordOutput("RobotPose", pose.get());
-        Logger.recordOutput("ZeroedComponentPoses", new Pose3d[] {new Pose3d()});
-        Logger.recordOutput("FinalComponentPoses", new Pose3d[] {
-            new Pose3d(
-                0.1958, 0.0, 0.21, 
-                new Rotation3d(
-                    Rotations.of(0), 
-                    getWristPitch(), 
-                    Rotations.of(0)
-                ))
-        });
     }
 
     public void restart() {
