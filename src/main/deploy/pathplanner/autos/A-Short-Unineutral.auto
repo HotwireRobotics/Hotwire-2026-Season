@@ -1,0 +1,61 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "Lower Intake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Start Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Short Unineutral Lower Exolateral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Unineutral Lower Endolateral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Firing Sequence"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Start Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Unineutral Second Lower Endolateral"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "A",
+  "choreoAuto": false
+}
