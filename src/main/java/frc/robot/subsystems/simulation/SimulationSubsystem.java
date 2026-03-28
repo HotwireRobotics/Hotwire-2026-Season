@@ -146,13 +146,10 @@ public class SimulationSubsystem extends SubsystemBase {
     private static final double AIR_TILT_DAMPING = 0.65;
     private static final double SUPPORT_LAUNCH_VELOCITY_GAIN = 1.45;
     private static final double MAX_SUPPORT_LAUNCH_VELOCITY_MPS = 2.8;
+    private static final double EFFECTIVE_CHASSIS_HEIGHT_METERS = 0.45;
     private static final double TILT_STIFFNESS = 42.0;
     private static final double TILT_DAMPING = 11.0;
-    private static final double COLLISION_YAW_GAIN = 0.22;
-    private static final double COLLISION_TILT_RATE_GAIN = 2.8;
-    private static final double HUB_COLLISION_TILT_MULTIPLIER = 2.5;
-    private static final double MAX_COLLISION_TILT_RATE_RADPS = Math.toRadians(1200);
-    private static final double MAX_COLLISION_YAW_STEP_RAD = Math.toRadians(28.0);
+    private static final double MAX_COLLISION_ANGULAR_RATE_RADPS = Math.toRadians(2000);
     private static final double HUB_SIDE = 1.2;
     private static final double BUMP_ENTRY_X = 3.96;
     private static final double BUMP_PEAK_X = 4.61;
@@ -192,6 +189,10 @@ public class SimulationSubsystem extends SubsystemBase {
     private final double robotMassKg;
     private final double coefficientOfRestitution;
     private final double tangentFrictionCoefficient;
+    private final double robotMOIRollKgM2;
+    private final double robotMOIPitchKgM2;
+    private final double robotMOIYawKgM2;
+    private final double centerOfMassHeightMeters;
     private ChassisSpeeds previousSpeeds = new ChassisSpeeds();
     private double pitchRad = 0.0;
     private double rollRad = 0.0;
@@ -219,6 +220,16 @@ public class SimulationSubsystem extends SubsystemBase {
       // Slight bumper squish: mostly inelastic with little bounce.
       this.coefficientOfRestitution = 0.12;
       this.tangentFrictionCoefficient = 0.65;
+      this.centerOfMassHeightMeters = this.bumperClearanceMeters + this.bumperHeightMeters + 0.12;
+      this.robotMOIRollKgM2 =
+          (robotMassKg / 12.0)
+              * (robotWidthMeters * robotWidthMeters + EFFECTIVE_CHASSIS_HEIGHT_METERS * EFFECTIVE_CHASSIS_HEIGHT_METERS);
+      this.robotMOIPitchKgM2 =
+          (robotMassKg / 12.0)
+              * (robotLengthMeters * robotLengthMeters + EFFECTIVE_CHASSIS_HEIGHT_METERS * EFFECTIVE_CHASSIS_HEIGHT_METERS);
+      this.robotMOIYawKgM2 =
+          (robotMassKg / 12.0)
+              * (robotLengthMeters * robotLengthMeters + robotWidthMeters * robotWidthMeters);
     }
 
     /**
@@ -285,6 +296,10 @@ public class SimulationSubsystem extends SubsystemBase {
       Logger.recordOutput("Simulation/RobotCollision/BumperClearanceMeters", bumperClearanceMeters);
       Logger.recordOutput("Simulation/RobotCollision/BumperComplianceMeters", bumperComplianceMeters);
       Logger.recordOutput("Simulation/RobotCollision/MassKg", robotMassKg);
+      Logger.recordOutput("Simulation/RobotCollision/MOI/Roll", robotMOIRollKgM2);
+      Logger.recordOutput("Simulation/RobotCollision/MOI/Pitch", robotMOIPitchKgM2);
+      Logger.recordOutput("Simulation/RobotCollision/MOI/Yaw", robotMOIYawKgM2);
+      Logger.recordOutput("Simulation/RobotCollision/COMHeightMeters", centerOfMassHeightMeters);
       Logger.recordOutput("Simulation/RobotCollision/Restitution", coefficientOfRestitution);
       Logger.recordOutput(
           "Simulation/RobotCollision/ImpactSpeedMps",
@@ -497,25 +512,33 @@ public class SimulationSubsystem extends SubsystemBase {
      * Applies a small yaw response from tangential impact velocity so rotation comes from collisions.
      */
     private Pose2d applyCollisionYawResponse(Pose2d before, Pose2d corrected, ChassisSpeeds speeds) {
-      Translation2d correction = corrected.getTranslation().minus(before.getTranslation());
-      if (correction.getNorm() < 1e-8) {
+      CollisionImpulse impulse = computeCollisionImpulse(before, corrected, speeds);
+      if (impulse == null) {
         return corrected;
       }
 
-      Translation2d normal = correction.div(correction.getNorm());
-      Translation2d tangent = new Translation2d(-normal.getY(), normal.getX());
-      Translation2d velocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
-      double normalSpeedIntoSurface = Math.max(0.0, -velocity.dot(normal));
-      if (normalSpeedIntoSurface < 1e-3) {
-        return corrected;
-      }
+      double heading = corrected.getRotation().getRadians();
+      double headingCos = Math.cos(heading);
+      double headingSin = Math.sin(heading);
+      double impulseLongitudinal =
+          impulse.totalImpulse.getX() * headingCos + impulse.totalImpulse.getY() * headingSin;
+      double impulseLateral =
+          -impulse.totalImpulse.getX() * headingSin + impulse.totalImpulse.getY() * headingCos;
+      double normalLongitudinal =
+          impulse.normal.getX() * headingCos + impulse.normal.getY() * headingSin;
+      double normalLateral =
+          -impulse.normal.getX() * headingSin + impulse.normal.getY() * headingCos;
 
-      double tangentialSpeed = velocity.dot(tangent);
+      // Contact point at the leading impacted bumper face in robot frame.
+      double contactX = Math.copySign(robotLengthMeters / 2.0, normalLongitudinal);
+      double contactY = Math.copySign(robotWidthMeters / 2.0, normalLateral);
+      double deltaYawRate =
+          (contactX * impulseLateral - contactY * impulseLongitudinal) / robotMOIYawKgM2;
       double yawStep =
           MathUtil.clamp(
-              tangentialSpeed * normalSpeedIntoSurface * COLLISION_YAW_GAIN,
-              -MAX_COLLISION_YAW_STEP_RAD,
-              MAX_COLLISION_YAW_STEP_RAD);
+              deltaYawRate * SIM_DT_SECONDS,
+              -MAX_COLLISION_ANGULAR_RATE_RADPS * SIM_DT_SECONDS,
+              MAX_COLLISION_ANGULAR_RATE_RADPS * SIM_DT_SECONDS);
       return new Pose2d(
           corrected.getTranslation(),
           corrected.getRotation().plus(new Rotation3d(0.0, 0.0, yawStep).toRotation2d()));
@@ -525,46 +548,70 @@ public class SimulationSubsystem extends SubsystemBase {
      * Injects collision-induced pitch/roll rate so impacts visibly tilt the chassis.
      */
     private void applyCollisionTiltResponse(Pose2d before, Pose2d corrected, ChassisSpeeds speeds) {
-      Translation2d correction = corrected.getTranslation().minus(before.getTranslation());
-      if (correction.getNorm() < 1e-8) {
-        return;
-      }
-
-      Translation2d normal = correction.div(correction.getNorm());
-      Translation2d velocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
-      double normalSpeedIntoSurface = Math.max(0.0, -velocity.dot(normal));
-      if (normalSpeedIntoSurface < 1e-3) {
+      CollisionImpulse impulse = computeCollisionImpulse(before, corrected, speeds);
+      if (impulse == null) {
         return;
       }
 
       double heading = corrected.getRotation().getRadians();
       double headingCos = Math.cos(heading);
       double headingSin = Math.sin(heading);
-      double normalLongitudinal = normal.getX() * headingCos + normal.getY() * headingSin;
-      double normalLateral = -normal.getX() * headingSin + normal.getY() * headingCos;
-
-      double hubBoost = isNearHub(corrected.getX(), corrected.getY()) ? HUB_COLLISION_TILT_MULTIPLIER : 1.0;
-      double tiltRateImpulse = normalSpeedIntoSurface * COLLISION_TILT_RATE_GAIN * hubBoost;
+      double impulseLongitudinal =
+          impulse.totalImpulse.getX() * headingCos + impulse.totalImpulse.getY() * headingSin;
+      double impulseLateral =
+          -impulse.totalImpulse.getX() * headingSin + impulse.totalImpulse.getY() * headingCos;
+      double contactHeightMeters = bumperClearanceMeters + bumperHeightMeters * 0.5;
+      double rZ = contactHeightMeters - centerOfMassHeightMeters;
+      double deltaPitchRate = (rZ * impulseLongitudinal) / robotMOIPitchKgM2;
+      double deltaRollRate = (-rZ * impulseLateral) / robotMOIRollKgM2;
 
       pitchRateRadPerSec =
           MathUtil.clamp(
-              pitchRateRadPerSec - normalLongitudinal * tiltRateImpulse,
-              -MAX_COLLISION_TILT_RATE_RADPS,
-              MAX_COLLISION_TILT_RATE_RADPS);
+              pitchRateRadPerSec + deltaPitchRate,
+              -MAX_COLLISION_ANGULAR_RATE_RADPS,
+              MAX_COLLISION_ANGULAR_RATE_RADPS);
       rollRateRadPerSec =
           MathUtil.clamp(
-              rollRateRadPerSec + normalLateral * tiltRateImpulse,
-              -MAX_COLLISION_TILT_RATE_RADPS,
-              MAX_COLLISION_TILT_RATE_RADPS);
+              rollRateRadPerSec + deltaRollRate,
+              -MAX_COLLISION_ANGULAR_RATE_RADPS,
+              MAX_COLLISION_ANGULAR_RATE_RADPS);
     }
 
-    private boolean isNearHub(double xMeters, double yMeters) {
-      double blueHubDx = xMeters - 4.61;
-      double blueHubDy = yMeters - FIELD_WIDTH_METERS / 2.0;
-      double redHubDx = xMeters - (FIELD_LENGTH_METERS - 4.61);
-      double redHubDy = yMeters - FIELD_WIDTH_METERS / 2.0;
-      double nearRadius = HUB_SIDE * 0.85;
-      return Math.hypot(blueHubDx, blueHubDy) <= nearRadius || Math.hypot(redHubDx, redHubDy) <= nearRadius;
+    private CollisionImpulse computeCollisionImpulse(
+        Pose2d before, Pose2d corrected, ChassisSpeeds speeds) {
+      Translation2d correction = corrected.getTranslation().minus(before.getTranslation());
+      if (correction.getNorm() < 1e-8) {
+        return null;
+      }
+      Translation2d normal = correction.div(correction.getNorm());
+      Translation2d tangent = new Translation2d(-normal.getY(), normal.getX());
+      Translation2d velocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+      double normalSpeedIntoSurface = Math.max(0.0, -velocity.dot(normal));
+      if (normalSpeedIntoSurface < 1e-3) {
+        return null;
+      }
+
+      // Rigid-body impulse against static collider: normal restitution + Coulomb friction.
+      double normalImpulseMagnitude = robotMassKg * (1.0 + coefficientOfRestitution) * normalSpeedIntoSurface;
+      double tangentialSpeed = velocity.dot(tangent);
+      double tangentialImpulseDesired = -robotMassKg * tangentialSpeed;
+      double maxFrictionImpulse = tangentFrictionCoefficient * normalImpulseMagnitude;
+      double tangentialImpulseMagnitude =
+          MathUtil.clamp(tangentialImpulseDesired, -maxFrictionImpulse, maxFrictionImpulse);
+
+      Translation2d totalImpulse =
+          normal.times(normalImpulseMagnitude).plus(tangent.times(tangentialImpulseMagnitude));
+      return new CollisionImpulse(normal, totalImpulse);
+    }
+
+    private static class CollisionImpulse {
+      private final Translation2d normal;
+      private final Translation2d totalImpulse;
+
+      private CollisionImpulse(Translation2d normal, Translation2d totalImpulse) {
+        this.normal = normal;
+        this.totalImpulse = totalImpulse;
+      }
     }
 
     /**
