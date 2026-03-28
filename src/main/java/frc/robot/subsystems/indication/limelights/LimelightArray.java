@@ -26,7 +26,7 @@ import org.littletonrobotics.junction.Logger;
 public class LimelightArray extends SubsystemBase {
 
   private static class Configuration {
-    private static final Distance maxDistance = Inches.of(140);
+    private static final Distance maxDistance = Inches.of(185);
     private static final Pipeline pipeline = Pipeline.MEGATAG2;
 
     public static class Limelight {
