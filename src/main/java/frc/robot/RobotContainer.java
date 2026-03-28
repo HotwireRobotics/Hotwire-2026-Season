@@ -138,7 +138,7 @@ public class RobotContainer {
         velocity,
             () -> shooter.getState().equals(Shooter.State.FIRING),
             () -> intake.getState().equals(Intake.State.INTAKING),
-        intake::getTarget, drive::getPose, drive::getChassisSpeeds
+        intake::getTarget, drive::getPose, drive::getChassisSpeeds, drive::setPose
     );
 
     // Configure button bindings.
