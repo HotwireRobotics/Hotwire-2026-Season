@@ -79,7 +79,7 @@ public class Shooter extends ModularSubsystem implements Systerface {
     // }
   }
 
-  private enum State {
+  public enum State {
     STOPPED,
     FIRING
   }

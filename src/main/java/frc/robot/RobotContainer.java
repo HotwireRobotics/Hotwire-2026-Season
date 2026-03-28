@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.constants.Constants;
 import frc.robot.constants.LimelightHelpers;
+import frc.robot.simulation.Handler;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.indication.LuminalArray;
@@ -26,6 +27,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -60,6 +62,9 @@ public class RobotContainer {
   public double testVelocity = 0;
   public final Supplier<Integer> kInverse = () -> (inverse ? -1 : 1);
   public VelocityType velocityType = VelocityType.STATIC;
+
+  // Simulation
+  public final Handler simulation;
 
   // Methodic toggles.
   private final Command velocity(VelocityType type) {
@@ -127,6 +132,14 @@ public class RobotContainer {
     // Initialize indicator subsystems.
     lights = new LuminalArray();
     vision = new LimelightArray(drive::getPose, drive::getRotation, drive::addVisionMeasurement);
+
+    // Simulation
+    simulation = new Handler(
+        velocity,
+            () -> shooter.getState().equals(Shooter.State.FIRING),
+            () -> intake.getState().equals(Intake.State.INTAKING),
+        intake::getTarget, drive::getPose, drive::getChassisSpeeds
+    );
 
     // Configure button bindings.
     configureButtonBindings();
