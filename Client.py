@@ -9,7 +9,7 @@ from networktables import NetworkTables as NT, NetworkTable
 base: str = os.path.dirname(os.path.abspath(__file__))
 deploy: str = os.path.join(base, "src", "main", "deploy")
 
-SERVER: str = "10.29.90.2"
+SERVER: str = "127.0.0.1"
 FPS: int = 60
 RUNNING: bool = True
 class State(Enum):
@@ -37,7 +37,7 @@ sound: pg.Sound = pg.mixer.music.load(os.path.join(base, "assets", "rebuilt.mp3"
 field: pg.Surface = pg.image.load(os.path.join(base, "assets", "field.png"))
 field = pg.transform.scale_by(pg.transform.flip(field, 1, 1), 0.5)
 width: float = 0.7112
-bumper: float = 0.2
+bumper: float = 0.1
 field_render = field.copy()
 size: tuple = field.get_size()
 
@@ -68,7 +68,6 @@ def marr(*arrays: list, integer: bool = False) -> list:
 def px(real: list[int, int], integer: bool = False) -> list:
     n: float = marr(real, [scale * f] * 2)
     return list((round(i) for i in n) if integer else n)
-bytes_data = b""
 
 f: float = 1
 pg.mixer.music.play()
@@ -93,14 +92,14 @@ while RUNNING:
     screen.blit(field_render, (0, 0))
 
     if ((state == State.REAL) or (state == State.SIM)):
-        robotPose: list[int, int] = dashboard.getNumberArray("robot-pose", [1, 1])
+        robotPose: list[float, float, float] = dashboard.getNumberArray("robot-pose", [1, 1, 0])
         # source: str = "http://limelight-one.local:5800/"
         # stream = requests.get(source, stream=True)
     elif (state == State.TEST):
-        robotPose: list[int, int] = [0, 0]
+        robotPose: list[float, float, float] = [0, 0, 0]
     
-    est = sarr(robotPose, [-width / 2] * 2, origin)
-    # print("Scale: ", scale, "F: ", f, "Pose: ", est, "Target: ", px(est, integer=True))
-    screen.blit(robot, px(est, integer=True))
+    est = sarr(robotPose[0:2], [-width / 2] * 2, origin)
+    print("Scale: ", scale, "F: ", f, "Pose: ", est, "Target: ", px(est, integer=True))
+    screen.blit(pg.transform.rotate(robot, robotPose[2]), px(est, integer=True))
     manager.draw_ui(screen)
     pg.display.flip()

@@ -126,7 +126,7 @@ public class Robot extends LoggedRobot {
 
     // Update python pose estimate.
     Double[] robotpose = {
-      robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX()
+      robotContainer.drive.getPose().getX(), robotContainer.drive.getPose().getX(), robotContainer.drive.getRotation().getDegrees()
     };
     SmartDashboard.putNumberArray("robot-pose", robotpose);
 
