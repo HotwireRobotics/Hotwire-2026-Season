@@ -2,6 +2,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -15,10 +16,12 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.constants.Constants;
+import frc.robot.constants.LimelightHelpers;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.indication.LuminalArray;
 import frc.robot.subsystems.indication.limelights.LimelightArray;
+import frc.robot.subsystems.indication.limelights.LimelightArray.IMUMode;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.simulation.SimulationSubsystem;
 import frc.robot.subsystems.shooter.Shooter;
@@ -38,7 +41,7 @@ public class RobotContainer {
   public final LimelightArray vision;
 
   // Static configuration.
-  private final boolean firstPerson = false;
+  private final boolean firstPerson = true;
   private final boolean testing = false;
 
   // Alignment supplier.
