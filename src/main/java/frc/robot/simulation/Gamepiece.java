@@ -25,6 +25,7 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -103,6 +104,7 @@ public class Gamepiece {
     protected static class Fuel {
         protected Translation3d pos;
         protected Translation3d vel;
+        protected boolean removeFromField = false;
 
         protected Fuel(Translation3d pos, Translation3d vel) {
             this.pos = pos;
@@ -331,6 +333,9 @@ public class Gamepiece {
     protected int subticks = 5;
     protected double loggingFreqHz = 10;
     protected Timer loggingTimer = new Timer();
+    protected static final double HUB_EXIT_DELAY_MEAN_SEC = 0.9;
+    protected static final double HUB_EXIT_DELAY_STD_DEV_SEC = 0.27;
+    protected static final Random RANDOM = new Random();
 
     /**
      * Creates a new instance of FuelSim
@@ -514,12 +519,16 @@ public class Gamepiece {
                 fuel.update(this.simulateAirResistance, this.subticks);
             }
 
+            fuels.removeIf((fuel) -> fuel.removeFromField);
+
             handleFuelCollisions(fuels);
 
             if (robotPoseSupplier != null) {
                 handleRobotCollisions(fuels);
                 handleIntakes(fuels);
             }
+
+            handleHubExits(fuels);
         }
 
         if (loggingTimer.advanceIfElapsed(1.0 / loggingFreqHz)) {
@@ -573,6 +582,15 @@ public class Gamepiece {
             launchVelocity.plus(InchesPerSecond.of((Math.random() - 0.5) * 32)), 
             Degrees.of(70.4333), Degrees.of(0).plus(Degrees.of((Math.random() - 0.5) * 10)), 
             Inches.of(14), Inches.of(-8), Inches.of(3 * (Math.random() > 0.5 ? 1 : -1)));
+    }
+
+    /**
+     * Release scored fuel from hubs once delayed exit timers expire.
+     * @param fuels Active fuel list to append released fuel into
+     */
+    protected void handleHubExits(ArrayList<Fuel> fuels) {
+        Hub.BLUE_HUB.handleHubExiting(fuels);
+        Hub.RED_HUB.handleHubExiting(fuels);
     }
 
     protected void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {
@@ -791,7 +809,8 @@ public class Gamepiece {
                 new Translation2d(FIELD_LENGTH - 4.61, FIELD_WIDTH / 2),
                 new Translation3d(FIELD_LENGTH - 5.3, FIELD_WIDTH / 2, 0.89),
                 -1);
-
+        
+        private final List<Double> queuedExitTimesSec = new ArrayList<>();
         protected static final double ENTRY_HEIGHT = 1.43;
         protected static final double ENTRY_RADIUS = 0.56;
 
@@ -816,14 +835,27 @@ public class Gamepiece {
 
         protected void handleHubInteraction(Fuel fuel, int subticks) {
             if (didFuelScore(fuel, subticks)) {
-                Distance offset = Inches.of(9.4);
-                Translation3d spawn = new Translation3d(
-                    exit.getMeasureX(), exit.getMeasureY().plus(offset.times((Math.random() * 4) - 2).plus(Inches.of(2.5))), exit.getMeasureZ()
-                );
-                fuel.pos = spawn;
-                fuel.vel = getDispersalVelocity();
+                fuel.removeFromField = true;
+                double delaySec = Math.max(0, RANDOM.nextGaussian(HUB_EXIT_DELAY_MEAN_SEC, HUB_EXIT_DELAY_STD_DEV_SEC));
+                queuedExitTimesSec.add(Timer.getFPGATimestamp() + delaySec);
                 score++;
             }
+        }
+
+        protected void handleHubExiting(List<Fuel> fuels) {
+            double nowSec = Timer.getFPGATimestamp();
+            for (int i = queuedExitTimesSec.size() - 1; i >= 0; i--) {
+                if (queuedExitTimesSec.get(i) > nowSec) continue;
+                queuedExitTimesSec.remove(i);
+                fuels.add(new Fuel(getExitSpawnPosition(), getDispersalVelocity()));
+            }
+        }
+
+        protected Translation3d getExitSpawnPosition() {
+            Distance offset = Inches.of(9.4);
+            return new Translation3d(
+                exit.getMeasureX(), exit.getMeasureY().plus(offset.times((Math.random() * 4) - 2).plus(Inches.of(2.5))), exit.getMeasureZ()
+            );
         }
 
         protected boolean didFuelScore(Fuel fuel, int subticks) {
