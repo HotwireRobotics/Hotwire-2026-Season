@@ -143,6 +143,11 @@ public class Handler {
         Gamepiece.Hub.RED_HUB.resetScore();
     }
 
+    public void autonomous() {
+        restart();
+        setCounter(8);
+    }
+
     public Angle getWristPitch() {
         return pitch;
     }

@@ -160,8 +160,7 @@ public class Robot extends LoggedRobot {
     }
     Constants.Tempo.startTime();
 
-    robotContainer.simulation.restart();
-    robotContainer.simulation.setCounter(8);
+    robotContainer.simulation.autonomous();
   }
 
   @Override
