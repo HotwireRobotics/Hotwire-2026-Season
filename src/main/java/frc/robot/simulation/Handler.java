@@ -85,7 +85,7 @@ public class Handler {
         gamepieceSimulation.spawnStartingFuel();
 
         physics = new RobotCollisionPhysics(
-            ROBOT_LENGTH_WITH_BUMPERS,
+            ROBOT_WIDTH_WITH_BUMPERS,
             ROBOT_LENGTH_WITH_BUMPERS,
             BUMPER_HEIGHT,
             BUMPER_CLEARANCE,
@@ -196,14 +196,15 @@ public class Handler {
     private static final double WHEEL_CONTACT_HEIGHT_TOLERANCE_METERS = 0.01;
     private static final double CHASSIS_CONTACT_EPSILON_METERS = 0.0008;
     private static final double GRAVITY_MPS2 = 7.1;
+    private static final double AIR_TILT_STIFFNESS = 18.0;
     private static final double AIR_TILT_DAMPING = 0.65;
     private static final double SUPPORT_LAUNCH_VELOCITY_GAIN = 1.45;
     private static final double MAX_SUPPORT_LAUNCH_VELOCITY_MPS = 2.8;
-    private static final double TILT_STIFFNESS = 42.0;
-    private static final double TILT_DAMPING = 11.0;
-    private static final double COLLISION_YAW_GAIN = 0.22;
-    private static final double COLLISION_TILT_RATE_GAIN = 20.8;
-    private static final double HUB_COLLISION_TILT_MULTIPLIER = 2.5;
+    private static final double TERRAIN_PITCH_RESPONSE_GAIN = 1.35;
+    private static final double TERRAIN_ROLL_RESPONSE_GAIN = 1.9;
+    private static final double COLLISION_FRICTION_COEFFICIENT = 0.55;
+    private static final double CENTER_OF_MASS_HEIGHT_METERS = 0.28;
+    private static final double ROBOT_BODY_HEIGHT_METERS = 0.30;
     private static final double MAX_COLLISION_TILT_RATE_RADPS = Math.toRadians(1200);
     private static final double MAX_COLLISION_YAW_STEP_RAD = Math.toRadians(28.0);
     private static final double HUB_SIDE = 1.2;
@@ -217,6 +218,7 @@ public class Handler {
     private static final double BUMP_HIGH_Y_MAX = FIELD_WIDTH_METERS - 1.57;
     private static final double TRENCH_WIDTH = 1.265;
     private static final double TRENCH_BLOCK_WIDTH = 0.305;
+    private static final double TRENCH_BAR_WIDTH = 0.152;
 
     private final ColliderRect[] staticRectangles = {
       // Hub side walls.
@@ -234,7 +236,28 @@ public class Handler {
           FIELD_LENGTH_METERS - 5.18,
           FIELD_WIDTH_METERS - 1.57,
           FIELD_LENGTH_METERS - 3.96,
-          FIELD_WIDTH_METERS - 1.57 + TRENCH_BLOCK_WIDTH)
+          FIELD_WIDTH_METERS - 1.57 + TRENCH_BLOCK_WIDTH),
+      // Trench bars.
+      new ColliderRect(
+          4.61 - TRENCH_BAR_WIDTH / 2.0,
+          0.0,
+          4.61 + TRENCH_BAR_WIDTH / 2.0,
+          TRENCH_WIDTH + TRENCH_BLOCK_WIDTH),
+      new ColliderRect(
+          4.61 - TRENCH_BAR_WIDTH / 2.0,
+          FIELD_WIDTH_METERS - 1.57,
+          4.61 + TRENCH_BAR_WIDTH / 2.0,
+          FIELD_WIDTH_METERS),
+      new ColliderRect(
+          FIELD_LENGTH_METERS - 4.61 - TRENCH_BAR_WIDTH / 2.0,
+          0.0,
+          FIELD_LENGTH_METERS - 4.61 + TRENCH_BAR_WIDTH / 2.0,
+          TRENCH_WIDTH + TRENCH_BLOCK_WIDTH),
+      new ColliderRect(
+          FIELD_LENGTH_METERS - 4.61 - TRENCH_BAR_WIDTH / 2.0,
+          FIELD_WIDTH_METERS - 1.57,
+          FIELD_LENGTH_METERS - 4.61 + TRENCH_BAR_WIDTH / 2.0,
+          FIELD_WIDTH_METERS)
     };
 
     private final double robotWidthMeters;
@@ -255,6 +278,7 @@ public class Handler {
     private boolean allWheelsGrounded = true;
     private boolean chassisAirborne = false;
     private double previousSupportHeightMeters = 0.0;
+    private Translation2d lastCollisionNormal = null;
 
     private RobotCollisionPhysics(
         Distance robotWidth,
@@ -286,24 +310,21 @@ public class Handler {
       // Project oriented half extents into field X/Y axes for an AABB-safe boundary clamp.
       double projectedHalfX = Math.abs(Math.cos(heading)) * halfLength + Math.abs(Math.sin(heading)) * halfWidth;
       double projectedHalfY = Math.abs(Math.sin(heading)) * halfLength + Math.abs(Math.cos(heading)) * halfWidth;
-      double complianceX = Math.min(projectedHalfX * 0.4, bumperComplianceMeters);
-      double complianceY = Math.min(projectedHalfY * 0.4, bumperComplianceMeters);
-
       double clampedX =
           MathUtil.clamp(
               pose.getX(),
-              projectedHalfX - complianceX * 0.05,
-              FIELD_LENGTH_METERS - projectedHalfX + complianceX * 0.05);
+              projectedHalfX,
+              FIELD_LENGTH_METERS - projectedHalfX);
       double clampedY =
           MathUtil.clamp(
               pose.getY(),
-              projectedHalfY - complianceY * 0.05,
-              FIELD_WIDTH_METERS - projectedHalfY + complianceY * 0.05);
+              projectedHalfY,
+              FIELD_WIDTH_METERS - projectedHalfY);
 
       boolean hitXWall = Math.abs(clampedX - pose.getX()) > 1e-6;
       boolean hitYWall = Math.abs(clampedY - pose.getY()) > 1e-6;
       Pose2d correctedPose = new Pose2d(clampedX, clampedY, pose.getRotation());
-      correctedPose = resolveStaticColliders(correctedPose, halfLength, halfWidth, 8);
+      correctedPose = resolveStaticColliders(correctedPose, halfLength, halfWidth, 20);
 
       boolean correctedByCollider = correctedPose.getTranslation().getDistance(pose.getTranslation()) > 1e-6;
       applyCollisionTiltResponse(pose, correctedPose, speeds);
@@ -365,12 +386,14 @@ public class Handler {
     private Pose2d resolveStaticColliders(
         Pose2d pose, double halfLength, double halfWidth, int passes) {
       Pose2d corrected = pose;
+      lastCollisionNormal = null;
       for (int pass = 0; pass < passes; pass++) {
         boolean changed = false;
         for (ColliderRect rect : staticRectangles) {
-          Pose2d before = corrected;
-          corrected = resolveRectangleCollision(corrected, rect, halfLength, halfWidth);
-          if (before.getTranslation().getDistance(corrected.getTranslation()) > 1e-8) {
+          CollisionResult collision = resolveRectangleCollision(corrected, rect, halfLength, halfWidth);
+          if (collision != null) {
+            corrected = collision.correctedPose();
+            lastCollisionNormal = collision.collisionNormal();
             changed = true;
           }
         }
@@ -384,71 +407,52 @@ public class Handler {
     /**
      * Uses SAT-style extents in field axes for an oriented-robot vs axis-aligned-rect collision test.
      */
-    private Pose2d resolveRectangleCollision(
+    private CollisionResult resolveRectangleCollision(
         Pose2d pose, ColliderRect rect, double halfLength, double halfWidth) {
-      // Let robots traverse bump lanes without trench block sidewalls hard-locking movement.
-      if (isTrenchBlockRect(rect) && isInBumpTraversalWindow(pose, halfLength, halfWidth)) {
-        return pose;
+      Translation2d[] robotVertices = getRobotVertices(pose, halfLength, halfWidth);
+      Translation2d[] rectVertices = {
+        new Translation2d(rect.xMin, rect.yMin),
+        new Translation2d(rect.xMax, rect.yMin),
+        new Translation2d(rect.xMax, rect.yMax),
+        new Translation2d(rect.xMin, rect.yMax)
+      };
+      Translation2d[] axes = {
+        getEdgeNormal(robotVertices[0], robotVertices[1]),
+        getEdgeNormal(robotVertices[1], robotVertices[2]),
+        new Translation2d(1.0, 0.0),
+        new Translation2d(0.0, 1.0)
+      };
+
+      double minOverlap = Double.POSITIVE_INFINITY;
+      Translation2d smallestAxis = null;
+      for (Translation2d axis : axes) {
+        Projection robotProjection = projectOntoAxis(robotVertices, axis);
+        Projection rectProjection = projectOntoAxis(rectVertices, axis);
+        double overlap = Math.min(robotProjection.max(), rectProjection.max()) - Math.max(robotProjection.min(), rectProjection.min());
+        if (overlap <= 0.0) {
+          return null;
+        }
+        if (overlap < minOverlap) {
+          minOverlap = overlap;
+          smallestAxis = axis;
+        }
       }
 
-      double heading = pose.getRotation().getRadians();
-      double projectedHalfX = Math.abs(Math.cos(heading)) * halfLength + Math.abs(Math.sin(heading)) * halfWidth;
-      double projectedHalfY = Math.abs(Math.sin(heading)) * halfLength + Math.abs(Math.cos(heading)) * halfWidth;
-
-      double left = pose.getX() - projectedHalfX;
-      double right = pose.getX() + projectedHalfX;
-      double bottom = pose.getY() - projectedHalfY;
-      double top = pose.getY() + projectedHalfY;
-
-      if (right <= rect.xMin || left >= rect.xMax || top <= rect.yMin || bottom >= rect.yMax) {
-        return pose;
+      if (smallestAxis == null) {
+        return null;
       }
 
-      double pushLeft = rect.xMin - right;
-      double pushRight = rect.xMax - left;
-      double pushDown = rect.yMin - top;
-      double pushUp = rect.yMax - bottom;
-
-      Translation2d correction = new Translation2d(pushLeft, 0.0);
-      if (Math.abs(pushRight) < Math.abs(correction.getX())) {
-        correction = new Translation2d(pushRight, 0.0);
-      }
-      if (Math.abs(pushDown) < Math.abs(correction.getNorm())) {
-        correction = new Translation2d(0.0, pushDown);
-      }
-      if (Math.abs(pushUp) < Math.abs(correction.getNorm())) {
-        correction = new Translation2d(0.0, pushUp);
+      Translation2d centerToRect =
+          new Translation2d((rect.xMin + rect.xMax) * 0.5 - pose.getX(), (rect.yMin + rect.yMax) * 0.5 - pose.getY());
+      if (centerToRect.dot(smallestAxis) < 0.0) {
+        smallestAxis = smallestAxis.times(-1.0);
       }
 
-      return new Pose2d(
-          pose.getX() + correction.getX(),
-          pose.getY() + correction.getY(),
-          pose.getRotation());
-    }
-
-    private boolean isTrenchBlockRect(ColliderRect rect) {
-      double eps = 1e-6;
-      boolean blueBlock = Math.abs(rect.yMin - TRENCH_WIDTH) < eps;
-      boolean redBlock = Math.abs(rect.yMin - (FIELD_WIDTH_METERS - 1.57)) < eps;
-      return blueBlock || redBlock;
-    }
-
-    private boolean isInBumpTraversalWindow(Pose2d pose, double halfLength, double halfWidth) {
-      double xMinBlue = BUMP_ENTRY_X - halfLength;
-      double xMaxBlue = BUMP_EXIT_X + halfLength;
-      double xMinRed = FIELD_LENGTH_METERS - BUMP_EXIT_X - halfLength;
-      double xMaxRed = FIELD_LENGTH_METERS - BUMP_ENTRY_X + halfLength;
-      boolean nearBlueBumpX = pose.getX() >= xMinBlue && pose.getX() <= xMaxBlue;
-      boolean nearRedBumpX = pose.getX() >= xMinRed && pose.getX() <= xMaxRed;
-
-      double yMinLow = BUMP_LOW_Y_MIN - halfWidth;
-      double yMaxLow = BUMP_LOW_Y_MAX + halfWidth;
-      double yMinHigh = BUMP_HIGH_Y_MIN - halfWidth;
-      double yMaxHigh = BUMP_HIGH_Y_MAX + halfWidth;
-      boolean onLowLane = pose.getY() >= yMinLow && pose.getY() <= yMaxLow;
-      boolean onHighLane = pose.getY() >= yMinHigh && pose.getY() <= yMaxHigh;
-
-      return (nearBlueBumpX || nearRedBumpX) && (onLowLane || onHighLane);
+      // Add a tiny slop so the robot is immediately projected outside the static obstacle.
+      Translation2d correction = smallestAxis.times(-(minOverlap + 1e-4));
+      Pose2d corrected =
+          new Pose2d(pose.getX() + correction.getX(), pose.getY() + correction.getY(), pose.getRotation());
+      return new CollisionResult(corrected, smallestAxis, minOverlap);
     }
 
     /**
@@ -495,9 +499,15 @@ public class Handler {
       double inertialRoll = MathUtil.clamp(lateralAccel / 9.81 * 0.22, -0.20, 0.20);
 
       double targetPitch =
-          MathUtil.clamp(terrainPitch + inertialPitch, -MAX_ROBOT_TILT_RAD, MAX_ROBOT_TILT_RAD);
+          MathUtil.clamp(
+              terrainPitch * TERRAIN_PITCH_RESPONSE_GAIN + inertialPitch,
+              -MAX_ROBOT_TILT_RAD,
+              MAX_ROBOT_TILT_RAD);
       double targetRoll =
-          MathUtil.clamp(terrainRoll + inertialRoll, -MAX_ROBOT_TILT_RAD, MAX_ROBOT_TILT_RAD);
+          MathUtil.clamp(
+              terrainRoll * TERRAIN_ROLL_RESPONSE_GAIN + inertialRoll,
+              -MAX_ROBOT_TILT_RAD,
+              MAX_ROBOT_TILT_RAD);
 
       // Vertical rigid-body dynamics: gravity + moving support from terrain.
       chassisVerticalVelocityMps -= GRAVITY_MPS2 * SIM_DT_SECONDS;
@@ -517,25 +527,20 @@ public class Handler {
       }
       chassisAirborne = chassisHeightMeters > targetHeight + CHASSIS_CONTACT_EPSILON_METERS;
 
-      if (allWheelsGrounded && !chassisAirborne) {
-        // Flat 4-wheel contact: rigid chassis should not wobble around.
-        pitchRad = 0.0;
-        rollRad = 0.0;
+      if (!chassisAirborne) {
+        // Ground contact is rigid: immediately align chassis to terrain support plane.
+        pitchRad = MathUtil.clamp(terrainPitch, -MAX_ROBOT_TILT_RAD, MAX_ROBOT_TILT_RAD);
+        rollRad = MathUtil.clamp(terrainRoll, -MAX_ROBOT_TILT_RAD, MAX_ROBOT_TILT_RAD);
         pitchRateRadPerSec = 0.0;
         rollRateRadPerSec = 0.0;
         return;
       }
 
-      // Rigid-body angular inertia over uneven terrain and in-air segments.
-      double pitchAccel;
-      double rollAccel;
-      if (chassisAirborne) {
-        pitchAccel = -AIR_TILT_DAMPING * pitchRateRadPerSec;
-        rollAccel = -AIR_TILT_DAMPING * rollRateRadPerSec;
-      } else {
-        pitchAccel = TILT_STIFFNESS * (targetPitch - pitchRad) - TILT_DAMPING * pitchRateRadPerSec;
-        rollAccel = TILT_STIFFNESS * (targetRoll - rollRad) - TILT_DAMPING * rollRateRadPerSec;
-      }
+      // Only airborne chassis uses dynamic tilt integration.
+      double pitchAccel =
+          AIR_TILT_STIFFNESS * (targetPitch - pitchRad) - AIR_TILT_DAMPING * pitchRateRadPerSec;
+      double rollAccel =
+          AIR_TILT_STIFFNESS * (targetRoll - rollRad) - AIR_TILT_DAMPING * rollRateRadPerSec;
       pitchRateRadPerSec += pitchAccel * SIM_DT_SECONDS;
       rollRateRadPerSec += rollAccel * SIM_DT_SECONDS;
       pitchRad =
@@ -555,18 +560,16 @@ public class Handler {
         return corrected;
       }
 
-      Translation2d normal = correction.div(correction.getNorm());
-      Translation2d tangent = new Translation2d(-normal.getY(), normal.getX());
-      Translation2d velocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
-      double normalSpeedIntoSurface = Math.max(0.0, -velocity.dot(normal));
-      if (normalSpeedIntoSurface < 1e-3) {
+      Translation2d normal = getCollisionNormal(correction);
+      CollisionImpulse impulse = estimateCollisionImpulse(corrected, speeds, normal);
+      if (impulse == null) {
         return corrected;
       }
 
-      double tangentialSpeed = velocity.dot(tangent);
+      double yawImpulse = cross2d(impulse.contactOffset(), impulse.totalImpulse());
       double yawStep =
           MathUtil.clamp(
-              tangentialSpeed * normalSpeedIntoSurface * COLLISION_YAW_GAIN,
+              (yawImpulse / getYawInertia()) * SIM_DT_SECONDS,
               -MAX_COLLISION_YAW_STEP_RAD,
               MAX_COLLISION_YAW_STEP_RAD);
       return new Pose2d(
@@ -583,41 +586,144 @@ public class Handler {
         return;
       }
 
-      Translation2d normal = correction.div(correction.getNorm());
-      Translation2d velocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
-      double normalSpeedIntoSurface = Math.max(0.0, -velocity.dot(normal));
-      if (normalSpeedIntoSurface < 1e-3) {
+      Translation2d normal = getCollisionNormal(correction);
+      CollisionImpulse impulse = estimateCollisionImpulse(corrected, speeds, normal);
+      if (impulse == null) {
         return;
       }
 
       double heading = corrected.getRotation().getRadians();
-      double headingCos = Math.cos(heading);
-      double headingSin = Math.sin(heading);
-      double normalLongitudinal = normal.getX() * headingCos + normal.getY() * headingSin;
-      double normalLateral = -normal.getX() * headingSin + normal.getY() * headingCos;
+      double cos = Math.cos(heading);
+      double sin = Math.sin(heading);
+      Translation2d bodyImpulse =
+          new Translation2d(
+              impulse.totalImpulse().getX() * cos + impulse.totalImpulse().getY() * sin,
+              -impulse.totalImpulse().getX() * sin + impulse.totalImpulse().getY() * cos);
 
-      double hubBoost = isNearHub(corrected.getX(), corrected.getY()) ? HUB_COLLISION_TILT_MULTIPLIER : 1.0;
-      double tiltRateImpulse = normalSpeedIntoSurface * COLLISION_TILT_RATE_GAIN * hubBoost;
+      double leverArmZ = bumperHeightMeters * 0.5 - CENTER_OF_MASS_HEIGHT_METERS;
+      double deltaPitchRate = (-leverArmZ * bodyImpulse.getX()) / getPitchRollInertia();
+      double deltaRollRate = (leverArmZ * bodyImpulse.getY()) / getPitchRollInertia();
 
       pitchRateRadPerSec =
           MathUtil.clamp(
-              pitchRateRadPerSec - normalLongitudinal * tiltRateImpulse,
+              pitchRateRadPerSec + deltaPitchRate,
               -MAX_COLLISION_TILT_RATE_RADPS,
               MAX_COLLISION_TILT_RATE_RADPS);
       rollRateRadPerSec =
           MathUtil.clamp(
-              rollRateRadPerSec + normalLateral * tiltRateImpulse,
+              rollRateRadPerSec + deltaRollRate,
               -MAX_COLLISION_TILT_RATE_RADPS,
               MAX_COLLISION_TILT_RATE_RADPS);
     }
 
-    private boolean isNearHub(double xMeters, double yMeters) {
-      double blueHubDx = xMeters - 4.61;
-      double blueHubDy = yMeters - FIELD_WIDTH_METERS / 2.0;
-      double redHubDx = xMeters - (FIELD_LENGTH_METERS - 4.61);
-      double redHubDy = yMeters - FIELD_WIDTH_METERS / 2.0;
-      double nearRadius = HUB_SIDE * 0.85;
-      return Math.hypot(blueHubDx, blueHubDy) <= nearRadius || Math.hypot(redHubDx, redHubDy) <= nearRadius;
+    private CollisionImpulse estimateCollisionImpulse(Pose2d pose, ChassisSpeeds speeds, Translation2d normal) {
+      Translation2d tangent = new Translation2d(-normal.getY(), normal.getX());
+      Translation2d contactOffset = getSupportPointOffset(pose, normal);
+      double contactVelocityX = speeds.vxMetersPerSecond - (speeds.omegaRadiansPerSecond * contactOffset.getY());
+      double contactVelocityY = speeds.vyMetersPerSecond + (speeds.omegaRadiansPerSecond * contactOffset.getX());
+      Translation2d contactVelocity = new Translation2d(contactVelocityX, contactVelocityY);
+      double normalSpeed = contactVelocity.dot(normal);
+      if (normalSpeed >= -1e-4) {
+        return null;
+      }
+
+      double normalDenominator =
+          (1.0 / robotMassKg)
+              + Math.pow(cross2d(contactOffset, normal), 2) / getYawInertia();
+      double normalImpulseMagnitude =
+          (-(1.0 + coefficientOfRestitution) * normalSpeed) / normalDenominator;
+      if (normalImpulseMagnitude <= 0.0) {
+        return null;
+      }
+
+      double tangentSpeed = contactVelocity.dot(tangent);
+      double tangentDenominator =
+          (1.0 / robotMassKg)
+              + Math.pow(cross2d(contactOffset, tangent), 2) / getYawInertia();
+      double rawFrictionImpulse = -tangentSpeed / tangentDenominator;
+      double maxFrictionImpulse = COLLISION_FRICTION_COEFFICIENT * normalImpulseMagnitude;
+      double tangentImpulseMagnitude =
+          MathUtil.clamp(rawFrictionImpulse, -maxFrictionImpulse, maxFrictionImpulse);
+      Translation2d totalImpulse =
+          normal.times(normalImpulseMagnitude).plus(tangent.times(tangentImpulseMagnitude));
+      return new CollisionImpulse(totalImpulse, contactOffset);
+    }
+
+    private Translation2d getSupportPointOffset(Pose2d pose, Translation2d outwardNormal) {
+      Translation2d[] vertices = getRobotVertices(pose, robotLengthMeters * 0.5, robotWidthMeters * 0.5);
+      Translation2d center = pose.getTranslation();
+      Translation2d best = vertices[0];
+      double bestDot = best.minus(center).dot(outwardNormal);
+      for (int i = 1; i < vertices.length; i++) {
+        Translation2d offset = vertices[i].minus(center);
+        double dot = offset.dot(outwardNormal);
+        if (dot > bestDot) {
+          bestDot = dot;
+          best = vertices[i];
+        }
+      }
+      return best.minus(center);
+    }
+
+    private Translation2d getCollisionNormal(Translation2d correction) {
+      if (lastCollisionNormal != null && lastCollisionNormal.getNorm() > 1e-8) {
+        return lastCollisionNormal;
+      }
+      return correction.div(correction.getNorm()).times(-1.0);
+    }
+
+    private Translation2d[] getRobotVertices(Pose2d pose, double halfLength, double halfWidth) {
+      double heading = pose.getRotation().getRadians();
+      double cos = Math.cos(heading);
+      double sin = Math.sin(heading);
+      Translation2d center = pose.getTranslation();
+      Translation2d forward = new Translation2d(cos * halfLength, sin * halfLength);
+      Translation2d left = new Translation2d(-sin * halfWidth, cos * halfWidth);
+      return new Translation2d[] {
+        center.plus(forward).plus(left),
+        center.plus(forward).minus(left),
+        center.minus(forward).minus(left),
+        center.minus(forward).plus(left)
+      };
+    }
+
+    private Translation2d getEdgeNormal(Translation2d a, Translation2d b) {
+      Translation2d edge = b.minus(a);
+      double norm = edge.getNorm();
+      if (norm < 1e-9) {
+        return new Translation2d(1.0, 0.0);
+      }
+      return new Translation2d(-edge.getY() / norm, edge.getX() / norm);
+    }
+
+    private Projection projectOntoAxis(Translation2d[] points, Translation2d axis) {
+      double min = points[0].dot(axis);
+      double max = min;
+      for (int i = 1; i < points.length; i++) {
+        double value = points[i].dot(axis);
+        if (value < min) {
+          min = value;
+        }
+        if (value > max) {
+          max = value;
+        }
+      }
+      return new Projection(min, max);
+    }
+
+    private double cross2d(Translation2d a, Translation2d b) {
+      return a.getX() * b.getY() - a.getY() * b.getX();
+    }
+
+    private double getYawInertia() {
+      return (robotMassKg / 12.0)
+          * ((robotLengthMeters * robotLengthMeters) + (robotWidthMeters * robotWidthMeters));
+    }
+
+    private double getPitchRollInertia() {
+      double widthSquared = robotWidthMeters * robotWidthMeters;
+      double heightSquared = ROBOT_BODY_HEIGHT_METERS * ROBOT_BODY_HEIGHT_METERS;
+      return (robotMassKg / 12.0) * (widthSquared + heightSquared);
     }
 
     /**
@@ -683,5 +789,14 @@ public class Handler {
         this.yMax = yMax;
       }
     }
+
+    /** Projection interval used in SAT overlap checks. */
+    private record Projection(double min, double max) {}
+
+    /** Collision solve output for one obstacle. */
+    private record CollisionResult(Pose2d correctedPose, Translation2d collisionNormal, double overlapMeters) {}
+
+    /** Impulse estimate for one collision contact. */
+    private record CollisionImpulse(Translation2d totalImpulse, Translation2d contactOffset) {}
   }
 }
