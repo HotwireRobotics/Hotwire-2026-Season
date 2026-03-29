@@ -152,7 +152,7 @@ public class Handler {
         Logger.recordOutput("Simulation/RobotPose3d", robotPose3d);
         Logger.recordOutput("RobotPose", pose.get());
         Logger.recordOutput("ZeroedComponentPoses", new Pose3d[] {new Pose3d()});
-        Logger.recordOutput("Intake", new Pose3d[] {
+        Logger.recordOutput("Components/Intake", new Pose3d[] {
             new Pose3d(
                 0.1958, 0.0, 0.21, 
                 new Rotation3d(

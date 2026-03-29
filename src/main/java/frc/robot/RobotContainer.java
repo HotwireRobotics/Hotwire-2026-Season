@@ -41,7 +41,7 @@ public class RobotContainer {
   public final LimelightArray vision;
 
   // Static configuration.
-  private final boolean firstPerson = false;
+  private final boolean firstPerson = true;
   private final boolean testing = false;
 
   // Alignment supplier.
@@ -232,7 +232,8 @@ public class RobotContainer {
     autoChooser.addOption("A-Short-Unineutral Left", new PathPlannerAuto("A-Short-Unineutral", true));
 
     // Tertiary autonomous routine.
-    // autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
+    autoChooser.addOption("CS-Bineutral", new PathPlannerAuto("CS-Bineutral"));
+
     autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
   }
 

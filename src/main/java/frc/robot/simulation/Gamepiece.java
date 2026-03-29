@@ -331,7 +331,7 @@ public class Gamepiece {
     protected double bumperHeight;
     protected ArrayList<SimIntake> intakes = new ArrayList<>();
     protected int subticks = 5;
-    protected double loggingFreqHz = 50;
+    protected double loggingFreqHz = 10;
     protected Timer loggingTimer = new Timer();
     protected static final double HUB_EXIT_DELAY_MEAN_SEC = 0.9;
     protected static final double HUB_EXIT_DELAY_STD_DEV_SEC = 0.27;
