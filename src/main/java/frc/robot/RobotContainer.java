@@ -40,7 +40,7 @@ public class RobotContainer {
 
   // Static configuration.
   private final boolean firstPerson = false;
-  private final boolean testing = true;
+  private final boolean testing = false;
 
   // Alignment supplier.
   public final BooleanSupplier aligned;
@@ -208,12 +208,15 @@ public class RobotContainer {
     }
 
     // Secondary autonomous routine.
-    autoChooser.addOption("A-Bineutral Right", new PathPlannerAuto("A-Bineutral", false));
-    autoChooser.addOption("A-Bineutral Left", new PathPlannerAuto("A-Bineutral", true));
+    // autoChooser.addOption("A-Bineutral Right", new PathPlannerAuto("A-Bineutral", false));
+    // autoChooser.addOption("A-Bineutral Left", new PathPlannerAuto("A-Bineutral", true));
 
     // Primary autonomous routine.
     autoChooser.addOption("A-Unineutral Right", new PathPlannerAuto("A-Unineutral", false));
     autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
+    
+    autoChooser.addOption("A-Short-Unineutral Right", new PathPlannerAuto("A-Short-Unineutral", false));
+    autoChooser.addOption("A-Short-Unineutral Left", new PathPlannerAuto("A-Short-Unineutral", true));
 
     // Tertiary autonomous routine.
     // autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));

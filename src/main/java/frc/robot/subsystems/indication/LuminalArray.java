@@ -102,16 +102,16 @@ public class LuminalArray extends SubsystemBase {
     public Supplier<Control> autodisabled = () -> Control.of(Colors.DISABLED);
 
     // Autonomous enabled.
-    public Supplier<Control> autoenabled =
-        () ->
-            Control.animation(
-                new FireAnimation(0, 55)
-                    .withSlot(0)
-                    .withBrightness(0.149)
-                    .withDirection(AnimationDirectionValue.Forward)
-                    .withSparking(0.6)
-                    .withCooling(0.3)
-                    .withFrameRate(Hertz.of(30)));
+    public Supplier<Control> autoenabled = () -> Control.of(Colors.DISABLED);
+        // () ->
+        //     Control.animation(
+        //         new FireAnimation(0, 55)
+        //             .withSlot(0)
+        //             .withBrightness(0.149)
+        //             .withDirection(AnimationDirectionValue.Forward)
+        //             .withSparking(0.6)
+        //             .withCooling(0.3)
+        //             .withFrameRate(Hertz.of(30)));
   }
 
   private final Controls controls = new Controls();
