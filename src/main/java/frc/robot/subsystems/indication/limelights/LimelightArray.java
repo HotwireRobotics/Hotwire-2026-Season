@@ -85,12 +85,13 @@ public class LimelightArray extends SubsystemBase {
 
   /** Define assist mode for the internal IMU. */
   public static enum IMUMode {
-    OFF(0),
-    SEED(1),
-    INTERNAL(2),
+    OFF(      0),
+    SEED(     1),
+    INTERNAL( 2),
     MT1ASSIST(3),
-    EXTERNAL(4);
+    EXTERNAL( 4);
 
+    // Stash integer mode key.
     public final int mode;
 
     IMUMode(int mode) {
@@ -98,6 +99,7 @@ public class LimelightArray extends SubsystemBase {
     }
   }
 
+  /** IMU Mode. */
   private int mode = 0;
 
   /** Measurement pipeline choice. */
