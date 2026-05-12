@@ -251,7 +251,7 @@ public class RobotContainer {
     Rotation2d rotation = new Rotation2d(
         Radians.of(Math.IEEEremainder(
             Math.atan2(dy, dx), 
-            Constants.Mathematics.TAU)));
+            Constants.Mathematics.TAU))).rotateBy(Rotation2d.k180deg);
 
     // Log the pointer
     Pose2d pointer = new Pose2d(robotPose.getX(), robotPose.getY(), rotation);

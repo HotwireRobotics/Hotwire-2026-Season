@@ -580,8 +580,8 @@ public class Gamepiece {
     public void launchFuel(LinearVelocity launchVelocity) {
         launchFuel(
             launchVelocity.plus(InchesPerSecond.of((Math.random() - 0.5) * 32)), 
-            Degrees.of(70.4333), Degrees.of(0).plus(Degrees.of((Math.random() - 0.5) * 10)), 
-            Inches.of(14), Inches.of(-8), Inches.of(3 * (Math.random() > 0.5 ? 1 : -1)));
+            Degrees.of(70), Degrees.of(180).plus(Degrees.of((Math.random() - 0.5) * 10)), 
+            Inches.of(14.759196), Meters.of(-0.183302), Meters.of(((2 * Math.random() - 1) * (0.31 - FUEL_RADIUS))));
     }
 
     /**

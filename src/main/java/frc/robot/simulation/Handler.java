@@ -2,6 +2,8 @@ package frc.robot.simulation;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.InchesPerSecond;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Second;
@@ -71,7 +73,7 @@ public class Handler {
         this.supp = supp;
 
         doIntake = () -> {
-            return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.99) && (pitch.lte(Degrees.of(3)));
+            return intake.getAsBoolean() && (counter < limit) && (Math.random() > 0.0) && (pitch.lte(Degrees.of(3)));
         };
 
         target = wrist;
@@ -116,8 +118,10 @@ public class Handler {
         if (
             ((counter > 0) && ((time.in(Seconds) % ((10 / ((-50 * motion.in(Degrees)) + (3 * counter))))) + (Math.random()/10)) < 0.05)
         ) {
-            gamepieceSimulation.launchFuel(lineate(velocity.get(), Inches.of(1.2)));
+          for (int i = 0; i < 1 + (int)(Math.random() * 5); i++) {
+            gamepieceSimulation.launchFuel(lineate(velocity.get(), Inches.of(1.2))); // lineate(velocity.get(), Inches.of(0.5))
             counter --;
+          }
         }
     }
 
