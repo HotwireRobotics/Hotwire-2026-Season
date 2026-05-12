@@ -200,14 +200,13 @@ public class Handler {
     private static final double WHEEL_CONTACT_HEIGHT_TOLERANCE_METERS = 0.01;
     private static final double CHASSIS_CONTACT_EPSILON_METERS = 0.0008;
     private static final double GRAVITY_MPS2 = 7.1;
-    private static final double AIR_TILT_DAMPING = 0.65;
+    private static final double AIR_TILT_DAMPING = 0.0;
     private static final double SUPPORT_LAUNCH_VELOCITY_GAIN = 1.45;
     private static final double MAX_SUPPORT_LAUNCH_VELOCITY_MPS = 2.8;
-    private static final double TILT_STIFFNESS = 42.0;
+    private static final double TILT_STIFFNESS = 50.0;
     private static final double TILT_DAMPING = 11.0;
     private static final double COLLISION_YAW_GAIN = 0.22;
     private static final double COLLISION_TILT_RATE_GAIN = 0.0208;
-    private static final double HUB_COLLISION_TILT_MULTIPLIER = 2.5;
     private static final double MAX_COLLISION_TILT_RATE_RADPS = Math.toRadians(1200);
     private static final double MAX_COLLISION_YAW_STEP_RAD = Math.toRadians(28.0);
     private static final double HUB_SIDE = 1.2;
@@ -481,9 +480,9 @@ public class Handler {
       double wheelHeightSpread = maxWheelHeight - minWheelHeight;
       allWheelsGrounded = wheelHeightSpread <= WHEEL_CONTACT_HEIGHT_TOLERANCE_METERS;
 
-      double frontAvg = (frontLeftHeight + frontRightHeight) * 0.5;
-      double rearAvg = (rearLeftHeight + rearRightHeight) * 0.5;
-      double leftAvg = (frontLeftHeight + rearLeftHeight) * 0.5;
+      double frontAvg = (frontLeftHeight  + frontRightHeight) * 0.5;
+      double  rearAvg = (rearLeftHeight   + rearRightHeight) * 0.5;
+      double  leftAvg = (frontLeftHeight  + rearLeftHeight) * 0.5;
       double rightAvg = (frontRightHeight + rearRightHeight) * 0.5;
 
       double terrainPitch = TERRAIN_PITCH_SIGN * Math.atan2(frontAvg - rearAvg, robotLengthMeters);

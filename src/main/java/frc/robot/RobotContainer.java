@@ -41,7 +41,7 @@ public class RobotContainer {
   public final LimelightArray vision;
 
   // Static configuration.
-  private final boolean firstPerson = true;
+  private final boolean firstPerson = false;
   private final boolean testing = false;
 
   // Alignment supplier.
