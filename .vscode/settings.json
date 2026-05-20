@@ -64,5 +64,7 @@
   ],
   "java.dependency.enableDependencyCheckup": false,
   "editor.formatOnSave": false,
-  "java.format.enabled": false
+  "java.format.enabled": false,
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "python-envs.pythonProjects": []
 }
