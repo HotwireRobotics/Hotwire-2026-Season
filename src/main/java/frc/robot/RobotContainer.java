@@ -21,6 +21,7 @@ import frc.robot.simulation.Handler;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.indication.LuminalArray;
+import frc.robot.subsystems.indication.Viewport;
 import frc.robot.subsystems.indication.limelights.LimelightArray;
 import frc.robot.subsystems.indication.limelights.LimelightArray.IMUMode;
 import frc.robot.subsystems.intake.Intake;
@@ -39,6 +40,7 @@ public class RobotContainer {
   public final Hopper hopper;
   public final LuminalArray lights;
   public final LimelightArray vision;
+  public final Viewport camera;
 
   // Static configuration.
   private final boolean firstPerson = false;
@@ -132,6 +134,7 @@ public class RobotContainer {
     // Initialize indicator subsystems.
     lights = new LuminalArray();
     vision = new LimelightArray(drive::getPose, drive::getRotation, drive::addVisionMeasurement);
+    camera = new Viewport(0);
 
     // Simulation
     // simulation = new Handler(
