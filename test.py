@@ -1,20 +1,32 @@
+# Test.py
 import sys
 import os
 
-def clear():
+def clear(*s: str):
+    """Clear console."""
     os.system('cls' if os.name == 'nt' else 'clear')
 
-clear()
+    # Replace with strung arguments.
+    if (s): print(*s)
+
+# Define conversion constant from inches to meters.
+constant: float = 0.0254
+
+clear("------------------")
+
+# Collect inputs.
 right  : float = float(eval(input(  "right (in): ")))
 up     : float = float(eval(input(     "up (in): ")))
 forward: float = float(eval(input("forward (in): ")))
 
-constant: float = 0.0254
 print("------------------")
 
+# Print resulting.
 print(  "right: ", constant * right, "m")
 print(     "up: ", constant * up, "m")
 print("forward: ", constant * forward, "m")
+
+print("------------------")
 
 # GAMMA
 # 19.375in UP

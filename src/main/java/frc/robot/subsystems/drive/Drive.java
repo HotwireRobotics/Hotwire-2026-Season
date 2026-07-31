@@ -153,7 +153,7 @@ public class Drive extends SubsystemBase {
 
   public Drive(Constants.Mode mode) {
     this(switch (mode) {
-      case REAL -> new GyroIOPigeon2();
+      case REAL -> new GyroIONavX();
       case SIM -> new GyroIO() {};
       default -> new GyroIO() {};
     },

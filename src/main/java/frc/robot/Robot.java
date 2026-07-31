@@ -132,7 +132,7 @@ public class Robot extends LoggedRobot {
 
     // Update field visualization.
     field.setRobotPose(container.drive.getPose());
-    container.simulation.tick();
+    // container.simulation.tick();
   }
 
   @Override
@@ -160,7 +160,7 @@ public class Robot extends LoggedRobot {
     }
     Constants.Tempo.startTime();
 
-    container.simulation.autonomous();
+    // container.simulation.autonomous();
   }
 
   @Override

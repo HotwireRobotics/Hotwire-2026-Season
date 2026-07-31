@@ -64,7 +64,7 @@ public class RobotContainer {
   public VelocityType velocityType = VelocityType.STATIC;
 
   // Simulation
-  public final Handler simulation;
+  // public final Handler simulation;
 
   // Methodic toggles.
   private final Command velocity(VelocityType type) {
@@ -134,12 +134,12 @@ public class RobotContainer {
     vision = new LimelightArray(drive::getPose, drive::getRotation, drive::addVisionMeasurement);
 
     // Simulation
-    simulation = new Handler(
-        velocity,
-            () -> shooter.getState().equals(Shooter.State.FIRING),
-            () -> intake.getState().equals(Intake.State.INTAKING),
-        intake::getTarget, drive::getPose, drive::getChassisSpeeds, drive::setPose
-    );
+    // simulation = new Handler(
+    //     velocity,
+    //         () -> shooter.getState().equals(Shooter.State.FIRING),
+    //         () -> intake.getState().equals(Intake.State.INTAKING),
+    //     intake::getTarget, drive::getPose, drive::getChassisSpeeds, drive::setPose
+    // );
 
     // Configure button bindings.
     configureButtonBindings();
@@ -232,7 +232,8 @@ public class RobotContainer {
     autoChooser.addOption("A-Short-Unineutral Left", new PathPlannerAuto("A-Short-Unineutral", true));
 
     // Tertiary autonomous routine.
-    // autoChooser.addOption("A-Depot", new PathPlannerAuto("A-Depot"));
+    autoChooser.addOption("CS-Bineutral", new PathPlannerAuto("CS-Bineutral"));
+
     autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
   }
 
@@ -250,7 +251,7 @@ public class RobotContainer {
     Rotation2d rotation = new Rotation2d(
         Radians.of(Math.IEEEremainder(
             Math.atan2(dy, dx), 
-            Constants.Mathematics.TAU)));
+            Constants.Mathematics.TAU))).rotateBy(Rotation2d.k180deg);
 
     // Log the pointer
     Pose2d pointer = new Pose2d(robotPose.getX(), robotPose.getY(), rotation);

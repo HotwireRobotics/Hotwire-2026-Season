@@ -68,6 +68,18 @@ public class LimelightArray extends SubsystemBase {
               Degrees.of(-90)
             )));
 
+    private static final Limelight beta =
+        new Limelight("limelight-beta",
+          new Pose3d(
+            Meters.of(0.250824), 
+            Meters.of(0.2794), 
+            Meters.of(-0.2413),
+            new Rotation3d(
+              Degrees.of(0), 
+              Degrees.of(30), 
+              Degrees.of(90)
+            )));
+
     private static final Limelight alpha =
         new Limelight("limelight-alpha",
           new Pose3d(
@@ -80,17 +92,18 @@ public class LimelightArray extends SubsystemBase {
               Degrees.of(0)
             )));
 
-    static final String[] keys = {alpha.getName(), gamma.getName()};
+    static final String[] keys = {alpha.getName(), gamma.getName(), beta.getName()};
   }
 
   /** Define assist mode for the internal IMU. */
   public static enum IMUMode {
-    OFF(0),
-    SEED(1),
-    INTERNAL(2),
+    OFF(      0),
+    SEED(     1),
+    INTERNAL( 2),
     MT1ASSIST(3),
-    EXTERNAL(4);
+    EXTERNAL( 4);
 
+    // Stash integer mode key.
     public final int mode;
 
     IMUMode(int mode) {
@@ -98,6 +111,7 @@ public class LimelightArray extends SubsystemBase {
     }
   }
 
+  /** IMU Mode. */
   private int mode = 0;
 
   /** Measurement pipeline choice. */
