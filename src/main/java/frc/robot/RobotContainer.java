@@ -64,7 +64,7 @@ public class RobotContainer {
   public VelocityType velocityType = VelocityType.STATIC;
 
   // Simulation
-  // public final Handler simulation;
+  public final Handler simulation;
 
   // Methodic toggles.
   private final Command velocity(VelocityType type) {
@@ -134,12 +134,12 @@ public class RobotContainer {
     vision = new LimelightArray(drive::getPose, drive::getRotation, drive::addVisionMeasurement);
 
     // Simulation
-    // simulation = new Handler(
-    //     velocity,
-    //         () -> shooter.getState().equals(Shooter.State.FIRING),
-    //         () -> intake.getState().equals(Intake.State.INTAKING),
-    //     intake::getTarget, drive::getPose, drive::getChassisSpeeds, drive::setPose
-    // );
+    simulation = new Handler(
+        velocity,
+            () -> shooter.getState().equals(Shooter.State.FIRING),
+            () -> intake.getState().equals(Intake.State.INTAKING),
+        intake::getTarget, drive::getPose, drive::getChassisSpeeds, drive::setPose
+    );
 
     // Configure button bindings.
     configureButtonBindings();

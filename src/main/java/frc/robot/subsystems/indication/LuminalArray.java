@@ -67,7 +67,7 @@ public class LuminalArray extends SubsystemBase {
 
   // Predefined colors.
   private class Colors {
-    public static final SolidColor DISABLED = Constants.Indication.LEDColor(180, 0, 0);
+    public static final SolidColor DISABLED = Constants.Indication.LEDColor(255, 31, 1);
     public static final SolidColor ACTIVE = Constants.Indication.LEDColor(0, 180, 0);
     public static final SolidColor INACTIVE = Constants.Indication.LEDColor(0, 0, 0);
   }
