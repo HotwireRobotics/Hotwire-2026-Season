@@ -323,7 +323,7 @@ public class RobotContainer {
               drive,
               () -> -Constants.Joysticks.driver.getLeftY(),
               () -> -Constants.Joysticks.driver.getLeftX(),
-              () -> -Constants.Joysticks.driver.getRightX()));
+              () ->  Constants.Joysticks.driver.getRightX()));
     }
 
     // Hold wheel position.

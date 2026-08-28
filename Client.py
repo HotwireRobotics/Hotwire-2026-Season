@@ -9,21 +9,21 @@ from networktables import NetworkTables as NT, NetworkTable
 base: str = os.path.dirname(os.path.abspath(__file__))
 deploy: str = os.path.join(base, "src", "main", "deploy")
 
-SERVER: str = "127.0.0.1"
+SERVER: str = "10.29.90.2"
 FPS: int = 60
 RUNNING: bool = True
 class State(Enum):
     REAL: int = None
     SIM:  int = None
     TEST: int = None
-state: State = State.SIM
-
+state: State = State.REAL
+ 
 if (state == State.REAL): NT.initialize(server=SERVER)
 else:                NT.initialize(server="127.0.0.1")
 
 
 table: NetworkTable =       NT.getTable("AdvantageKit")
-driverStation =      table.getSubTable("DriverStation")
+driverStation =      NT.getTable("DriverStation")
 dashboard: NetworkTable = NT.getTable("SmartDashboard")
 outputs =              table.getSubTable("RealOutputs")
 camera: NetworkTable =   NT.getTable("CameraPublisher")
@@ -99,7 +99,8 @@ while RUNNING:
         robotPose: list[float, float, float] = [0, 0, 0]
     
     est = sarr(robotPose[0:2], [-width / 2] * 2, origin)
-    print("Scale: ", scale, "F: ", f, "Pose: ", est, "Target: ", px(est, integer=True))
+    print("Enabled: ", enabled)
+    # print("Scale: ", scale, "F: ", f, "Pose: ", est, "Target: ", px(est, integer=True))
     screen.blit(pg.transform.rotate(robot, robotPose[2]), px(est, integer=True))
     manager.draw_ui(screen)
     pg.display.flip()

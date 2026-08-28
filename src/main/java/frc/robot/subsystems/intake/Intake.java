@@ -73,7 +73,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     control = new PositionVoltage(Degrees.of(0));
 
     slot = new Slot0Configs();
-    configureProportional(14);
+    configureProportional(8);
 
     // Configuration
     right.setControl(control);
@@ -145,7 +145,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           target = angle;
-          configureProportional(14);
+          configureProportional(8);
           left.setControl(control.withPosition(angle));
           right.setControl(control.withPosition(angle));
         });
@@ -155,7 +155,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           target = Degrees.of(0);
-          configureProportional(14);
+          configureProportional(8);
           left.setControl(control.withPosition(Degrees.of(0)));
           right.setControl(control.withPosition(Degrees.of(0)));
         });
