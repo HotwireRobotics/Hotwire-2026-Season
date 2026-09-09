@@ -234,10 +234,12 @@ public class RobotContainer {
     autoChooser.addOption("A-Short-Unineutral Right", new PathPlannerAuto("A-Short-Unineutral", false));
     autoChooser.addOption("A-Short-Unineutral Left", new PathPlannerAuto("A-Short-Unineutral", true));
 
+    
     // Tertiary autonomous routine.
     autoChooser.addOption("CS-Bineutral", new PathPlannerAuto("CS-Bineutral"));
 
     autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
+    autoChooser.addOption("A-Back-Up", new PathPlannerAuto("A-Back-Up"));
   }
 
   /** Returns the Rotation2d the robot needs to face the hub. */
@@ -341,7 +343,7 @@ public class RobotContainer {
     Constants.Joysticks.operator
         .povUp()
         .onTrue(intake.raiseWrist(Degrees.of(60)).alongWith(intake.run().repeatedly()))
-        .onFalse(intake.lowerWrist().alongWith(intake.halt()));
+        .whileFalse(intake.lowerWrist().alongWith(intake.halt()));
 
     // Run intake rollers at full speed when left trigger is held, and halt when released.
     Constants.Joysticks.operator.leftTrigger()
@@ -368,7 +370,7 @@ public class RobotContainer {
     Constants.Joysticks.operator.leftBumper().whileFalse(hopper.halt()).whileTrue(hopper.run().repeatedly());
 
     // Raise intake to avoid impact.
-    Constants.Joysticks.operator.povRight().onFalse(intake.lowerWrist()).onTrue(intake.emergency());
+    // Constants.Joysticks.operator.povRight().onFalse(intake.lowerWrist()).onTrue(intake.emergency());
 
     // Invert all control.
     Constants.Joysticks.operator.povLeft().whileTrue(invertion(true)).whileFalse(invertion(false));

@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -72,13 +73,14 @@ public class Intake extends ModularSubsystem implements Systerface {
     // Initialize control loop.
     control = new PositionVoltage(Degrees.of(0));
 
-    slot = new Slot0Configs();
+    slot = new Slot0Configs().withKG(0.42).withGravityType(GravityTypeValue.Arm_Cosine);
     configureProportional(8);
 
     // Configuration
     right.setControl(control);
     right.getConfigurator().apply(slot);
 
+    left.getConfigurator().apply(slot);
     left.setMaster(right, false);
 
     this.speed = speed;
@@ -145,7 +147,6 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           target = angle;
-          configureProportional(8);
           left.setControl(control.withPosition(angle));
           right.setControl(control.withPosition(angle));
         });
@@ -155,7 +156,6 @@ public class Intake extends ModularSubsystem implements Systerface {
     return Commands.runOnce(
         () -> {
           target = Degrees.of(0);
-          configureProportional(8);
           left.setControl(control.withPosition(Degrees.of(0)));
           right.setControl(control.withPosition(Degrees.of(0)));
         });
@@ -168,7 +168,6 @@ public class Intake extends ModularSubsystem implements Systerface {
   public Command emergency() {
     return Commands.runOnce(
         () -> {
-          configureProportional(14);
           left.setControl(control.withPosition(Degrees.of(90)));
           right.setControl(control.withPosition(Degrees.of(90)));
         });
