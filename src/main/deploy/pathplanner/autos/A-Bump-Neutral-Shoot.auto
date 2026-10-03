@@ -1,0 +1,49 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "Lower Intake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Start Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Annoying1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Stop Intaking"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CS-Bump-Neutral-Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Firing Sequence"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

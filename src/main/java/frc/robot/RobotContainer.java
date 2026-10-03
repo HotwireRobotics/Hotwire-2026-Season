@@ -228,18 +228,21 @@ public class RobotContainer {
     // autoChooser.addOption("A-Bineutral Left", new PathPlannerAuto("A-Bineutral", true));
 
     // Primary autonomous routine.
-    autoChooser.addOption("A-Unineutral Right", new PathPlannerAuto("A-Unineutral", false));
-    autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
+    // autoChooser.addOption("A-Unineutral Right", new PathPlannerAuto("A-Unineutral", false));
+    // autoChooser.addOption("A-Unineutral Left", new PathPlannerAuto("A-Unineutral", true));
     
-    autoChooser.addOption("A-Short-Unineutral Right", new PathPlannerAuto("A-Short-Unineutral", false));
-    autoChooser.addOption("A-Short-Unineutral Left", new PathPlannerAuto("A-Short-Unineutral", true));
+    // autoChooser.addOption("A-Short-Unineutral Right", new PathPlannerAuto("A-Short-Unineutral", false));
+    // autoChooser.addOption("A-Short-Unineutral Left", new PathPlannerAuto("A-Short-Unineutral", true));
 
     
     // Tertiary autonomous routine.
-    autoChooser.addOption("CS-Bineutral", new PathPlannerAuto("CS-Bineutral"));
+    // autoChooser.addOption("CS-Bineutral", new PathPlannerAuto("CS-Bineutral"));
 
-    autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
+    // autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
     autoChooser.addOption("A-Back-Up", new PathPlannerAuto("A-Back-Up"));
+    autoChooser.addOption("A-Bump-Neutral-Shoot Right", new PathPlannerAuto("A-Bump-Neutral-Shoot", false));
+    autoChooser.addOption("A-Bump-Neutral-Shoot Left",  new PathPlannerAuto("A-Bump-Neutral-Shoot", true));
+    // autoChooser.addOption("Annoying", new PathPlannerAuto("Annoying"));
   }
 
   /** Returns the Rotation2d the robot needs to face the hub. */
@@ -251,6 +254,7 @@ public class RobotContainer {
     // Pose differences.
     double dx = hubPose.getX() - robotPose.getX();
     double dy = hubPose.getY() - robotPose.getY();
+
 
     // Angle from robot to hub
     Rotation2d rotation = new Rotation2d(

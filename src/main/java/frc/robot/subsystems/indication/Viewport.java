@@ -11,8 +11,8 @@ public class Viewport extends SubsystemBase {
     public Viewport(int port) {
         this.port = port;
 
-        UsbCamera camera = CameraServer.startAutomaticCapture(port);
-        camera.setFPS(15);
+        // UsbCamera camera = CameraServer.startAutomaticCapture(port);
+        // camera.setFPS(15);
         // camera.setResolution(..., ...)
     }
 }

@@ -27,7 +27,7 @@ public class LimelightArray extends SubsystemBase {
 
   private static class Configuration {
     private static final Distance maxDistance = Inches.of(185);
-    private static final Pipeline pipeline = Pipeline.MEGATAG2;
+    private static final Pipeline pipeline = Pipeline.MEGATAG1;
 
     public static class Limelight {
 
@@ -59,40 +59,40 @@ public class LimelightArray extends SubsystemBase {
     private static final Limelight gamma =
         new Limelight("limelight-gamma",
           new Pose3d(
-            Meters.of(-0.250824), 
-            Meters.of(0.2794), 
-            Meters.of(0.2413),
+            Meters.of(-0.2667), 
+            Meters.of(-0.2667), 
+            Meters.of(0.492125),
             new Rotation3d(
               Degrees.of(0), 
-              Degrees.of(30), 
-              Degrees.of(-90)
-            )));
-
-    private static final Limelight beta =
-        new Limelight("limelight-beta",
-          new Pose3d(
-            Meters.of(0.250824), 
-            Meters.of(0.2794), 
-            Meters.of(-0.2413),
-            new Rotation3d(
-              Degrees.of(0), 
-              Degrees.of(30), 
-              Degrees.of(90)
-            )));
-
-    private static final Limelight alpha =
-        new Limelight("limelight-alpha",
-          new Pose3d(
-            Meters.of(-0.1651), 
-            Meters.of(-0.29209), 
-            Meters.of(0.5206),
-            new Rotation3d(
-              Degrees.of(0), 
-              Degrees.of(27), 
+              Degrees.of(34), 
               Degrees.of(0)
             )));
 
-    static final String[] keys = {alpha.getName(), gamma.getName(), beta.getName()};
+    // private static final Limelight beta =
+    //     new Limelight("limelight-beta",
+    //       new Pose3d(
+    //         Meters.of(0.250824), 
+    //         Meters.of(0.2794), 
+    //         Meters.of(-0.2413),
+    //         new Rotation3d(
+    //           Degrees.of(0), 
+    //           Degrees.of(30), 
+    //           Degrees.of(90)
+    //         )));
+
+    // private static final Limelight alpha =
+    //     new Limelight("limelight-alpha",
+    //       new Pose3d(
+    //         Meters.of(-0.1651), 
+    //         Meters.of(-0.29209), 
+    //         Meters.of(0.5206),
+    //         new Rotation3d(
+    //           Degrees.of(0), 
+    //           Degrees.of(27), 
+    //           Degrees.of(0)
+    //         )));
+
+    static final String[] keys = {gamma.getName()};
   }
 
   /** Define assist mode for the internal IMU. */
