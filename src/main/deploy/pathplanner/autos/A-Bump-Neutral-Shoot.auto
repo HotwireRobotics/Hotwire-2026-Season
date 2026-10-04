@@ -5,6 +5,12 @@
     "data": {
       "commands": [
         {
+          "type": "wait",
+          "data": {
+            "waitTime": 4.5
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "Lower Intake"
