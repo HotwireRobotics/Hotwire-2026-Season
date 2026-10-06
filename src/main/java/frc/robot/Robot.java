@@ -137,6 +137,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
+    robotContainer.releaseShootOnFly();
   }
 
   @Override

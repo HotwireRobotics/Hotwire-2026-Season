@@ -6,6 +6,7 @@ import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.signals.RGBWColor;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.path.PathConstraints;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -60,10 +61,47 @@ public final class Constants {
     public static final Angle kAlignmentError = Degrees.of(4);
 
     /**
-     * Radians of aim lead per meter/second of chassis speed perpendicular to the hub ray.
-     * Zero aims directly at the hub; raise it if shots drift in the direction of travel.
+     * Extra aim trim, radians per m/s of sideways speed, applied on top of the velocity vector.
+     * The vector compensation is always on. Leave this at 0 unless shots still drift.
      */
     public static final double kLeadGain = 0.0;
+
+    /** How far ahead to project the chassis for release latency, in seconds. */
+    public static final double kShotLookaheadSeconds = 0.10;
+
+    /**
+     * Horizontal ball speed (m/s) per shooter RPM. Used only while the robot is moving, to turn
+     * chassis velocity into an aim offset and an RPM scale. 0.005 is about 12.5 m/s at 2500 RPM.
+     */
+    public static final double kHorizontalMetersPerSecondPerRPM = 0.005;
+
+    /** Hard ceiling so a bad distance or speed cannot command a destructive flywheel setpoint. */
+    public static final double kMaxRpm = 5500.0;
+
+    /** Largest fraction the moving-shot RPM may drop below or rise above the stationary regression. */
+    public static final double kMinRpmScale = 0.70;
+
+    public static final double kMaxRpmScale = 1.40;
+
+    /** Largest heading offset velocity compensation may add, in degrees. */
+    public static final double kMaxLeadDegrees = 25.0;
+
+    /** Chassis speed used for compensation is clamped to this, in m/s. */
+    public static final double kMaxFieldSpeedMetersPerSecond = 5.5;
+
+    /** Floor on the modeled horizontal exit speed so a slow setpoint cannot divide the shot vector. */
+    public static final double kMinExitMetersPerSecond = 4.0;
+
+    /** Distances outside this window are clamped before the regression and the aim vector. */
+    public static final double kMinShotMeters = 0.30;
+
+    public static final double kMaxShotMeters = 8.0;
+
+    /** Limelight translations older than this are ignored for aiming. */
+    public static final double kVisionMaxAgeSeconds = 0.25;
+
+    /** Limelight translations farther than this from odometry are ignored for aiming. */
+    public static final double kVisionMaxDisagreementMeters = 1.25;
 
     // Current limits for shooter motors.
     public static final Current kCurrentLimit = Amps.of(80);
@@ -439,14 +477,39 @@ public final class Constants {
   public static final double exponential = 1.00529;
 
   /**
+   * Unclamped regression RPM for a distance in meters. Non-finite inputs become the nearest
+   * in-range distance. Callers that command a motor should clamp to {@link Shooter#kMaxRpm}.
+   */
+  public static double regressRaw(double meters) {
+    if (!Double.isFinite(meters)) {
+      meters = Shooter.kMinShotMeters;
+    }
+    meters = MathUtil.clamp(meters, 0.0, Shooter.kMaxShotMeters);
+    double rpm = base * Math.pow(exponential, Units.metersToInches(meters));
+    if (!Double.isFinite(rpm)) {
+      return Shooter.kSpeed.in(RPM);
+    }
+    return rpm;
+  }
+
+  /**
    * Calculate shooter velocity from distance using an exponential regression.
    *
    * @param distance Distance to the target.
-   * @return Shooter velocity in RPM.
+   * @return Shooter velocity in RPM, clamped to a safe range.
    */
   public static AngularVelocity regress(Distance distance) {
-    Logger.recordOutput("Shooter/Distance", distance.in(Inches));
-    return RPM.of(base * Math.pow(exponential, distance.in(Inches)));
+    double meters = Shooter.kMinShotMeters;
+    if (distance != null) {
+      double candidate = distance.in(Meters);
+      if (Double.isFinite(candidate)) {
+        meters = candidate;
+      }
+    }
+    meters = MathUtil.clamp(meters, 0.0, Shooter.kMaxShotMeters);
+    double rpm = MathUtil.clamp(regressRaw(meters), 0.0, Shooter.kMaxRpm);
+    Logger.recordOutput("Shooter/Distance", Units.metersToInches(meters));
+    return RPM.of(rpm);
   }
 
   public static enum Mode {

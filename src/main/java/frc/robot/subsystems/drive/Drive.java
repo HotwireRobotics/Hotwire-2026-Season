@@ -32,6 +32,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.constants.Field;
+import frc.robot.util.HubShot;
 import frc.robot.constants.Constants.Mode;
 import frc.robot.constants.LimelightHelpers.PoseEstimate;
 import frc.robot.generated.TunerConstants;
@@ -348,10 +349,26 @@ public class Drive extends SubsystemBase {
   }
 
   /**
-   * Measured chassis velocity in the field frame. Used to lead the hub while translating.
+   * Measured chassis velocity in the field frame. Used to lead the hub while translating. A bad
+   * module or gyro sample returns zero instead of NaN.
    */
   public ChassisSpeeds getFieldVelocity() {
-    return ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getRotation());
+    try {
+      ChassisSpeeds robotRelative = getChassisSpeeds();
+      Rotation2d rotation = getRotation();
+      if (!HubShot.isFinite(robotRelative)
+          || rotation == null
+          || !Double.isFinite(rotation.getRadians())) {
+        return new ChassisSpeeds();
+      }
+      ChassisSpeeds field = ChassisSpeeds.fromRobotRelativeSpeeds(robotRelative, rotation);
+      if (!HubShot.isFinite(field)) {
+        return new ChassisSpeeds();
+      }
+      return field;
+    } catch (RuntimeException ex) {
+      return new ChassisSpeeds();
+    }
   }
 
   /** Returns the position of each module in radians. */

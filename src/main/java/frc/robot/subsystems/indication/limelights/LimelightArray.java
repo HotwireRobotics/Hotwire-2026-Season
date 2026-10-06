@@ -13,7 +13,9 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.HubShot;
 import frc.robot.Dashboard;
 import frc.robot.constants.LimelightHelpers;
 import frc.robot.constants.LimelightHelpers.PoseEstimate;
@@ -107,6 +109,7 @@ public class LimelightArray extends SubsystemBase {
   }
 
   private Pose2d lastPoseEstimate;
+  private double lastPoseTimestamp = Double.NaN;
 
   // Suppliers for rotation and pose.
   private final Supplier<Pose2d> pose;
@@ -178,9 +181,10 @@ public class LimelightArray extends SubsystemBase {
       PoseEstimate MT2estimate = getEstimation(limelight);
 
       // Validate estimate.
-      if (isValidEstimate(MT2estimate)) {
+      if (isValidEstimate(MT2estimate) && HubShot.isFinite(MT2estimate.pose)) {
         measurements.add(MT2estimate);
         lastPoseEstimate = MT2estimate.pose;
+        lastPoseTimestamp = Timer.getFPGATimestamp();
 
         // Log detecting status and pose estimate.
         Logger.recordOutput(limelight + " Detecting", true);
@@ -216,6 +220,26 @@ public class LimelightArray extends SubsystemBase {
    * @return
    */
   public Pose2d getLastPoseEstimate() {
+    return lastPoseEstimate;
+  }
+
+  /**
+   * Last Limelight translation that is still young enough to aim with. Returns null when vision has
+   * not produced a finite pose inside {@code maxAgeSeconds}.
+   *
+   * @param maxAgeSeconds maximum age of the estimate
+   */
+  public Pose2d getFreshPose(double maxAgeSeconds) {
+    if (!HubShot.isFinite(lastPoseEstimate) || !Double.isFinite(lastPoseTimestamp)) {
+      return null;
+    }
+    if (!Double.isFinite(maxAgeSeconds) || maxAgeSeconds < 0.0) {
+      return null;
+    }
+    double age = Timer.getFPGATimestamp() - lastPoseTimestamp;
+    if (!Double.isFinite(age) || age < 0.0 || age > maxAgeSeconds) {
+      return null;
+    }
     return lastPoseEstimate;
   }
 

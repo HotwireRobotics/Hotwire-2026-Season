@@ -16,6 +16,7 @@ import frc.robot.subsystems.Logs;
 import frc.robot.subsystems.ModularSubsystem;
 import frc.robot.subsystems.Motor;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
 
 public class Shooter extends ModularSubsystem implements Systerface {
 
@@ -97,9 +98,48 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
   @Override
   public void periodic() {
+    // Keep the flywheel on the live supplier for the whole time we are firing, so distance and
+    // chassis speed change the setpoint every cycle instead of only when the command restarts.
+    if (state == State.FIRING) {
+      applyTrackedVelocity();
+    }
+
     logDevices();
 
     Logs.log(this, state);
+  }
+
+  /**
+   * Latest supplier value, with a finite magnitude at or below {@link Constants.Shooter#kMaxRpm}.
+   * A broken supplier returns the ferry speed rather than NaN or a runaway setpoint.
+   */
+  private AngularVelocity readVelocity() {
+    try {
+      AngularVelocity target = velocity.get();
+      if (target == null) {
+        return Constants.Shooter.kSpeed;
+      }
+      double rpm = target.in(RPM);
+      if (!Double.isFinite(rpm)) {
+        return Constants.Shooter.kSpeed;
+      }
+      double magnitude = Math.min(Math.abs(rpm), Constants.Shooter.kMaxRpm);
+      return RPM.of(Math.copySign(magnitude, rpm));
+    } catch (RuntimeException ex) {
+      Logger.recordOutput("Shooter/VelocityFault", ex.toString());
+      return Constants.Shooter.kSpeed;
+    }
+  }
+
+  /** Push the current setpoint to the flywheels and feeder. */
+  private void applyTrackedVelocity() {
+    AngularVelocity target = readVelocity();
+    Logger.recordOutput("Shooter/CommandedRPM", target.in(RPM));
+    if (Math.abs(target.in(RPM)) < 1.0) {
+      applyPercent(0.0, left, right, feeder);
+      return;
+    }
+    applyVelocity(target, left, right, feeder);
   }
 
   private void applyVelocity(AngularVelocity velocity, Motor... motors) {
@@ -111,15 +151,8 @@ public class Shooter extends ModularSubsystem implements Systerface {
   }
 
   public void start() {
-    if (velocity.get().equals(RPM.of(0))) {
-      applyPercent(Constants.Shooter.kZero.in(RPM), left, right, feeder);
-
-      setState(State.STOPPED);
-    } else {
-      applyVelocity(velocity.get(), left, right, feeder);
-
-      setState(State.FIRING);
-    }
+    setState(State.FIRING);
+    applyTrackedVelocity();
   }
 
   public void stall() {
@@ -129,9 +162,14 @@ public class Shooter extends ModularSubsystem implements Systerface {
   }
 
   public boolean isReady() {
-    return debouncer.calculate(
-        left.getVelocity().getValue().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance) &&
-        right.getVelocity().getValue().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance));
+    AngularVelocity target = readVelocity();
+    try {
+      return debouncer.calculate(
+          left.getVelocity().getValue().isNear(target, Constants.Shooter.kVelocityTolerance)
+              && right.getVelocity().getValue().isNear(target, Constants.Shooter.kVelocityTolerance));
+    } catch (RuntimeException ex) {
+      return false;
+    }
   }
 
   public Command run() {

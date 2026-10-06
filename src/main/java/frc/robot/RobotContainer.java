@@ -26,6 +26,7 @@ import frc.robot.subsystems.indication.limelights.LimelightArray;
 import frc.robot.subsystems.indication.limelights.LimelightArray.IMUMode;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.util.HubShot;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -65,6 +66,12 @@ public class RobotContainer {
   /** True while operator X is held: heading tracks the hub and feed waits for alignment. */
   public boolean shootOnFly = false;
 
+  /** Last finite odometry pose, used if the estimator returns NaN. */
+  private Pose2d lastFinitePose = new Pose2d();
+
+  /** Last live shot, held if a cycle cannot be solved. */
+  private HubShot.Solution lastSolution = HubShot.fallback();
+
   // Methodic toggles.
   private final Command velocity(VelocityType type) {
     return Commands.runOnce(() -> velocityType = type);
@@ -84,10 +91,21 @@ public class RobotContainer {
     // Alignment supplier.
     aligned =
         () -> {
-          return drive
-              .getRotation()
-              .getMeasure()
-              .isNear(drive.getRotationTarget().getMeasure(), Constants.Shooter.kAlignmentError);
+          try {
+            Rotation2d measured = drive.getRotation();
+            Rotation2d target = drive.getRotationTarget();
+            if (measured == null
+                || target == null
+                || !Double.isFinite(measured.getRadians())
+                || !Double.isFinite(target.getRadians())) {
+              return false;
+            }
+            return measured
+                .getMeasure()
+                .isNear(target.getMeasure(), Constants.Shooter.kAlignmentError);
+          } catch (RuntimeException ex) {
+            return false;
+          }
         };
 
     // Velocity supplier.
@@ -98,14 +116,12 @@ public class RobotContainer {
               // Ferrying static velocity.
               return Constants.Shooter.kSpeed;
             case REGRESSION:
-              // Spin to the distance regression the whole time aim is held so the
-              // flywheels are at speed by the time heading error is inside tolerance.
-              return Constants.regress(Meters.of(hubDistanceMeters()));
+            case AUTO:
+              // Recomputed on every read: distance, closing speed, and sideways speed.
+              return RPM.of(currentShot().rpm);
             case TESTING:
               // Allow testing of shooter velocity via dashboard input, for characterization purposes.
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
-            case AUTO:
-              return Constants.regress(Meters.of(hubDistanceMeters()));
             default:
               // Fallback velocity.
               return Constants.Shooter.kSpeed;
@@ -216,26 +232,96 @@ public class RobotContainer {
   }
 
   /**
-   * Pose used to aim. Odometry translation by default; when vision is enabled and a Limelight
-   * estimate exists, that translation is used with the odometry heading.
+   * Pose used to aim. Odometry by default. A fresh Limelight translation is used only when vision
+   * is enabled, the estimate is young, and it agrees with odometry. The heading always stays the
+   * gyro heading.
    */
   private Pose2d aimPose() {
     Pose2d odometry = drive.getPose();
-    if (!Dashboard.visionEnabled.get() || vision == null) {
+    if (!HubShot.isFinite(odometry)) {
+      odometry = lastFinitePose;
+    } else {
+      lastFinitePose = odometry;
+    }
+    if (vision == null || !Dashboard.visionEnabled.get()) {
       return odometry;
     }
-    Pose2d visionPose = vision.getLastPoseEstimate();
-    if (visionPose == null) {
+    Pose2d visionPose = vision.getFreshPose(Constants.Shooter.kVisionMaxAgeSeconds);
+    if (!HubShot.isFinite(visionPose)) {
+      return odometry;
+    }
+    double disagreement =
+        visionPose.getTranslation().getDistance(odometry.getTranslation());
+    if (!Double.isFinite(disagreement)
+        || disagreement > Constants.Shooter.kVisionMaxDisagreementMeters) {
       return odometry;
     }
     return new Pose2d(visionPose.getTranslation(), odometry.getRotation());
   }
 
-  /** Distance from the aim pose to the hub, in meters. */
-  private double hubDistanceMeters() {
-    return aimPose()
-        .getTranslation()
-        .getDistance(Constants.Poses.hub.getPose().getTranslation());
+  /**
+   * Shot for this cycle. Chassis velocity changes both the aim point and the flywheel RPM. A bad
+   * sample holds the previous live shot.
+   */
+  private HubShot.Solution currentShot() {
+    try {
+      Pose2d pose = aimPose();
+      Pose2d hub = Constants.Poses.hub.getPose();
+      if (!HubShot.isFinite(pose) || !HubShot.isFinite(hub)) {
+        return lastSolution;
+      }
+      ChassisSpeeds field = drive.getFieldVelocity();
+      if (!HubShot.isFinite(field)) {
+        field = new ChassisSpeeds();
+      }
+
+      HubShot.Input input = new HubShot.Input();
+      input.robot = pose.getTranslation();
+      input.hub = hub.getTranslation();
+      input.vxMetersPerSecond = field.vxMetersPerSecond;
+      input.vyMetersPerSecond = field.vyMetersPerSecond;
+      input.lookaheadSeconds = Dashboard.shotLookahead.get(0.0, 0.40);
+      input.metersPerSecondPerRpm = Dashboard.exitSpeedPerRpm.get(0.001, 0.02);
+      input.leadGainRadiansPerMps = Dashboard.leadGain.get(-0.20, 0.20);
+      input.minScale = Constants.Shooter.kMinRpmScale;
+      input.maxScale = Constants.Shooter.kMaxRpmScale;
+      input.maxLeadRadians = Math.toRadians(Constants.Shooter.kMaxLeadDegrees);
+      input.maxFieldSpeed = Constants.Shooter.kMaxFieldSpeedMetersPerSecond;
+      input.minExitMetersPerSecond = Constants.Shooter.kMinExitMetersPerSecond;
+      input.minDistanceMeters = Constants.Shooter.kMinShotMeters;
+      input.maxDistanceMeters = Constants.Shooter.kMaxShotMeters;
+      input.maxRpm = Constants.Shooter.kMaxRpm;
+      input.regressionBase = Constants.base;
+      input.regressionExp = Constants.exponential;
+      input.rpmForDistance = Constants::regressRaw;
+
+      HubShot.Solution solved = HubShot.solve(input);
+      if (!solved.live && lastSolution.live) {
+        solved = lastSolution;
+      } else if (solved.live) {
+        lastSolution = solved;
+      }
+      logShot(solved);
+      return solved;
+    } catch (RuntimeException ex) {
+      Logger.recordOutput("Align/Fault", ex.toString());
+      return lastSolution;
+    }
+  }
+
+  /** Publish the shot that aim and RPM are both using. */
+  private void logShot(HubShot.Solution shot) {
+    Translation2d pose = HubShot.isFinite(shot.pose) ? shot.pose : Translation2d.kZero;
+    Rotation2d aim = shot.aim == null ? Rotation2d.kZero : shot.aim;
+    Logger.recordOutput("Hub Pointer", new Pose2d(pose, aim));
+    Logger.recordOutput("Align/Target", aim);
+    Logger.recordOutput("Align/Lead", shot.leadRadians);
+    Logger.recordOutput("Align/PerpVelocity", shot.perpMetersPerSecond);
+    Logger.recordOutput("Align/RadialVelocity", shot.radialMetersPerSecond);
+    Logger.recordOutput("Align/Live", shot.live);
+    Logger.recordOutput("Shooter/VelocityMode", velocityType.name());
+    Logger.recordOutput("Shooter/RpmStationary", shot.stationaryRpm);
+    Logger.recordOutput("Shooter/DistanceMeters", shot.distanceMeters);
   }
 
   /**
@@ -244,47 +330,48 @@ public class RobotContainer {
    * unless the dashboard alignment requirement is turned off.
    */
   private boolean feedAllowed() {
-    if (!shootOnFly) {
-      return shooter.isReady();
+    try {
+      if (!shootOnFly) {
+        return shooter.isReady();
+      }
+      boolean headingOk = aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get();
+      return headingOk && shooter.isReady();
+    } catch (RuntimeException ex) {
+      return false;
     }
-    boolean headingOk = aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get();
-    return headingOk && shooter.isReady();
   }
 
   /**
-   * Field heading that keeps the chassis pointed at the hub. Called every drive cycle while aim is
-   * held. A lead term (default 0) offsets that bearing by sideways chassis speed.
+   * Drop shoot-on-the-fly if the aim command ends, is interrupted, or the robot disables. Only
+   * clears regression when this mode set it, so autonomous {@code AUTO} velocity is left alone.
+   */
+  public void releaseShootOnFly() {
+    shootOnFly = false;
+    if (velocityType == VelocityType.REGRESSION) {
+      velocityType = VelocityType.STATIC;
+    }
+  }
+
+  /**
+   * Field heading that keeps the chassis on the moving hub shot. Called every drive cycle while
+   * operator X is held. Right-stick rotate is not part of this command.
    */
   private Rotation2d calculateHubRotation() {
-    Pose2d robotPose = aimPose();
-    Translation2d toHub =
-        Constants.Poses.hub.getPose().getTranslation().minus(robotPose.getTranslation());
-
-    Rotation2d bearing = toHub.getNorm() > 1e-6 ? toHub.getAngle() : drive.getRotation();
-
-    ChassisSpeeds field = drive.getFieldVelocity();
-    Translation2d velocity = new Translation2d(field.vxMetersPerSecond, field.vyMetersPerSecond);
-    // Signed speed to the left of the hub ray, meters per second.
-    double vPerp = 0.0;
-    if (toHub.getNorm() > 1e-6) {
-      Translation2d ray = toHub.div(toHub.getNorm());
-      vPerp = velocity.getX() * ray.getY() - velocity.getY() * ray.getX();
-    }
-    double leadRadians = Dashboard.leadGain.get() * vPerp;
-    Rotation2d rotation = bearing.plus(Rotation2d.fromRadians(leadRadians));
-
-    drive.setRotationTarget(rotation);
+    HubShot.Solution shot = currentShot();
+    Rotation2d aim = shot.aim == null ? Rotation2d.kZero : shot.aim;
+    drive.setRotationTarget(aim);
 
     Rotation2d measured = drive.getRotation();
-    Logger.recordOutput("Hub Pointer", new Pose2d(robotPose.getTranslation(), rotation));
-    Logger.recordOutput("Align/Target", rotation);
+    if (measured == null || !Double.isFinite(measured.getRadians())) {
+      measured = Rotation2d.kZero;
+    }
+    double error = aim.minus(measured).getDegrees();
+    if (!Double.isFinite(error)) {
+      error = 180.0;
+    }
     Logger.recordOutput("Align/Measured", measured);
-    Logger.recordOutput("Align/Error", rotation.minus(measured).getDegrees());
-    Logger.recordOutput("Align/Lead", leadRadians);
-    Logger.recordOutput("Align/PerpVelocity", vPerp);
-    Logger.recordOutput("Shooter/VelocityMode", velocityType.name());
-
-    return rotation;
+    Logger.recordOutput("Align/Error", error);
+    return aim;
   }
 
   private Rotation2d calculatePassingRotation() {
@@ -399,16 +486,18 @@ public class RobotContainer {
     // Invert all control.
     Constants.Joysticks.operator.povLeft().whileTrue(invertion(true)).whileFalse(invertion(false));
 
-    // Hold operator X: left stick translates, chassis heading tracks the hub, shooter uses
-    // distance regression. Right-stick rotate is not in this command, so it is ignored.
+    // Hold operator X: left stick translates, heading and RPM track the moving hub shot.
+    // Right-stick rotate is not in this command. Releasing X, or any interrupt, clears the mode.
     Constants.Joysticks.operator
         .x()
         .whileTrue(
-            Commands.runOnce(() -> shootOnFly = true)
-                .andThen(velocity(VelocityType.REGRESSION))
-                .alongWith(firingOrientation()))
-        .whileFalse(
-            Commands.runOnce(() -> shootOnFly = false).andThen(velocity(VelocityType.STATIC)));
+            firingOrientation()
+                .beforeStarting(
+                    () -> {
+                      shootOnFly = true;
+                      velocityType = VelocityType.REGRESSION;
+                    })
+                .finallyDo(this::releaseShootOnFly));
   }
 
   /**
