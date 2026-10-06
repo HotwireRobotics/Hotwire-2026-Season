@@ -7,6 +7,8 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -60,6 +62,8 @@ public class RobotContainer {
   public double testVelocity = 0;
   public final Supplier<Integer> kInverse = () -> (inverse ? -1 : 1);
   public VelocityType velocityType = VelocityType.STATIC;
+  /** True while operator X is held: heading tracks the hub and feed waits for alignment. */
+  public boolean shootOnFly = false;
 
   // Methodic toggles.
   private final Command velocity(VelocityType type) {
@@ -94,23 +98,14 @@ public class RobotContainer {
               // Ferrying static velocity.
               return Constants.Shooter.kSpeed;
             case REGRESSION:
-              // Conditional shooting.
-              if (aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get()) {
-                return Constants.regress(
-                  Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
-                      .getTranslation()
-                      .getNorm()));
-              } else {
-                return Constants.Shooter.kZero;
-              }
+              // Spin to the distance regression the whole time aim is held so the
+              // flywheels are at speed by the time heading error is inside tolerance.
+              return Constants.regress(Meters.of(hubDistanceMeters()));
             case TESTING:
               // Allow testing of shooter velocity via dashboard input, for characterization purposes.
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
             case AUTO:
-              return Constants.regress(
-                Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
-                    .getTranslation()
-                    .getNorm()));
+              return Constants.regress(Meters.of(hubDistanceMeters()));
             default:
               // Fallback velocity.
               return Constants.Shooter.kSpeed;
@@ -220,30 +215,76 @@ public class RobotContainer {
     autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
   }
 
-  /** Returns the Rotation2d the robot needs to face the hub. */
+  /**
+   * Pose used to aim. Odometry translation by default; when vision is enabled and a Limelight
+   * estimate exists, that translation is used with the odometry heading.
+   */
+  private Pose2d aimPose() {
+    Pose2d odometry = drive.getPose();
+    if (!Dashboard.visionEnabled.get() || vision == null) {
+      return odometry;
+    }
+    Pose2d visionPose = vision.getLastPoseEstimate();
+    if (visionPose == null) {
+      return odometry;
+    }
+    return new Pose2d(visionPose.getTranslation(), odometry.getRotation());
+  }
+
+  /** Distance from the aim pose to the hub, in meters. */
+  private double hubDistanceMeters() {
+    return aimPose()
+        .getTranslation()
+        .getDistance(Constants.Poses.hub.getPose().getTranslation());
+  }
+
+  /**
+   * Hopper may feed. Outside shoot-on-the-fly this is only {@link Shooter#isReady()}. While
+   * operator X is held, heading must also be inside {@link Constants.Shooter#kAlignmentError}
+   * unless the dashboard alignment requirement is turned off.
+   */
+  private boolean feedAllowed() {
+    if (!shootOnFly) {
+      return shooter.isReady();
+    }
+    boolean headingOk = aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get();
+    return headingOk && shooter.isReady();
+  }
+
+  /**
+   * Field heading that keeps the chassis pointed at the hub. Called every drive cycle while aim is
+   * held. A lead term (default 0) offsets that bearing by sideways chassis speed.
+   */
   private Rotation2d calculateHubRotation() {
-    // Get poses.
-    Pose2d robotPose = drive.getPose();
-    Pose2d hubPose = Constants.Poses.hub.getPose();
+    Pose2d robotPose = aimPose();
+    Translation2d toHub =
+        Constants.Poses.hub.getPose().getTranslation().minus(robotPose.getTranslation());
 
-    // Pose differences.
-    double dx = hubPose.getX() - robotPose.getX();
-    double dy = hubPose.getY() - robotPose.getY();
+    Rotation2d bearing = toHub.getNorm() > 1e-6 ? toHub.getAngle() : drive.getRotation();
 
-    // Angle from robot to hub
-    Rotation2d rotation = new Rotation2d(
-        Radians.of(Math.IEEEremainder(
-            Math.atan2(dy, dx), 
-            Constants.Mathematics.TAU)));
+    ChassisSpeeds field = drive.getFieldVelocity();
+    Translation2d velocity = new Translation2d(field.vxMetersPerSecond, field.vyMetersPerSecond);
+    // Signed speed to the left of the hub ray, meters per second.
+    double vPerp = 0.0;
+    if (toHub.getNorm() > 1e-6) {
+      Translation2d ray = toHub.div(toHub.getNorm());
+      vPerp = velocity.getX() * ray.getY() - velocity.getY() * ray.getX();
+    }
+    double leadRadians = Dashboard.leadGain.get() * vPerp;
+    Rotation2d rotation = bearing.plus(Rotation2d.fromRadians(leadRadians));
 
-    // Log the pointer
-    Pose2d pointer = new Pose2d(robotPose.getX(), robotPose.getY(), rotation);
-    Logger.recordOutput("Hub Pointer", pointer);
-
-    // Update drive target.
     drive.setRotationTarget(rotation);
 
-    return drive.getRotationTarget();
+    Rotation2d measured = drive.getRotation();
+    Logger.recordOutput("Hub Pointer", new Pose2d(robotPose.getTranslation(), rotation));
+    Logger.recordOutput("Align/Target", rotation);
+    Logger.recordOutput("Align/Measured", measured);
+    Logger.recordOutput("Align/Error", rotation.minus(measured).getDegrees());
+    Logger.recordOutput("Align/Lead", leadRadians);
+    Logger.recordOutput("Align/PerpVelocity", vPerp);
+    Logger.recordOutput("Shooter/VelocityMode", velocityType.name());
+
+    return rotation;
   }
 
   private Rotation2d calculatePassingRotation() {
@@ -333,7 +374,7 @@ public class RobotContainer {
         .rightTrigger()
         .whileTrue(
           shooter.run().repeatedly().alongWith(Commands.either(
-            hopper.run(), hopper.halt(), () -> shooter.isReady()).repeatedly()))
+            hopper.run(), hopper.halt(), this::feedAllowed).repeatedly()))
         .onFalse(
           shooter.halt().alongWith(hopper.halt()));
 
@@ -344,8 +385,13 @@ public class RobotContainer {
         .onFalse(
           shooter.halt());
 
-    // Run feeding mechanism.
-    Constants.Joysticks.operator.leftBumper().whileFalse(hopper.halt()).whileTrue(hopper.run().repeatedly());
+    // Manual feed. While shoot-on-the-fly is held, the same ready gate as right trigger applies.
+    Constants.Joysticks.operator
+        .leftBumper()
+        .whileFalse(hopper.halt())
+        .whileTrue(
+            Commands.either(hopper.run(), hopper.halt(), () -> !shootOnFly || feedAllowed())
+                .repeatedly());
 
     // Raise intake to avoid impact.
     Constants.Joysticks.operator.povRight().onFalse(intake.lowerWrist()).onTrue(intake.emergency());
@@ -353,11 +399,16 @@ public class RobotContainer {
     // Invert all control.
     Constants.Joysticks.operator.povLeft().whileTrue(invertion(true)).whileFalse(invertion(false));
 
-    // Toggle regression velocity control.
+    // Hold operator X: left stick translates, chassis heading tracks the hub, shooter uses
+    // distance regression. Right-stick rotate is not in this command, so it is ignored.
     Constants.Joysticks.operator
         .x()
-        .whileTrue(velocity(VelocityType.REGRESSION).alongWith(firingOrientation()))
-        .whileFalse(velocity(VelocityType.STATIC));
+        .whileTrue(
+            Commands.runOnce(() -> shootOnFly = true)
+                .andThen(velocity(VelocityType.REGRESSION))
+                .alongWith(firingOrientation()))
+        .whileFalse(
+            Commands.runOnce(() -> shootOnFly = false).andThen(velocity(VelocityType.STATIC)));
   }
 
   /**

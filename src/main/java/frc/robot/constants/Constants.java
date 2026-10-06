@@ -59,6 +59,12 @@ public final class Constants {
     // Drivetrain alignment error tolerance.
     public static final Angle kAlignmentError = Degrees.of(4);
 
+    /**
+     * Radians of aim lead per meter/second of chassis speed perpendicular to the hub ray.
+     * Zero aims directly at the hub; raise it if shots drift in the direction of travel.
+     */
+    public static final double kLeadGain = 0.0;
+
     // Current limits for shooter motors.
     public static final Current kCurrentLimit = Amps.of(80);
   }
