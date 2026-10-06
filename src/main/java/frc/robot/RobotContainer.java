@@ -104,9 +104,10 @@ public class RobotContainer {
                 || !Double.isFinite(target.getRadians())) {
               return false;
             }
-            return measured
-                .getMeasure()
-                .isNear(target.getMeasure(), Constants.Shooter.kAlignmentError);
+            // Measure.isNear compares raw magnitudes and does not wrap. 179° and -179°
+            // would look 358° apart and the hopper would never feed while aimed.
+            return HubShot.headingsAligned(
+                measured, target, Constants.Shooter.kAlignmentError.in(Radians));
           } catch (RuntimeException ex) {
             return false;
           }

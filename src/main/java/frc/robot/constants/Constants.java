@@ -243,15 +243,19 @@ public final class Constants {
     }
 
     /**
-     * Get the alliance color for this robot.
-     *
-     * @return
+     * Alliance from the driver station. {@code Optional} is empty when the station is disconnected,
+     * and {@code Optional.get()} throws in that case. Keep the last known color, and assume blue
+     * until the station has reported one, matching the field's blue-origin coordinates.
      */
     public static Alliance getAlliance() {
       Optional<Alliance> alliance = DriverStation.getAlliance();
-      if (alliance == null) return Alliance.Red;
-      return alliance.get();
+      if (alliance != null && alliance.isPresent()) {
+        lastAlliance = alliance.get();
+      }
+      return lastAlliance;
     }
+
+    private static Alliance lastAlliance = Alliance.Blue;
 
     /** Control haptic indicators based on time remaining in the match. */
     public static void updateHaptics() {

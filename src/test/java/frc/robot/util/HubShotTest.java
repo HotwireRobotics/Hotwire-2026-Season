@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import org.junit.jupiter.api.Test;
 
@@ -164,6 +165,14 @@ public class HubShotTest {
     speeding.lookaheadSeconds = 0.20;
     speeding.axMetersPerSecondSquared = 5.0;
     assertTrue(HubShot.solve(speeding).rpm < HubShot.solve(coasting).rpm);
+  }
+
+  @Test
+  public void headingCheckWrapsAroundTheCircle() {
+    Rotation2d measured = Rotation2d.fromDegrees(179.0);
+    Rotation2d target = Rotation2d.fromDegrees(-179.0);
+    assertTrue(HubShot.headingsAligned(measured, target, Math.toRadians(4.0)));
+    assertFalse(HubShot.headingsAligned(Rotation2d.fromDegrees(0.0), Rotation2d.fromDegrees(10.0), Math.toRadians(4.0)));
   }
 
   @Test

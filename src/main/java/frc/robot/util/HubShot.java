@@ -208,6 +208,19 @@ public final class HubShot {
     public DoubleUnaryOperator rpmForDistance;
   }
 
+  /**
+   * True when the wrapped heading error is inside {@code toleranceRadians}. This is the check
+   * {@code Measure.isNear} does not do: that method subtracts the raw angle magnitudes.
+   */
+  public static boolean headingsAligned(
+      Rotation2d measured, Rotation2d target, double toleranceRadians) {
+    if (measured == null || target == null || !isFinite(toleranceRadians)) {
+      return false;
+    }
+    double error = Math.abs(measured.minus(target).getRadians());
+    return isFinite(error) && error <= Math.abs(toleranceRadians);
+  }
+
   /** True when {@code value} is neither NaN nor infinite. */
   public static boolean isFinite(double value) {
     return Double.isFinite(value);
