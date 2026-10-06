@@ -70,7 +70,15 @@ public class Dashboard {
   public static final Number shotLookahead =
       new Number("Shooter/Shot Lookahead", Constants.Shooter.kShotLookaheadSeconds);
 
-  /** Horizontal m/s per RPM. See {@link Constants.Shooter#kHorizontalMetersPerSecondPerRPM}. */
+  /** Tangential m/s per RPM. See {@link Constants.Shooter#kHorizontalMetersPerSecondPerRPM}. */
   public static final Number exitSpeedPerRpm =
       new Number("Shooter/Exit Mps Per RPM", Constants.Shooter.kHorizontalMetersPerSecondPerRPM);
+
+  /** Fixed hood angle, degrees. See {@link Constants.Shooter#kHoodPitchDegrees}. */
+  public static final Number hoodPitch =
+      new Number("Shooter/Hood Pitch", Constants.Shooter.kHoodPitchDegrees);
+
+  /** Chassis-velocity low-pass, seconds. See {@link Constants.Shooter#kVelocityFilterSeconds}. */
+  public static final Number velocityFilter =
+      new Number("Shooter/Velocity Filter", Constants.Shooter.kVelocityFilterSeconds);
 }

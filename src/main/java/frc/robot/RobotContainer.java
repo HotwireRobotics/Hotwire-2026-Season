@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -71,6 +72,9 @@ public class RobotContainer {
 
   /** Last live shot, held if a cycle cannot be solved. */
   private HubShot.Solution lastSolution = HubShot.fallback();
+
+  /** Smooths module-speed noise before it moves the virtual hub. */
+  private final HubShot.VelocityFilter shotVelocity = new HubShot.VelocityFilter();
 
   // Methodic toggles.
   private final Command velocity(VelocityType type) {
@@ -274,15 +278,31 @@ public class RobotContainer {
       if (!HubShot.isFinite(field)) {
         field = new ChassisSpeeds();
       }
+      Translation2d filtered =
+          shotVelocity.update(
+              field.vxMetersPerSecond,
+              field.vyMetersPerSecond,
+              Timer.getFPGATimestamp(),
+              Dashboard.velocityFilter.get(0.0, 0.25));
+      Translation2d accel = shotVelocity.acceleration();
 
       HubShot.Input input = new HubShot.Input();
       input.robot = pose.getTranslation();
       input.hub = hub.getTranslation();
-      input.vxMetersPerSecond = field.vxMetersPerSecond;
-      input.vyMetersPerSecond = field.vyMetersPerSecond;
+      input.vxMetersPerSecond = filtered.getX();
+      input.vyMetersPerSecond = filtered.getY();
+      input.axMetersPerSecondSquared = accel.getX();
+      input.ayMetersPerSecondSquared = accel.getY();
+      input.omegaRadiansPerSecond = field.omegaRadiansPerSecond;
+      input.headingRadians = pose.getRotation().getRadians();
+      input.shooterForwardMeters = Constants.Shooter.kShooterForwardMeters;
+      input.shooterLeftMeters = Constants.Shooter.kShooterLeftMeters;
       input.lookaheadSeconds = Dashboard.shotLookahead.get(0.0, 0.40);
       input.metersPerSecondPerRpm = Dashboard.exitSpeedPerRpm.get(0.001, 0.02);
+      input.hoodPitchRadians = Math.toRadians(Dashboard.hoodPitch.get(20.0, 75.0));
       input.leadGainRadiansPerMps = Dashboard.leadGain.get(-0.20, 0.20);
+      input.minFlightSeconds = Constants.Shooter.kMinFlightSeconds;
+      input.maxFlightSeconds = Constants.Shooter.kMaxFlightSeconds;
       input.minScale = Constants.Shooter.kMinRpmScale;
       input.maxScale = Constants.Shooter.kMaxRpmScale;
       input.maxLeadRadians = Math.toRadians(Constants.Shooter.kMaxLeadDegrees);
@@ -318,10 +338,12 @@ public class RobotContainer {
     Logger.recordOutput("Align/Lead", shot.leadRadians);
     Logger.recordOutput("Align/PerpVelocity", shot.perpMetersPerSecond);
     Logger.recordOutput("Align/RadialVelocity", shot.radialMetersPerSecond);
+    Logger.recordOutput("Align/FlightSeconds", shot.flightSeconds);
     Logger.recordOutput("Align/Live", shot.live);
     Logger.recordOutput("Shooter/VelocityMode", velocityType.name());
     Logger.recordOutput("Shooter/RpmStationary", shot.stationaryRpm);
     Logger.recordOutput("Shooter/DistanceMeters", shot.distanceMeters);
+    Logger.recordOutput("Shooter/EffectiveDistance", shot.effectiveDistanceMeters);
   }
 
   /**

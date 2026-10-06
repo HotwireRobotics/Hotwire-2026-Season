@@ -70,10 +70,30 @@ public final class Constants {
     public static final double kShotLookaheadSeconds = 0.10;
 
     /**
-     * Horizontal ball speed (m/s) per shooter RPM. Used only while the robot is moving, to turn
-     * chassis velocity into an aim offset and an RPM scale. 0.005 is about 12.5 m/s at 2500 RPM.
+     * Tangential exit speed (m/s) per shooter RPM. Used only to estimate flight time while the
+     * robot is moving. 0.005 is about 12.5 m/s at 2500 RPM. Stationary shots do not use it.
      */
     public static final double kHorizontalMetersPerSecondPerRPM = 0.005;
+
+    /**
+     * Fixed hood angle above horizontal, degrees. Flight time is distance divided by the horizontal
+     * part of the exit speed. The 2026 hub opening is 72 in high; 55° is a lob into that opening
+     * and should be tuned to this robot's hood.
+     */
+    public static final double kHoodPitchDegrees = 55.0;
+
+    /** Low-pass time constant for the chassis velocity used by the shot, seconds. */
+    public static final double kVelocityFilterSeconds = 0.06;
+
+    /** Shooter muzzle relative to the robot center, meters. Zero solves the shot from the center. */
+    public static final double kShooterForwardMeters = 0.0;
+
+    public static final double kShooterLeftMeters = 0.0;
+
+    /** Flight-time clamp, seconds. Keeps a bad hood angle from throwing the virtual hub. */
+    public static final double kMinFlightSeconds = 0.12;
+
+    public static final double kMaxFlightSeconds = 1.10;
 
     /** Hard ceiling so a bad distance or speed cannot command a destructive flywheel setpoint. */
     public static final double kMaxRpm = 5500.0;

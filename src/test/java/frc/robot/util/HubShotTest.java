@@ -125,4 +125,59 @@ public class HubShotTest {
     assertTrue(Double.isFinite(shot.rpm));
     assertTrue(shot.rpm > 0.0);
   }
+
+  @Test
+  public void closingSpeedShortensTheVirtualHub() {
+    HubShot.Input in = still();
+    in.vxMetersPerSecond = 2.0;
+    HubShot.Solution shot = HubShot.solve(in);
+    assertTrue(shot.effectiveDistanceMeters < shot.distanceMeters - 0.2);
+    assertTrue(shot.flightSeconds > 0.12);
+    assertEquals(curve(shot.distanceMeters), shot.stationaryRpm, 1e-6);
+  }
+
+  @Test
+  public void fartherShotsStayInTheAirLonger() {
+    HubShot.Input near = still();
+    near.hub = new Translation2d(2.0, 0.0);
+    HubShot.Input far = still();
+    far.hub = new Translation2d(6.0, 0.0);
+    assertTrue(HubShot.solve(far).flightSeconds > HubShot.solve(near).flightSeconds);
+  }
+
+  @Test
+  public void yawAtAForwardShooterAimsBehindTheSwing() {
+    HubShot.Input in = still();
+    in.omegaRadiansPerSecond = 2.0;
+    in.shooterForwardMeters = 0.30;
+    in.headingRadians = 0.0;
+    HubShot.Solution shot = HubShot.solve(in);
+    assertTrue(shot.aim.getRadians() < 0.0);
+    assertTrue(shot.perpMetersPerSecond > 0.0);
+  }
+
+  @Test
+  public void accelerationAtReleaseChangesTheShot() {
+    HubShot.Input coasting = still();
+    coasting.lookaheadSeconds = 0.20;
+    HubShot.Input speeding = still();
+    speeding.lookaheadSeconds = 0.20;
+    speeding.axMetersPerSecondSquared = 5.0;
+    assertTrue(HubShot.solve(speeding).rpm < HubShot.solve(coasting).rpm);
+  }
+
+  @Test
+  public void velocityFilterIgnoresSameCycleAndNaN() {
+    HubShot.VelocityFilter filter = new HubShot.VelocityFilter();
+    assertEquals(0.0, filter.update(0.0, 0.0, 0.0, 0.05).getX(), 1e-9);
+    double alpha = 1.0 - Math.exp(-0.02 / 0.05);
+    Translation2d filtered = filter.update(4.0, 0.0, 0.02, 0.05);
+    assertEquals(4.0 * alpha, filtered.getX(), 1e-9);
+    // Same timestamp must not apply the sample a second time.
+    assertEquals(filtered.getX(), filter.update(0.0, 0.0, 0.02, 0.05).getX(), 1e-9);
+    assertEquals(filtered.getX(), filter.update(Double.NaN, 0.0, 0.04, 0.05).getX(), 1e-9);
+    // A long gap reseeds and clears acceleration.
+    assertEquals(1.0, filter.update(1.0, 0.0, 1.0, 0.05).getX(), 1e-9);
+    assertEquals(0.0, filter.acceleration().getNorm(), 1e-9);
+  }
 }
