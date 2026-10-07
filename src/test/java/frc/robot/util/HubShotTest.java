@@ -3,6 +3,7 @@ package frc.robot.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -211,6 +212,36 @@ public class HubShotTest {
     Rotation2d target = Rotation2d.fromDegrees(-179.0);
     assertTrue(HubShot.headingsAligned(measured, target, Math.toRadians(4.0)));
     assertFalse(HubShot.headingsAligned(Rotation2d.fromDegrees(0.0), Rotation2d.fromDegrees(10.0), Math.toRadians(4.0)));
+  }
+
+  @Test
+  public void chassisHeadingPointsTheBackAtTheStaticHub() {
+    // Hub due east of the robot. The ball travels at 0°, so the chassis faces 180°.
+    Rotation2d east =
+        HubShot.chassisHeading(new Translation2d(0.0, 0.0), new Translation2d(4.0, 0.0));
+    assertNotNull(east);
+    assertEquals(Math.PI, east.getRadians(), 1e-9);
+
+    // Hub due north. Chassis faces south.
+    Rotation2d north =
+        HubShot.chassisHeading(new Translation2d(1.0, 1.0), new Translation2d(1.0, 5.0));
+    assertNotNull(north);
+    assertEquals(-Math.PI / 2.0, north.getRadians(), 1e-9);
+
+    // A moving shot's virtual hub is a different direction. The chassis heading does not follow it.
+    HubShot.Input moving = still();
+    moving.vyMetersPerSecond = 2.0;
+    HubShot.Solution shot = HubShot.solve(moving);
+    assertTrue(shot.aim.getRadians() < 0.0);
+    assertEquals(Math.PI, east.getRadians(), 1e-9);
+  }
+
+  @Test
+  public void chassisHeadingRefusesAMissingPose() {
+    assertNull(HubShot.chassisHeading(null, new Translation2d(4.0, 0.0)));
+    assertNull(
+        HubShot.chassisHeading(new Translation2d(Double.NaN, 0.0), new Translation2d(4.0, 0.0)));
+    assertNull(HubShot.chassisHeading(new Translation2d(1.0, 1.0), new Translation2d(1.0, 1.0)));
   }
 
   @Test

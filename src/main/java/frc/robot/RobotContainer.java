@@ -11,7 +11,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -74,15 +73,6 @@ public class RobotContainer {
 
   /** True while operator X is held: heading tracks the hub and feed waits for alignment. */
   public boolean shootOnFly = false;
-
-  /** Last finite odometry pose, used if the estimator returns NaN. */
-  private Pose2d lastFinitePose = new Pose2d();
-
-  /** Last live shot, held if a cycle cannot be solved. */
-  private HubShot.Solution lastSolution = HubShot.fallback();
-
-  /** Smooths module-speed noise before it moves the virtual hub. */
-  private final HubShot.VelocityFilter shotVelocity = new HubShot.VelocityFilter();
 
   // Methodic toggles.
   private final Command velocity(VelocityType type) {
@@ -253,67 +243,38 @@ public class RobotContainer {
   }
 
   /**
-   * Pose used to aim. Odometry by default. A fresh Limelight translation is used only when vision
-   * is enabled, the estimate is young, and it agrees with odometry. The heading always stays the
-   * gyro heading.
-   */
-  private Pose2d aimPose() {
-    Pose2d odometry = drive.getPose();
-    if (!HubShot.isFinite(odometry)) {
-      odometry = lastFinitePose;
-    } else {
-      lastFinitePose = odometry;
-    }
-    if (vision == null || !Dashboard.visionEnabled.get()) {
-      return odometry;
-    }
-    Pose2d visionPose = vision.getFreshPose(Constants.Shooter.kVisionMaxAgeSeconds);
-    if (!HubShot.isFinite(visionPose)) {
-      return odometry;
-    }
-    double disagreement = visionPose.getTranslation().getDistance(odometry.getTranslation());
-    if (!Double.isFinite(disagreement)
-        || disagreement > Constants.Shooter.kVisionMaxDisagreementMeters) {
-      return odometry;
-    }
-    return new Pose2d(visionPose.getTranslation(), odometry.getRotation());
-  }
-
-  /**
-   * Shot for this cycle. Chassis velocity changes both the aim point and the flywheel RPM. A bad
-   * sample holds the previous live shot.
+   * Flywheel shot for this cycle, from the current odometry pose and the fixed hub pose.
+   *
+   * <p>Robot translation is {@link Drive#getPose()} with no vision blend, held pose, velocity
+   * filter, or lookahead. The hub translation is {@link Constants.Poses#hub}. Chassis speed still
+   * adjusts RPM. It does not choose the heading; {@link #calculateHubRotation()} does that from
+   * the same two poses.
    */
   private HubShot.Solution currentShot() {
     try {
-      Pose2d pose = aimPose();
+      Pose2d pose = drive.getPose();
       Pose2d hub = Constants.Poses.hub.getPose();
       if (!HubShot.isFinite(pose) || !HubShot.isFinite(hub)) {
-        return lastSolution;
+        return HubShot.fallback();
       }
       ChassisSpeeds field = drive.getFieldVelocity();
       if (!HubShot.isFinite(field)) {
         field = new ChassisSpeeds();
       }
-      Translation2d filtered =
-          shotVelocity.update(
-              field.vxMetersPerSecond,
-              field.vyMetersPerSecond,
-              Timer.getFPGATimestamp(),
-              Dashboard.velocityFilter.get(0.0, 0.25));
-      Translation2d accel = shotVelocity.acceleration();
 
       HubShot.Input input = new HubShot.Input();
       input.robot = pose.getTranslation();
       input.hub = hub.getTranslation();
-      input.vxMetersPerSecond = filtered.getX();
-      input.vyMetersPerSecond = filtered.getY();
-      input.axMetersPerSecondSquared = accel.getX();
-      input.ayMetersPerSecondSquared = accel.getY();
+      input.vxMetersPerSecond = field.vxMetersPerSecond;
+      input.vyMetersPerSecond = field.vyMetersPerSecond;
+      // No filtered acceleration and no position lookahead. Both were moving the pose we aim from.
+      input.axMetersPerSecondSquared = 0.0;
+      input.ayMetersPerSecondSquared = 0.0;
       input.omegaRadiansPerSecond = field.omegaRadiansPerSecond;
       input.headingRadians = pose.getRotation().getRadians();
       input.shooterForwardMeters = Constants.Shooter.kShooterForwardMeters;
       input.shooterLeftMeters = Constants.Shooter.kShooterLeftMeters;
-      input.lookaheadSeconds = Dashboard.shotLookahead.get(0.0, 0.40);
+      input.lookaheadSeconds = 0.0;
       input.metersPerSecondPerRpm = Dashboard.exitSpeedPerRpm.get(0.001, 0.02);
       input.hoodPitchRadians = Math.toRadians(Dashboard.hoodPitch.get(20.0, 75.0));
       input.leadGainRadiansPerMps = Dashboard.leadGain.get(-0.20, 0.20);
@@ -332,28 +293,21 @@ public class RobotContainer {
       input.rpmForDistance = Constants::regressRaw;
 
       HubShot.Solution solved = HubShot.solve(input);
-      if (!solved.live && lastSolution.live) {
-        solved = lastSolution;
-      } else if (solved.live) {
-        lastSolution = solved;
-      }
-      logShot(solved, pose);
+      logShot(solved);
       return solved;
     } catch (RuntimeException ex) {
       Logger.recordOutput("Align/Fault", ex.toString());
-      return lastSolution;
+      return HubShot.fallback();
     }
   }
 
-  /** Publish the shot that aim and RPM are both using. */
-  private void logShot(HubShot.Solution shot, Pose2d robot) {
+  /** Publish the flywheel solution. Heading is logged separately from odometry. */
+  private void logShot(HubShot.Solution shot) {
     Translation2d release = HubShot.isFinite(shot.pose) ? shot.pose : Translation2d.kZero;
     Rotation2d travel = shot.aim == null ? Rotation2d.kZero : shot.aim;
-    // Chassis faces the opposite way: this shooter fires out the back.
-    Rotation2d chassis = travel.plus(Rotation2d.k180deg);
-    Logger.recordOutput("Hub Pointer", new Pose2d(robot.getTranslation(), chassis));
+    // RPM solution only. The commanded heading is logged from calculateHubRotation.
     Logger.recordOutput("Align/Release", new Pose2d(release, travel));
-    Logger.recordOutput("Align/Target", chassis);
+    Logger.recordOutput("Align/ShotAim", travel);
     Logger.recordOutput("Align/Lead", shot.leadRadians);
     Logger.recordOutput("Align/PerpVelocity", shot.perpMetersPerSecond);
     Logger.recordOutput("Align/RadialVelocity", shot.radialMetersPerSecond);
@@ -395,24 +349,39 @@ public class RobotContainer {
   }
 
   /**
-   * Chassis heading for the shot. The ball travels along {@code shot.aim}; this robot's muzzle
-   * faces backward, so the held heading is that direction plus 180°, the same half-turn the old
-   * hub pointer applied with {@code rotateBy(k180deg)}.
+   * Chassis heading that points the back of the robot at the hub.
+   *
+   * <p>The hub is the fixed alliance pose. The robot position is the current odometry pose. The
+   * bearing is {@code atan2} from that pose to the hub, plus 180° because the muzzle faces
+   * backward. Vision, a remembered pose, a velocity filter, lookahead, and the moving shot
+   * solution are not used. If either pose is missing, the target stays at the current gyro
+   * heading so a tap cannot command a made-up angle.
    */
   private Rotation2d calculateHubRotation() {
-    HubShot.Solution shot = currentShot();
-    Rotation2d travel = shot.aim == null ? Rotation2d.kZero : shot.aim;
-    Rotation2d aim = travel.plus(Rotation2d.k180deg);
-    drive.setRotationTarget(aim);
-
+    Pose2d robot = drive.getPose();
+    Pose2d hub = Constants.Poses.hub.getPose();
     Rotation2d measured = drive.getRotation();
     if (measured == null || !Double.isFinite(measured.getRadians())) {
       measured = Rotation2d.kZero;
     }
+
+    // Stay on the current heading until both poses are real numbers and not the same point.
+    Rotation2d bearing =
+        HubShot.chassisHeading(
+            robot == null ? null : robot.getTranslation(),
+            hub == null ? null : hub.getTranslation());
+    Rotation2d aim = bearing == null ? measured : bearing;
+    drive.setRotationTarget(aim);
+
     double error = aim.minus(measured).getDegrees();
     if (!Double.isFinite(error)) {
       error = 180.0;
     }
+    if (HubShot.isFinite(robot)) {
+      Logger.recordOutput("Hub Pointer", new Pose2d(robot.getTranslation(), aim));
+    }
+    Logger.recordOutput("Align/Hub", hub);
+    Logger.recordOutput("Align/Target", aim);
     Logger.recordOutput("Align/Measured", measured);
     Logger.recordOutput("Align/Error", error);
     return aim;

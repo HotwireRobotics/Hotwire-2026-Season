@@ -15,8 +15,11 @@ import java.util.function.DoubleUnaryOperator;
  * virtual-target method: project the release point forward by the shot latency, estimate flight
  * time from hood pitch and exit speed, then move the hub opposite the chassis velocity for that
  * flight and iterate until the two agree. RPM is the regression at the distance to that virtual
- * hub, so forward and backward speed follow the real distance curve. Heading aims at the virtual
- * hub. Every returned number is finite, and the heading offset and RPM scale are clamped.
+ * hub, so forward and backward speed follow the real distance curve. {@link Solution#aim} is the
+ * ball's direction toward that moving point. The chassis heading command does not use it. The hub
+ * on the field is fixed, and {@link #chassisHeading} aims the back of the robot at that pose from
+ * odometry alone. Every returned number is finite, and the heading offset and RPM scale are
+ * clamped.
  */
 public final class HubShot {
 
@@ -61,7 +64,7 @@ public final class HubShot {
 
     /**
      * @param pose release translation
-     * @param aim field heading to hold
+     * @param aim field direction of the shot toward the virtual hub, not the chassis heading
      * @param distanceMeters distance to the real hub
      * @param effectiveDistanceMeters distance used for the regression
      * @param rpm flywheel setpoint
@@ -227,6 +230,30 @@ public final class HubShot {
     }
     double error = Math.abs(measured.minus(target).getRadians());
     return isFinite(error) && error <= Math.abs(toleranceRadians);
+  }
+
+  /**
+   * Field heading that points the back of the robot at a fixed hub.
+   *
+   * <p>The two translations are used as-is. This does not look at velocity, acceleration,
+   * lookahead, vision, or a previous solution. Returns null when either translation is unusable or
+   * they are the same point, so the caller can hold the current gyro heading instead of commanding
+   * a made-up angle.
+   *
+   * @param robot current odometry translation
+   * @param hub fixed hub translation
+   * @return chassis heading, or null when there is no bearing
+   */
+  public static Rotation2d chassisHeading(Translation2d robot, Translation2d hub) {
+    if (!isFinite(robot) || !isFinite(hub)) {
+      return null;
+    }
+    double dx = hub.getX() - robot.getX();
+    double dy = hub.getY() - robot.getY();
+    if (dx * dx + dy * dy <= 1e-6) {
+      return null;
+    }
+    return new Rotation2d(Math.atan2(dy, dx)).plus(Rotation2d.k180deg);
   }
 
   /** True when {@code value} is neither NaN nor infinite. */
