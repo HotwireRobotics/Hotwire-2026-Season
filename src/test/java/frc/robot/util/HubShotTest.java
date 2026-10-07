@@ -20,7 +20,6 @@ public class HubShotTest {
     in.robot = new Translation2d(0.0, 0.0);
     in.hub = new Translation2d(4.0, 0.0);
     in.lookaheadSeconds = 0.0;
-    in.leadGainRadiansPerMps = 0.0;
     return in;
   }
 
@@ -39,6 +38,13 @@ public class HubShotTest {
     assertEquals(releaseDistance, shot.distanceMeters, 1e-9);
     assertEquals(curve(releaseDistance), shot.stationaryRpm, 1e-6);
     assertEquals(shot.stationaryRpm, shot.rpm, 1e-6);
+    double pitch = Math.toRadians(Constants.Shooter.kHoodPitchDegrees);
+    double dz = Constants.Shooter.kHubEntryHeightMeters - Constants.Shooter.kShooterHeightMeters;
+    double reach = releaseDistance * Math.tan(pitch) - dz;
+    double flight =
+        Math.sqrt(2.0 * reach / Constants.Shooter.kGravityMetersPerSecondSquared);
+    assertEquals(flight, shot.flightSeconds, 1e-9);
+    assertEquals(releaseDistance, shot.effectiveDistanceMeters, 1e-9);
   }
 
   @Test
@@ -79,8 +85,10 @@ public class HubShotTest {
     HubShot.Input in = still();
     in.vxMetersPerSecond = -3.0;
     HubShot.Solution shot = HubShot.solve(in);
+    // The equation, not a scale clamp, raises RPM. The motor ceiling is the only limit.
     assertTrue(shot.rpm > shot.stationaryRpm * 1.40);
-    assertTrue(shot.rpm <= shot.stationaryRpm * Constants.Shooter.kMaxRpmScale + 1e-6);
+    assertTrue(shot.rpm < Constants.Shooter.kMaxRpm);
+    assertEquals(0.0, shot.aim.getRadians(), 1e-6);
   }
 
   @Test
@@ -89,7 +97,8 @@ public class HubShotTest {
     in.vxMetersPerSecond = 3.0;
     HubShot.Solution shot = HubShot.solve(in);
     assertTrue(shot.rpm < shot.stationaryRpm * 0.70);
-    assertTrue(shot.rpm >= shot.stationaryRpm * Constants.Shooter.kMinRpmScale - 1e-6);
+    assertTrue(shot.rpm > 0.0);
+    assertEquals(0.0, shot.aim.getRadians(), 1e-6);
   }
 
   @Test
@@ -114,17 +123,66 @@ public class HubShotTest {
   }
 
   @Test
-  public void hugeSidewaysSpeedIsClamped() {
+  public void impossibleSpeedHoldsTheHubBearing() {
     HubShot.Input in = still();
     in.vyMetersPerSecond = 50.0;
     in.maxFieldSpeed = 50.0;
-    in.metersPerSecondPerRpm = 0.001;
     HubShot.Solution shot = HubShot.solve(in);
+    HubShot.Solution parked = HubShot.solve(still());
     assertTrue(shot.live);
-    assertTrue(Math.abs(shot.leadRadians) <= Math.toRadians(Constants.Shooter.kMaxLeadDegrees) + 1e-9);
-    assertTrue(Math.abs(shot.leadRadians) > Math.toRadians(25.0));
-    assertTrue(shot.rpm <= 5500.0);
-    assertTrue(shot.rpm <= shot.stationaryRpm * Constants.Shooter.kMaxRpmScale + 1e-6);
+    assertEquals(0.0, shot.aim.getRadians(), 1e-9);
+    assertEquals(0.0, shot.leadRadians, 1e-9);
+    assertEquals(parked.rpm, shot.rpm, 1e-6);
+    assertTrue(shot.rpm <= Constants.Shooter.kMaxRpm);
+  }
+
+  @Test
+  public void hardSidewaysLeadIsNotCapped() {
+    HubShot.Input in = still();
+    in.vyMetersPerSecond = 5.5;
+    HubShot.Solution shot = HubShot.solve(in);
+    // Old compensation stopped the lead at 70°. The equation does not.
+    assertTrue(shot.aim.getRadians() < Math.toRadians(-70.0));
+    assertEquals(Constants.Shooter.kMaxRpm, shot.rpm, 1e-6);
+  }
+
+  @Test
+  public void closeRetreatUsesTheRangeItActuallyFlies() {
+    HubShot.Input in = still();
+    // Muzzle is 0.183 m behind center, so this hub is about 0.50 m from the release point.
+    // A stopped 70° lob cannot descend into the mouth from there.
+    in.hub = new Translation2d(0.317, 0.0);
+    HubShot.Solution parked = HubShot.solve(in);
+    assertEquals(0.0, parked.flightSeconds, 1e-9);
+    in.vxMetersPerSecond = -2.0;
+    HubShot.Solution shot = HubShot.solve(in);
+    assertTrue(shot.flightSeconds > 0.5);
+    assertTrue(shot.effectiveDistanceMeters > shot.distanceMeters);
+    assertTrue(shot.rpm > parked.rpm);
+  }
+
+  @Test
+  public void movingShotLandsOnTheHubInVacuum() {
+    HubShot.Input in = still();
+    in.vyMetersPerSecond = 2.0;
+    HubShot.Solution shot = HubShot.solve(in);
+    double pitch = Math.toRadians(Constants.Shooter.kHoodPitchDegrees);
+    double gravity = Constants.Shooter.kGravityMetersPerSecondSquared;
+    double dz = Constants.Shooter.kHubEntryHeightMeters - Constants.Shooter.kShooterHeightMeters;
+    double reach = shot.distanceMeters * Math.tan(pitch) - dz;
+    double stoppedFlight = Math.sqrt(2.0 * reach / gravity);
+    double stoppedExit = (shot.distanceMeters / stoppedFlight) / Math.cos(pitch);
+    double exit = stoppedExit * (shot.rpm / shot.stationaryRpm);
+    double horizontal = exit * Math.cos(pitch);
+    double t = shot.flightSeconds;
+    double x = shot.pose.getX() + (in.vxMetersPerSecond + horizontal * Math.cos(shot.aim.getRadians())) * t;
+    double y = shot.pose.getY() + (in.vyMetersPerSecond + horizontal * Math.sin(shot.aim.getRadians())) * t;
+    assertEquals(in.hub.getX(), x, 1e-4);
+    assertEquals(in.hub.getY(), y, 1e-4);
+    double z =
+        Constants.Shooter.kShooterHeightMeters + exit * Math.sin(pitch) * t - 0.5 * gravity * t * t;
+    assertEquals(Constants.Shooter.kHubEntryHeightMeters, z, 1e-4);
+    assertTrue(exit * Math.sin(pitch) - gravity * t < 0.0);
   }
 
   @Test
@@ -148,7 +206,11 @@ public class HubShotTest {
     in.robot = new Translation2d(4.0, 0.0);
     HubShot.Solution shot = HubShot.solve(in);
     assertTrue(shot.live);
-    assertEquals(0.30, shot.distanceMeters, 1e-9);
+    // Robot center is on the hub. The muzzle is still the rear offset away, which is inside the
+    // minimum range of a 70° descending lob, so the shot holds the hub bearing and the regression.
+    assertEquals(Math.abs(Constants.Shooter.kShooterForwardMeters), shot.distanceMeters, 1e-9);
+    assertEquals(0.0, shot.aim.getRadians(), 1e-9);
+    assertEquals(0.0, shot.flightSeconds, 1e-9);
     assertTrue(Double.isFinite(shot.rpm));
     assertTrue(shot.rpm > 0.0);
   }

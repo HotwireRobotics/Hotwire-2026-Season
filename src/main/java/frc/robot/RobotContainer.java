@@ -247,8 +247,7 @@ public class RobotContainer {
    *
    * <p>Robot translation is {@link Drive#getPose()} with no vision blend, held pose, or lookahead.
    * The hub translation is {@link Constants.Poses#hub} and is not filtered. Chassis velocity
-   * changes the aim lead and the regression distance. {@link #calculateHubRotation()} holds that
-   * lead.
+   * enters the fixed-hood projectile equation. {@link #calculateHubRotation()} holds that aim.
    */
   private HubShot.Solution currentShot() {
     try {
@@ -282,19 +281,11 @@ public class RobotContainer {
       input.shooterForwardMeters = Constants.Shooter.kShooterForwardMeters;
       input.shooterLeftMeters = Constants.Shooter.kShooterLeftMeters;
       input.lookaheadSeconds = 0.0;
-      input.velocitySeconds = Dashboard.velocityCompensation.get(0.20, 1.50);
-      input.metersPerSecondPerRpm = Dashboard.exitSpeedPerRpm.get(0.001, 0.02);
-      input.hoodPitchRadians = Math.toRadians(Dashboard.hoodPitch.get(20.0, 75.0));
-      input.leadGainRadiansPerMps = Dashboard.leadGain.get(-0.20, 0.20);
-      input.minFlightSeconds = Constants.Shooter.kMinFlightSeconds;
-      input.maxFlightSeconds = Constants.Shooter.kMaxFlightSeconds;
-      input.minScale = Constants.Shooter.kMinRpmScale;
-      input.maxScale = Constants.Shooter.kMaxRpmScale;
-      input.maxLeadRadians = Math.toRadians(Constants.Shooter.kMaxLeadDegrees);
+      input.hoodPitchRadians = Math.toRadians(Dashboard.hoodPitch.get(1.0, 89.0));
+      input.launchHeightMeters = Constants.Shooter.kShooterHeightMeters;
+      input.hubEntryHeightMeters = Constants.Shooter.kHubEntryHeightMeters;
+      input.gravityMetersPerSecondSquared = Constants.Shooter.kGravityMetersPerSecondSquared;
       input.maxFieldSpeed = Constants.Shooter.kMaxFieldSpeedMetersPerSecond;
-      input.minExitMetersPerSecond = Constants.Shooter.kMinExitMetersPerSecond;
-      input.minDistanceMeters = Constants.Shooter.kMinShotMeters;
-      input.maxDistanceMeters = Constants.Shooter.kMaxShotMeters;
       input.maxRpm = Constants.Shooter.kMaxRpm;
       input.regressionBase = Constants.base;
       input.regressionExp = Constants.exponential;

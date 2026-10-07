@@ -60,9 +60,6 @@ public final class Constants {
     // Drivetrain alignment error tolerance.
     public static final Angle kAlignmentError = Degrees.of(4);
 
-    /** Extra aim trim, radians per m/s of sideways speed. The vector compensation is always on. */
-    public static final double kLeadGain = 0.0;
-
     /** How far ahead to project the chassis for release latency, in seconds. */
     public static final double kShotLookaheadSeconds = 0.10;
 
@@ -98,47 +95,21 @@ public final class Constants {
     public static final double kShooterHeightMeters = Units.inchesToMeters(14.759196);
 
     /**
-     * Height of the hub mouth, meters. {@code Gamepiece.Hub.ENTRY_HEIGHT}. A shot is in the air
-     * until it falls back through this height, which is the hang time velocity compensation uses.
+     * Height of the hub mouth, meters. {@code Gamepiece.Hub.ENTRY_HEIGHT}. The trajectory is solved
+     * through this height.
      */
     public static final double kHubEntryHeightMeters = 1.43;
 
-    /** Gravity used for that hang time, m/s^2. Matches {@code Gamepiece} fuel gravity. */
+    /** Gravity in the trajectory equation, m/s^2. Matches {@code Gamepiece} fuel gravity. */
     public static final double kGravityMetersPerSecondSquared = 9.81;
-
-    /**
-     * How long chassis velocity is applied when picking the regression distance, in seconds. The
-     * aim lead uses the longer hang time instead. This is not a filter on the robot pose.
-     */
-    public static final double kVelocityCompensationSeconds = 0.90;
-
-    /** Flight-time clamp, seconds. Long enough for a 70° lob to fall back into the hub. */
-    public static final double kMinFlightSeconds = 0.12;
-
-    public static final double kMaxFlightSeconds = 2.50;
 
     /** Hard ceiling so a bad distance or speed cannot command a destructive flywheel setpoint. */
     public static final double kMaxRpm = 5500.0;
 
-    /**
-     * Largest fraction the moving-shot RPM may drop below or rise above the stationary regression.
-     * Wide on purpose: a 3 m/s retreat needs well above +40%, and a fast close needs well below
-     * -30%. The distance regression itself is unchanged.
-     */
-    public static final double kMinRpmScale = 0.50;
-
-    public static final double kMaxRpmScale = 2.00;
-
-    /** Largest heading offset velocity compensation may add, in degrees. */
-    public static final double kMaxLeadDegrees = 70.0;
-
     /** Chassis speed used for compensation is clamped to this, in m/s. */
     public static final double kMaxFieldSpeedMetersPerSecond = 5.5;
 
-    /** Floor on the modeled horizontal exit speed so a slow setpoint cannot divide the shot vector. */
-    public static final double kMinExitMetersPerSecond = 4.0;
-
-    /** Distances outside this window are clamped before the regression and the aim vector. */
+    /** {@link #regressRaw} clamps distance to this window. The aim vector uses the real geometry. */
     public static final double kMinShotMeters = 0.30;
 
     public static final double kMaxShotMeters = 8.0;
