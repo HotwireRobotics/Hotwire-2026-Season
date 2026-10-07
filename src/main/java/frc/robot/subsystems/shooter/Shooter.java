@@ -92,6 +92,11 @@ public class Shooter extends ModularSubsystem implements Systerface {
     return state;
   }
 
+  /** True while the flywheel command is running. The fuel sim launches only in this state. */
+  public boolean isFiring() {
+    return state == State.FIRING;
+  }
+
   public void setState(State newState) {
     state = newState;
   }

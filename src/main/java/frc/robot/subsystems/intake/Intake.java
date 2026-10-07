@@ -104,6 +104,11 @@ public class Intake extends ModularSubsystem implements Systerface {
     return state;
   }
 
+  /** True while the intake rollers are running. The fuel sim uses this to pick balls up. */
+  public boolean isIntaking() {
+    return state == State.INTAKING;
+  }
+
   @Override
   public void periodic() {
     // Log devices and state.

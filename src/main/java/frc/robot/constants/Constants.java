@@ -94,10 +94,9 @@ public final class Constants {
      * Inches.of(14.759196)} launchHeight, {@code Meters.of(-0.183302)} launchForward, and a
      * zero-mean launchRight spray. The pose is the robot pose plus a transform whose translation is
      * (launchForward, launchRight, launchHeight). WPILib Y is left, and the spray averages to 0, so
-     * the fixed left offset is 0. That sim class is not on this branch; these fields are the single
-     * copy HubShot reads.
-     * Hood {@code Degrees.of(70)} and turret yaw {@code Degrees.of(180)} in that call are not
-     * applied here.
+     * the fixed left offset is 0. {@code Gamepiece.launchFuel(LinearVelocity)} and HubShot both read
+     * these fields. Hood {@code Degrees.of(70)} and turret yaw {@code Degrees.of(180)} stay in the
+     * sim launch. HubShot does not use them.
      */
     public static final double kShooterForwardMeters = -0.183302;
 

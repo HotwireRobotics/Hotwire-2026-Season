@@ -132,6 +132,10 @@ public class Robot extends LoggedRobot {
 
     // Update field visualization.
     field.setRobotPose(robotContainer.drive.getPose());
+
+    if (robotContainer.fuelSim != null) {
+      robotContainer.fuelSim.tick();
+    }
   }
 
   @Override
@@ -159,6 +163,9 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("Robot/AutonomousCommand", "None");
     }
     Constants.Tempo.startTime();
+    if (robotContainer.fuelSim != null) {
+      robotContainer.fuelSim.autonomous();
+    }
   }
 
   @Override

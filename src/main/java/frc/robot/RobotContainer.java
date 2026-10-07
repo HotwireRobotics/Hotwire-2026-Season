@@ -26,6 +26,7 @@ import frc.robot.subsystems.indication.LuminalArray;
 import frc.robot.subsystems.indication.limelights.LimelightArray;
 import frc.robot.subsystems.indication.limelights.LimelightArray.IMUMode;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.simulation.FuelSim;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.HubShot;
 import java.util.function.BooleanSupplier;
@@ -41,6 +42,9 @@ public class RobotContainer {
   public final Hopper hopper;
   public final LuminalArray lights;
   public final LimelightArray vision;
+
+  /** Fuel physics. Null on the real robot and during log replay. */
+  public final FuelSim fuelSim;
 
   // Static configuration.
   private final boolean firstPerson = false;
@@ -143,6 +147,17 @@ public class RobotContainer {
     // Initialize indicator subsystems.
     lights = new LuminalArray();
     vision = new LimelightArray(drive::getPose, drive::getRotation, drive::addVisionMeasurement);
+
+    // Fuel sim reads the same muzzle constants as HubShot and adds field velocity to each launch.
+    fuelSim =
+        Constants.currentMode == Constants.Mode.SIM
+            ? new FuelSim(
+                drive::getPose,
+                drive::getFieldVelocity,
+                shooter::isFiring,
+                intake::isIntaking,
+                velocity)
+            : null;
 
     // Configure button bindings.
     configureButtonBindings();
