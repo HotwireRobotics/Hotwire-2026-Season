@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import frc.robot.constants.Constants;
 import java.util.function.DoubleUnaryOperator;
 
 /**
@@ -184,8 +185,15 @@ public final class HubShot {
     public double ayMetersPerSecondSquared;
     public double omegaRadiansPerSecond;
     public double headingRadians;
-    public double shooterForwardMeters;
-    public double shooterLeftMeters;
+
+    /**
+     * Muzzle in the robot frame, meters. Defaults are {@link Constants.Shooter#kShooterForwardMeters}
+     * and {@link Constants.Shooter#kShooterLeftMeters}, the fuel exit copied from {@code
+     * Gamepiece.launchFuel(LinearVelocity)}.
+     */
+    public double shooterForwardMeters = Constants.Shooter.kShooterForwardMeters;
+
+    public double shooterLeftMeters = Constants.Shooter.kShooterLeftMeters;
     public double lookaheadSeconds = 0.10;
     public double metersPerSecondPerRpm = 0.005;
     public double hoodPitchRadians = Math.toRadians(55.0);
@@ -285,11 +293,17 @@ public final class HubShot {
             MAX_ACCEL);
     double lookahead = MathUtil.clamp(finiteOrZero(in.lookaheadSeconds), 0.0, 0.40);
 
-    // Where the ball leaves, and how fast the chassis is moving then.
+    // Release pose is the projected robot center plus the muzzle, in the field frame.
+    // The same offset is what fieldVelocity uses for ω×r, so position and speed cannot drift.
+    Translation2d offset = shooterOffsetField(in);
     Translation2d release =
         in.robot
             .plus(velocity.times(lookahead))
-            .plus(accel.times(0.5 * lookahead * lookahead));
+            .plus(accel.times(0.5 * lookahead * lookahead))
+            .plus(offset);
+    if (!isFinite(release)) {
+      release = in.robot.plus(offset);
+    }
     if (!isFinite(release)) {
       release = in.robot;
     }
@@ -413,19 +427,31 @@ public final class HubShot {
   }
 
   /**
-   * Field velocity of the muzzle. Chassis spin adds a tangential speed when the shooter is not at
-   * the robot center. Non-finite components are dropped.
+   * Muzzle translation in the field frame. Robot frame is +X forward and +Y left, rotated by the
+   * gyro heading. A non-finite offset becomes zero so the shot falls back to the robot center.
+   */
+  private static Translation2d shooterOffsetField(Input in) {
+    Translation2d offset =
+        new Translation2d(
+                finiteOrZero(in.shooterForwardMeters), finiteOrZero(in.shooterLeftMeters))
+            .rotateBy(Rotation2d.fromRadians(finiteOrZero(in.headingRadians)));
+    if (!isFinite(offset)) {
+      return Translation2d.kZero;
+    }
+    return offset;
+  }
+
+  /**
+   * Field velocity of the muzzle. Chassis spin adds ω×r using {@link #shooterOffsetField}, the
+   * same vector added to the release translation. Non-finite components are dropped.
    */
   private static Translation2d fieldVelocity(Input in, double maxSpeed) {
     double vx = finiteOrZero(in.vxMetersPerSecond);
     double vy = finiteOrZero(in.vyMetersPerSecond);
     double omega = MathUtil.clamp(finiteOrZero(in.omegaRadiansPerSecond), -12.0, 12.0);
-    double heading = finiteOrZero(in.headingRadians);
-    Translation2d offset =
-        new Translation2d(
-                finiteOrZero(in.shooterForwardMeters), finiteOrZero(in.shooterLeftMeters))
-            .rotateBy(Rotation2d.fromRadians(heading));
-    if (isFinite(offset) && offset.getNorm() > 1e-4 && omega != 0.0) {
+    Translation2d offset = shooterOffsetField(in);
+    if (offset.getNorm() > 1e-4 && omega != 0.0) {
+      // ω × r for ω about +Z: (-ω y, ω x).
       vx += -omega * offset.getY();
       vy += omega * offset.getX();
     }

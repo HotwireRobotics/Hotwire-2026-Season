@@ -85,10 +85,30 @@ public final class Constants {
     /** Low-pass time constant for the chassis velocity used by the shot, seconds. */
     public static final double kVelocityFilterSeconds = 0.06;
 
-    /** Shooter muzzle relative to the robot center, meters. Zero solves the shot from the center. */
-    public static final double kShooterForwardMeters = 0.0;
+    /**
+     * Muzzle relative to the robot center, robot frame (+X forward, +Y left, +Z up).
+     *
+     * <p>Copied from {@code Gamepiece.launchFuel(LinearVelocity)} on {@code origin/hotwire-simulation}
+     * (same call on {@code origin/simulation-advanced}). That overload calls {@code
+     * launchFuel(LinearVelocity, Angle, Angle, Distance, Distance, Distance)} with {@code
+     * Inches.of(14.759196)} launchHeight, {@code Meters.of(-0.183302)} launchForward, and a
+     * zero-mean launchRight spray. The pose is the robot pose plus a transform whose translation is
+     * (launchForward, launchRight, launchHeight). WPILib Y is left, and the spray averages to 0, so
+     * the fixed left offset is 0. That sim class is not on this branch; these fields are the single
+     * copy HubShot reads.
+     * Hood {@code Degrees.of(70)} and turret yaw {@code Degrees.of(180)} in that call are not
+     * applied here.
+     */
+    public static final double kShooterForwardMeters = -0.183302;
 
     public static final double kShooterLeftMeters = 0.0;
+
+    /**
+     * Muzzle height above the floor, meters. {@code Units.inchesToMeters(14.759196)} from the same
+     * {@code launchFuel} call. Stored so it cannot drift from the sim exit. The planar shot solver
+     * does not consume it.
+     */
+    public static final double kShooterHeightMeters = Units.inchesToMeters(14.759196);
 
     /** Flight-time clamp, seconds. Keeps a bad hood angle from throwing the virtual hub. */
     public static final double kMinFlightSeconds = 0.12;

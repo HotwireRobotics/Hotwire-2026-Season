@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
+import frc.robot.constants.Constants;
 import org.junit.jupiter.api.Test;
 
 /** Pure checks for moving-shot aim and RPM. These do not start the robot. */
@@ -31,7 +33,10 @@ public class HubShotTest {
     assertTrue(shot.live);
     assertEquals(0.0, shot.aim.getRadians(), 1e-9);
     assertEquals(0.0, shot.leadRadians, 1e-9);
-    assertEquals(curve(4.0), shot.stationaryRpm, 1e-6);
+    // Heading 0, rear muzzle: distance is hub range minus the (negative) forward offset.
+    double releaseDistance = 4.0 - Constants.Shooter.kShooterForwardMeters;
+    assertEquals(releaseDistance, shot.distanceMeters, 1e-9);
+    assertEquals(curve(releaseDistance), shot.stationaryRpm, 1e-6);
     assertEquals(shot.stationaryRpm, shot.rpm, 1e-6);
   }
 
@@ -144,6 +149,39 @@ public class HubShotTest {
     HubShot.Input far = still();
     far.hub = new Translation2d(6.0, 0.0);
     assertTrue(HubShot.solve(far).flightSeconds > HubShot.solve(near).flightSeconds);
+  }
+
+  @Test
+  public void releasePoseUsesTheFuelExitOffset() {
+    // Gamepiece.launchFuel(LinearVelocity): Meters.of(-0.183302), zero fixed left, Inches.of(14.759196).
+    assertEquals(-0.183302, Constants.Shooter.kShooterForwardMeters, 0.0);
+    assertEquals(0.0, Constants.Shooter.kShooterLeftMeters, 0.0);
+    assertEquals(Units.inchesToMeters(14.759196), Constants.Shooter.kShooterHeightMeters, 0.0);
+
+    HubShot.Input in = still();
+    in.headingRadians = 0.0;
+    HubShot.Solution shot = HubShot.solve(in);
+    assertEquals(-0.183302, shot.pose.getX(), 1e-9);
+    assertEquals(0.0, shot.pose.getY(), 1e-9);
+
+    // 90° CCW takes robot-frame (-0.183302, 0) to field (0, -0.183302).
+    in.headingRadians = Math.PI / 2.0;
+    shot = HubShot.solve(in);
+    assertEquals(0.0, shot.pose.getX(), 1e-9);
+    assertEquals(-0.183302, shot.pose.getY(), 1e-9);
+
+    // A side component rotates with the same heading. +Y left, 90° CCW: (x, y) -> (-y, x).
+    in.shooterLeftMeters = 0.10;
+    shot = HubShot.solve(in);
+    assertEquals(-0.10, shot.pose.getX(), 1e-9);
+    assertEquals(-0.183302, shot.pose.getY(), 1e-9);
+
+    // ω×r uses that same field offset. Heading 0, ω = 2: vy = ω * forward.
+    in.headingRadians = 0.0;
+    in.shooterLeftMeters = 0.0;
+    in.omegaRadiansPerSecond = 2.0;
+    shot = HubShot.solve(in);
+    assertEquals(2.0 * -0.183302, shot.perpMetersPerSecond, 1e-9);
   }
 
   @Test
