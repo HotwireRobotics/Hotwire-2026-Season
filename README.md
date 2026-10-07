@@ -74,7 +74,7 @@ This repository is **Hotwire Robotics (2990)**'s robot code for the 2026 game, *
 ./gradlew test
 ```
 
-- **Simulation:** `./gradlew simulateJava` (WPILib sim). Fuel publishes on `/Fuel Simulation/Fuels`. Hold operator X to aim the back of the robot at the hub, and right trigger to shoot. The sim hopper starts with fuel already in the robot.
+- **Simulation:** `./gradlew simulateJava` (WPILib sim). In AdvantageScope, add `/Fuel Simulation/Fuels`. Hold operator X to aim the back of the robot at the hub while the driver stick translates, and right trigger to shoot. The sim hopper starts with fuel already in the robot. Scores log as `Simulation/Score/Blue` and `Simulation/Score/Red`. Fuel leaves 0.183302 m behind center, 14.759196 in up, at 70° out the back.
 - **PathPlanner paths** live in `src/main/deploy/pathplanner/paths/` and are deployed with the project.
 
 ### Key Paths/autos
