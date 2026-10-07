@@ -7,6 +7,8 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -26,6 +28,7 @@ import frc.robot.subsystems.indication.limelights.LimelightArray;
 import frc.robot.subsystems.indication.limelights.LimelightArray.IMUMode;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.util.HubShot;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -41,6 +44,9 @@ public class RobotContainer {
   public final LuminalArray lights;
   public final LimelightArray vision;
   public final Viewport camera;
+
+  /** Fuel sim. Null on the real robot and during log replay. */
+  public final Handler simulation;
 
   // Static configuration.
   private final boolean firstPerson = false;
@@ -65,8 +71,8 @@ public class RobotContainer {
   public final Supplier<Integer> kInverse = () -> (inverse ? -1 : 1);
   public VelocityType velocityType = VelocityType.STATIC;
 
-  // Simulation
-  // public final Handler simulation;
+  /** True while operator X is held: heading tracks the hub and feed waits for alignment. */
+  public boolean shootOnFly = false;
 
   // Methodic toggles.
   private final Command velocity(VelocityType type) {
@@ -87,42 +93,31 @@ public class RobotContainer {
     // Alignment supplier.
     aligned =
         () -> {
-          return drive
-              .getRotation()
-              .getMeasure()
-              .isNear(drive.getRotationTarget().getMeasure(), Constants.Shooter.kAlignmentError);
+          try {
+            Rotation2d measured = drive.getRotation();
+            Rotation2d target = drive.getRotationTarget();
+            if (measured == null
+                || target == null
+                || !Double.isFinite(measured.getRadians())
+                || !Double.isFinite(target.getRadians())) {
+              return false;
+            }
+            // Measure.isNear compares raw magnitudes and does not wrap.
+            return HubShot.headingsAligned(
+                measured, target, Constants.Shooter.kAlignmentError.in(Radians));
+          } catch (RuntimeException ex) {
+            return false;
+          }
         };
 
     // Velocity supplier.
     velocity =
-        () -> {
-          switch (velocityType) {
-            case STATIC:
-              // Ferrying static velocity.
-              return Constants.Shooter.kSpeed;
-            case REGRESSION:
-              // Conditional shooting.
-              if (aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get()) {
-                return Constants.regress(
-                  Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
-                      .getTranslation()
-                      .getNorm()));
-              } else {
-                return Constants.Shooter.kZero;
-              }
-            case TESTING:
-              // Allow testing of shooter velocity via dashboard input, for characterization purposes.
-              return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
-            case AUTO:
-              return Constants.regress(
-                Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
-                    .getTranslation()
-                    .getNorm()));
-            default:
-              // Fallback velocity.
-              return Constants.Shooter.kSpeed;
-          }
-        };
+        () ->
+            switch (velocityType) {
+              case STATIC -> Constants.Shooter.kSpeed;
+              case REGRESSION, AUTO -> RPM.of(currentShot().rpm);
+              case TESTING -> RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
+            };
 
     // Initialize shooter subsystem.
     shooter = new Shooter(() -> velocity.get().times(kInverse.get()));
@@ -136,13 +131,18 @@ public class RobotContainer {
     vision = new LimelightArray(drive::getPose, drive::getRotation, drive::addVisionMeasurement);
     camera = new Viewport(0);
 
-    // Simulation
-    // simulation = new Handler(
-    //     velocity,
-    //         () -> shooter.getState().equals(Shooter.State.FIRING),
-    //         () -> intake.getState().equals(Intake.State.INTAKING),
-    //     intake::getTarget, drive::getPose, drive::getChassisSpeeds, drive::setPose
-    // );
+    // Fuel sim reads the same muzzle as HubShot. Field velocity is what the launch adds.
+    simulation =
+        Constants.currentMode == Constants.Mode.SIM
+            ? new Handler(
+                velocity,
+                () -> shooter.getState().equals(Shooter.State.FIRING),
+                () -> intake.getState().equals(Intake.State.INTAKING),
+                intake::getTarget,
+                drive::getPose,
+                drive::getFieldVelocity,
+                drive::setPose)
+            : null;
 
     // Configure button bindings.
     configureButtonBindings();
@@ -242,30 +242,143 @@ public class RobotContainer {
     autoChooser.addOption("A-Back-Up", new PathPlannerAuto("A-Back-Up"));
   }
 
-  /** Returns the Rotation2d the robot needs to face the hub. */
+  /**
+   * Flywheel shot for this cycle, from the current odometry pose and the fixed hub pose.
+   *
+   * <p>Robot translation is {@link Drive#getPose()} with no vision blend, held pose, or lookahead.
+   * The hub translation is {@link Constants.Poses#hub} and is not filtered. Chassis velocity
+   * enters the fixed-hood projectile equation. {@link #calculateHubRotation()} holds that aim.
+   */
+  private HubShot.Solution currentShot() {
+    try {
+      Pose2d pose = drive.getPose();
+      Pose2d hub = Constants.Poses.hub.getPose();
+      if (!HubShot.isFinite(pose) || !HubShot.isFinite(hub)) {
+        return HubShot.fallback();
+      }
+      ChassisSpeeds field = drive.getFieldVelocity();
+      if (!HubShot.isFinite(field)) {
+        field = new ChassisSpeeds();
+      }
+
+      HubShot.Input input = new HubShot.Input();
+      input.robot = pose.getTranslation();
+      input.hub = hub.getTranslation();
+      input.vxMetersPerSecond = field.vxMetersPerSecond;
+      input.vyMetersPerSecond = field.vyMetersPerSecond;
+      input.axMetersPerSecondSquared = 0.0;
+      input.ayMetersPerSecondSquared = 0.0;
+      input.omegaRadiansPerSecond = field.omegaRadiansPerSecond;
+      // Put the muzzle on the hub line, not on whatever way the chassis is facing right now.
+      // Otherwise the aim swings as the robot rotates toward the shot.
+      double dx = hub.getX() - pose.getX();
+      double dy = hub.getY() - pose.getY();
+      if (dx * dx + dy * dy > 1e-6) {
+        input.headingRadians = Math.atan2(dy, dx) + Math.PI;
+      } else {
+        input.headingRadians = pose.getRotation().getRadians();
+      }
+      input.shooterForwardMeters = Constants.Shooter.kShooterForwardMeters;
+      input.shooterLeftMeters = Constants.Shooter.kShooterLeftMeters;
+      input.lookaheadSeconds = 0.0;
+      input.hoodPitchRadians = Math.toRadians(Dashboard.hoodPitch.get(1.0, 89.0));
+      input.launchHeightMeters = Constants.Shooter.kShooterHeightMeters;
+      input.hubEntryHeightMeters = Constants.Shooter.kHubEntryHeightMeters;
+      input.gravityMetersPerSecondSquared = Constants.Shooter.kGravityMetersPerSecondSquared;
+      input.maxFieldSpeed = Constants.Shooter.kMaxFieldSpeedMetersPerSecond;
+      input.maxRpm = Constants.Shooter.kMaxRpm;
+      input.regressionBase = Constants.base;
+      input.regressionExp = Constants.exponential;
+      input.rpmForDistance = Constants::regressRaw;
+
+      HubShot.Solution solved = HubShot.solve(input);
+      logShot(solved);
+      return solved;
+    } catch (RuntimeException ex) {
+      Logger.recordOutput("Align/Fault", ex.toString());
+      return HubShot.fallback();
+    }
+  }
+
+  /** Publish the flywheel solution. Heading is logged separately from odometry. */
+  private void logShot(HubShot.Solution shot) {
+    Translation2d release = HubShot.isFinite(shot.pose) ? shot.pose : Translation2d.kZero;
+    Rotation2d travel = shot.aim == null ? Rotation2d.kZero : shot.aim;
+    // RPM solution only. The commanded heading is logged from calculateHubRotation.
+    Logger.recordOutput("Align/Release", new Pose2d(release, travel));
+    Logger.recordOutput("Align/ShotAim", travel);
+    Logger.recordOutput("Align/Lead", shot.leadRadians);
+    Logger.recordOutput("Align/PerpVelocity", shot.perpMetersPerSecond);
+    Logger.recordOutput("Align/RadialVelocity", shot.radialMetersPerSecond);
+    Logger.recordOutput("Align/FlightSeconds", shot.flightSeconds);
+    Logger.recordOutput("Align/Live", shot.live);
+    Logger.recordOutput("Shooter/VelocityMode", velocityType.name());
+    Logger.recordOutput("Shooter/RpmStationary", shot.stationaryRpm);
+    Logger.recordOutput("Shooter/DistanceMeters", shot.distanceMeters);
+    Logger.recordOutput("Shooter/EffectiveDistance", shot.effectiveDistanceMeters);
+    Logger.recordOutput("Shooter/CommandedRPM", shot.rpm);
+  }
+
+  /**
+   * Hopper may feed. Outside shoot-on-the-fly this is only {@link Shooter#isReady()}. While
+   * operator X is held, heading must also be inside {@link Constants.Shooter#kAlignmentError}
+   * unless the dashboard alignment requirement is turned off.
+   */
+  private boolean feedAllowed() {
+    try {
+      if (!shootOnFly) {
+        return shooter.isReady();
+      }
+      boolean headingOk = aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get();
+      return headingOk && shooter.isReady();
+    } catch (RuntimeException ex) {
+      return false;
+    }
+  }
+
+  /**
+   * Drop shoot-on-the-fly if the aim command ends, is interrupted, or the robot disables. Only
+   * clears regression when this mode set it, so autonomous {@code AUTO} velocity is left alone.
+   */
+  public void releaseShootOnFly() {
+    shootOnFly = false;
+    if (velocityType == VelocityType.REGRESSION) {
+      velocityType = VelocityType.STATIC;
+    }
+  }
+
+  /**
+   * Chassis heading for the shot. The hub pose is fixed and the robot pose is odometry. The held
+   * heading is the velocity-compensated shot direction plus 180°, because the muzzle faces
+   * backward. If the shot cannot be solved, the target stays on the current gyro heading.
+   */
   private Rotation2d calculateHubRotation() {
-    // Get poses.
-    Pose2d robotPose = drive.getPose();
-    Pose2d hubPose = Constants.Poses.hub.getPose();
+    Pose2d robot = drive.getPose();
+    Pose2d hub = Constants.Poses.hub.getPose();
+    Rotation2d measured = drive.getRotation();
+    if (measured == null || !Double.isFinite(measured.getRadians())) {
+      measured = Rotation2d.kZero;
+    }
 
-    // Pose differences.
-    double dx = hubPose.getX() - robotPose.getX();
-    double dy = hubPose.getY() - robotPose.getY();
+    HubShot.Solution shot = currentShot();
+    Rotation2d aim = measured;
+    if (shot.live && shot.aim != null && Double.isFinite(shot.aim.getRadians())) {
+      aim = shot.aim.plus(Rotation2d.k180deg);
+    }
+    drive.setRotationTarget(aim);
 
-    // Angle from robot to hub
-    Rotation2d rotation = new Rotation2d(
-        Radians.of(Math.IEEEremainder(
-            Math.atan2(dy, dx), 
-            Constants.Mathematics.TAU))).rotateBy(Rotation2d.k180deg);
-
-    // Log the pointer
-    Pose2d pointer = new Pose2d(robotPose.getX(), robotPose.getY(), rotation);
-    Logger.recordOutput("Hub Pointer", pointer);
-
-    // Update drive target.
-    drive.setRotationTarget(rotation);
-
-    return drive.getRotationTarget();
+    double error = aim.minus(measured).getDegrees();
+    if (!Double.isFinite(error)) {
+      error = 180.0;
+    }
+    if (HubShot.isFinite(robot)) {
+      Logger.recordOutput("Hub Pointer", new Pose2d(robot.getTranslation(), aim));
+    }
+    Logger.recordOutput("Align/Hub", hub);
+    Logger.recordOutput("Align/Target", aim);
+    Logger.recordOutput("Align/Measured", measured);
+    Logger.recordOutput("Align/Error", error);
+    return aim;
   }
 
   private Rotation2d calculatePassingRotation() {
@@ -328,8 +441,10 @@ public class RobotContainer {
               () -> -Constants.Joysticks.driver.getRightX()));
     }
 
-    // Hold wheel position.
-    Constants.Joysticks.driver.rightBumper().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    // Hold wheel position. Requires the drive so it cancels hub aim while held.
+    Constants.Joysticks.driver
+        .rightBumper()
+        .whileTrue(Commands.run(drive::stopWithX, drive));
 
     // Zero pose heading.
     Constants.Joysticks.driver
@@ -355,7 +470,7 @@ public class RobotContainer {
         .rightTrigger()
         .whileTrue(
           shooter.run().repeatedly().alongWith(Commands.either(
-            hopper.run(), hopper.halt(), () -> shooter.isReady()).repeatedly()))
+            hopper.run(), hopper.halt(), this::feedAllowed).repeatedly()))
         .onFalse(
           shooter.halt().alongWith(hopper.halt()));
 
@@ -367,7 +482,12 @@ public class RobotContainer {
           shooter.halt());
 
     // Run feeding mechanism.
-    Constants.Joysticks.operator.leftBumper().whileFalse(hopper.halt()).whileTrue(hopper.run().repeatedly());
+    Constants.Joysticks.operator
+        .leftBumper()
+        .whileFalse(hopper.halt())
+        .whileTrue(
+            Commands.either(hopper.run(), hopper.halt(), () -> !shootOnFly || feedAllowed())
+                .repeatedly());
 
     // Raise intake to avoid impact.
     // Constants.Joysticks.operator.povRight().onFalse(intake.lowerWrist()).onTrue(intake.emergency());
@@ -375,11 +495,17 @@ public class RobotContainer {
     // Invert all control.
     Constants.Joysticks.operator.povLeft().whileTrue(invertion(true)).whileFalse(invertion(false));
 
-    // Toggle regression velocity control.
+    // Hold X: translate with the left stick, hold the back of the robot on the hub, live RPM.
     Constants.Joysticks.operator
         .x()
-        .whileTrue(velocity(VelocityType.REGRESSION).alongWith(firingOrientation()))
-        .whileFalse(velocity(VelocityType.STATIC));
+        .whileTrue(
+            firingOrientation()
+                .beforeStarting(
+                    () -> {
+                      shootOnFly = true;
+                      velocityType = VelocityType.REGRESSION;
+                    })
+                .finallyDo(this::releaseShootOnFly));
   }
 
   /**
