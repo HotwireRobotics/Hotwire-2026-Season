@@ -14,12 +14,10 @@ import java.util.function.DoubleUnaryOperator;
  * <p>A stopped robot gets the distance regression unchanged. A moving robot uses the fixed-hood
  * virtual-target method: project the release point forward by the shot latency, estimate flight
  * time from hood pitch and exit speed, then move the hub opposite the chassis velocity for that
- * flight and iterate until the two agree. RPM is the regression at the distance to that virtual
- * hub, so forward and backward speed follow the real distance curve. {@link Solution#aim} is the
- * ball's direction toward that moving point. The chassis heading command does not use it. The hub
- * on the field is fixed, and {@link #chassisHeading} aims the back of the robot at that pose from
- * odometry alone. Every returned number is finite, and the heading offset and RPM scale are
- * clamped.
+ * flight. RPM is still the distance regression, read at a range shifted by chassis velocity. The
+ * hub on the field does not move. {@link Solution#aim} is the ball's direction: the odometry
+ * bearing to that hub, plus the sideways lead for the hang time. The chassis faces the opposite
+ * way. Every returned number is finite, and the heading offset and RPM scale are clamped.
  */
 public final class HubShot {
 
@@ -201,16 +199,23 @@ public final class HubShot {
     public double metersPerSecondPerRpm = Constants.Shooter.kHorizontalMetersPerSecondPerRPM;
     public double hoodPitchRadians = Math.toRadians(Constants.Shooter.kHoodPitchDegrees);
     public double leadGainRadiansPerMps = 0.0;
-    public double minScale = 0.70;
-    public double maxScale = 1.40;
-    public double maxLeadRadians = Math.toRadians(25.0);
+
+    /** Seconds of chassis velocity used to shift the regression distance. Not a pose filter. */
+    public double velocitySeconds = Constants.Shooter.kVelocityCompensationSeconds;
+
+    public double launchHeightMeters = Constants.Shooter.kShooterHeightMeters;
+    public double hubEntryHeightMeters = Constants.Shooter.kHubEntryHeightMeters;
+    public double gravityMetersPerSecondSquared = Constants.Shooter.kGravityMetersPerSecondSquared;
+    public double minScale = Constants.Shooter.kMinRpmScale;
+    public double maxScale = Constants.Shooter.kMaxRpmScale;
+    public double maxLeadRadians = Math.toRadians(Constants.Shooter.kMaxLeadDegrees);
     public double maxFieldSpeed = 5.5;
     public double minExitMetersPerSecond = 4.0;
     public double minDistanceMeters = 0.30;
     public double maxDistanceMeters = 8.0;
     public double maxRpm = 5500.0;
     public double minFlightSeconds = 0.12;
-    public double maxFlightSeconds = 1.10;
+    public double maxFlightSeconds = Constants.Shooter.kMaxFlightSeconds;
     public int iterations = 6;
     public double regressionBase = Constants.base;
     public double regressionExp = Constants.exponential;
@@ -355,45 +360,34 @@ public final class HubShot {
       bearing = Rotation2d.kZero;
     }
 
-    int steps = (int) MathUtil.clamp(in.iterations, 1, 8);
-    Translation2d virtual = in.hub;
-    double flight = positive(in.minFlightSeconds, 0.12);
-    double shiftCap = maxSpeed * positive(in.maxFlightSeconds, 1.10);
-    for (int i = 0; i < steps; i++) {
-      double virtualDistance = virtual.minus(release).getNorm();
-      if (!isFinite(virtualDistance)) {
-        virtual = in.hub;
-        break;
-      }
-      virtualDistance = MathUtil.clamp(Math.max(virtualDistance, 0.0), minDistance, maxDistance);
-      flight = flightSeconds(in, virtualDistance);
-      Translation2d shift = clampVector(vRelease.times(flight), shiftCap);
-      Translation2d next = in.hub.minus(shift);
-      if (!isFinite(next)) {
-        break;
-      }
-      // Half-step a large jump so a noisy speed cannot oscillate the virtual hub.
-      if (i > 0) {
-        Translation2d step = next.minus(virtual);
-        double stepNorm = step.getNorm();
-        if (Double.isFinite(stepNorm) && stepNorm > 0.75) {
-          next = virtual.plus(step.times(0.5));
-        }
-      }
-      virtual = next;
+    double vLeft = ray.getX() * vRelease.getY() - ray.getY() * vRelease.getX();
+    double vRadial = vRelease.getX() * ray.getX() + vRelease.getY() * ray.getY();
+    if (!isFinite(vLeft)) {
+      vLeft = 0.0;
+    }
+    if (!isFinite(vRadial)) {
+      vRadial = 0.0;
     }
 
+    // Hang time of the stationary lob. Sideways speed is integrated over this whole flight,
+    // which is longer than range / horizontal-speed for a 70° shot.
+    double flight = descentSeconds(in, distance);
+    // Regression distance uses a shorter window so a fast close does not zero the flywheel.
+    double velocitySeconds =
+        MathUtil.clamp(finiteOr(in.velocitySeconds, Constants.Shooter.kVelocityCompensationSeconds), 0.0, 1.50);
+    Translation2d virtual = in.hub.minus(vRelease.times(velocitySeconds));
+    if (!isFinite(virtual)) {
+      virtual = in.hub;
+    }
     Translation2d toVirtual = virtual.minus(release);
     if (!isFinite(toVirtual)) {
       toVirtual = toHubNow;
-      virtual = in.hub;
     }
     double effective = toVirtual.getNorm();
     if (!isFinite(effective)) {
       effective = distance;
     }
     effective = MathUtil.clamp(Math.max(effective, 0.0), minDistance, maxDistance);
-    flight = flightSeconds(in, effective);
 
     double maxRpm = positive(in.maxRpm, 5500.0);
     double stationaryRpm = MathUtil.clamp(stationaryRpm(in, distance), 0.0, maxRpm);
@@ -402,8 +396,8 @@ public final class HubShot {
     if (!isFinite(scale)) {
       scale = 1.0;
     }
-    double minScale = finiteOr(in.minScale, 0.70);
-    double maxScale = finiteOr(in.maxScale, 1.40);
+    double minScale = finiteOr(in.minScale, Constants.Shooter.kMinRpmScale);
+    double maxScale = finiteOr(in.maxScale, Constants.Shooter.kMaxRpmScale);
     if (maxScale < minScale) {
       maxScale = minScale;
     }
@@ -414,22 +408,19 @@ public final class HubShot {
     }
     rpm = MathUtil.clamp(rpm, 0.0, maxRpm);
 
-    double vLeft = ray.getX() * vRelease.getY() - ray.getY() * vRelease.getX();
-    double vRadial = vRelease.getX() * ray.getX() + vRelease.getY() * ray.getY();
-    if (!isFinite(vLeft)) {
-      vLeft = 0.0;
+    // Radial speed changes range, not the bearing. Sideways speed is aimed out over the hang time.
+    double lateral = vLeft * flight;
+    double lead = distance > 1e-4 ? Math.atan2(-lateral, distance) : 0.0;
+    if (!isFinite(lead)) {
+      lead = 0.0;
     }
-    if (!isFinite(vRadial)) {
-      vRadial = 0.0;
-    }
-
-    Rotation2d aim = toVirtual.getNorm() > 1e-4 ? toVirtual.getAngle() : bearing;
+    Rotation2d aim = bearing.plus(Rotation2d.fromRadians(lead));
     double gain = MathUtil.clamp(finiteOrZero(in.leadGainRadiansPerMps), -0.20, 0.20);
     aim = aim.plus(Rotation2d.fromRadians(-gain * vLeft));
     if (!isFinite(aim.getRadians())) {
       aim = bearing;
     }
-    double maxLead = positive(in.maxLeadRadians, Math.toRadians(25.0));
+    double maxLead = positive(in.maxLeadRadians, Math.toRadians(Constants.Shooter.kMaxLeadDegrees));
     double delta = Math.IEEEremainder(aim.minus(bearing).getRadians(), Math.PI * 2.0);
     if (!isFinite(delta)) {
       delta = 0.0;
@@ -486,10 +477,11 @@ public final class HubShot {
   }
 
   /**
-   * Time for a fixed-hood shot to cover {@code meters}. Horizontal speed is the exit speed times
-   * cos(pitch). The result is clamped so a flat or vertical hood cannot explode the virtual hub.
+   * Time for the stationary shot to fall back through the hub mouth. A 70° lob is still in the
+   * air after it has covered the ground range, so velocity has to be integrated for this longer
+   * time. Falls back to range / horizontal speed when the arc cannot reach the mouth.
    */
-  private static double flightSeconds(Input in, double meters) {
+  private static double descentSeconds(Input in, double meters) {
     double rpm = Math.max(stationaryRpm(in, meters), 0.0);
     double perRpm =
         MathUtil.clamp(
@@ -503,16 +495,35 @@ public final class HubShot {
     }
     double pitch = finiteOr(in.hoodPitchRadians, Math.toRadians(Constants.Shooter.kHoodPitchDegrees));
     pitch = MathUtil.clamp(pitch, Math.toRadians(20.0), Math.toRadians(75.0));
-    double horizontal = exit * Math.cos(pitch);
+    double vz = exit * Math.sin(pitch);
+    double launch = finiteOr(in.launchHeightMeters, Constants.Shooter.kShooterHeightMeters);
+    double entry = finiteOr(in.hubEntryHeightMeters, Constants.Shooter.kHubEntryHeightMeters);
+    double gravity = positive(in.gravityMetersPerSecondSquared, Constants.Shooter.kGravityMetersPerSecondSquared);
+    double drop = entry - launch;
+    double disc = vz * vz - 2.0 * gravity * drop;
+    double minFlight = positive(in.minFlightSeconds, 0.12);
+    double maxFlight = positive(in.maxFlightSeconds, Constants.Shooter.kMaxFlightSeconds);
+    if (!isFinite(vz) || vz < 0.2 || !isFinite(disc) || disc <= 0.0) {
+      return coastSeconds(exit * Math.cos(pitch), meters, minFlight, maxFlight);
+    }
+    // Later root of 0.5 g t^2 - vz t + drop = 0. That is the downward crossing.
+    double flight = (vz + Math.sqrt(disc)) / gravity;
+    if (!isFinite(flight)) {
+      return coastSeconds(exit * Math.cos(pitch), meters, minFlight, maxFlight);
+    }
+    return MathUtil.clamp(flight, minFlight, maxFlight);
+  }
+
+  /** Range divided by horizontal exit speed, clamped. Used when the lob cannot reach the hub. */
+  private static double coastSeconds(double horizontal, double meters, double minFlight, double maxFlight) {
     if (!isFinite(horizontal) || horizontal < 2.0) {
       horizontal = 2.0;
     }
     double flight = meters / horizontal;
     if (!isFinite(flight)) {
-      flight = positive(in.minFlightSeconds, 0.12);
+      return minFlight;
     }
-    return MathUtil.clamp(
-        flight, positive(in.minFlightSeconds, 0.12), positive(in.maxFlightSeconds, 1.10));
+    return MathUtil.clamp(flight, minFlight, maxFlight);
   }
 
   /** Distance regression, using the caller's function when it returns a finite RPM. */

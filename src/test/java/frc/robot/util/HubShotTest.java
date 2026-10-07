@@ -68,9 +68,28 @@ public class HubShotTest {
     HubShot.Solution shot = HubShot.solve(in);
     HubShot.Solution parked = HubShot.solve(still());
     // Moving to the left of the ray, so the chassis aims to the right of the hub.
-    assertTrue(shot.aim.getRadians() < 0.0);
+    // 2 m/s at 4 m hangs long enough that the lead is well past the old 25° cap.
+    assertTrue(shot.aim.getRadians() < Math.toRadians(-30.0));
     assertTrue(shot.perpMetersPerSecond > 0.0);
     assertTrue(shot.rpm > parked.rpm);
+  }
+
+  @Test
+  public void fastRetreatClearsTheOldRpmCap() {
+    HubShot.Input in = still();
+    in.vxMetersPerSecond = -3.0;
+    HubShot.Solution shot = HubShot.solve(in);
+    assertTrue(shot.rpm > shot.stationaryRpm * 1.40);
+    assertTrue(shot.rpm <= shot.stationaryRpm * Constants.Shooter.kMaxRpmScale + 1e-6);
+  }
+
+  @Test
+  public void fastCloseDropsBelowTheOldRpmFloor() {
+    HubShot.Input in = still();
+    in.vxMetersPerSecond = 3.0;
+    HubShot.Solution shot = HubShot.solve(in);
+    assertTrue(shot.rpm < shot.stationaryRpm * 0.70);
+    assertTrue(shot.rpm >= shot.stationaryRpm * Constants.Shooter.kMinRpmScale - 1e-6);
   }
 
   @Test
@@ -102,9 +121,10 @@ public class HubShotTest {
     in.metersPerSecondPerRpm = 0.001;
     HubShot.Solution shot = HubShot.solve(in);
     assertTrue(shot.live);
-    assertTrue(Math.abs(shot.leadRadians) <= Math.toRadians(25.0) + 1e-9);
+    assertTrue(Math.abs(shot.leadRadians) <= Math.toRadians(Constants.Shooter.kMaxLeadDegrees) + 1e-9);
+    assertTrue(Math.abs(shot.leadRadians) > Math.toRadians(25.0));
     assertTrue(shot.rpm <= 5500.0);
-    assertTrue(shot.rpm <= shot.stationaryRpm * 1.40 + 1e-6);
+    assertTrue(shot.rpm <= shot.stationaryRpm * Constants.Shooter.kMaxRpmScale + 1e-6);
   }
 
   @Test

@@ -83,4 +83,12 @@ public class Dashboard {
   /** Chassis-velocity low-pass, seconds. See {@link Constants.Shooter#kVelocityFilterSeconds}. */
   public static final Number velocityFilter =
       new Number("Shooter/Velocity Filter", Constants.Shooter.kVelocityFilterSeconds);
+
+  /**
+   * Seconds of chassis speed applied to the regression distance. See {@link
+   * Constants.Shooter#kVelocityCompensationSeconds}.
+   */
+  public static final Number velocityCompensation =
+      new Number(
+          "Shooter/Velocity Compensation", Constants.Shooter.kVelocityCompensationSeconds);
 }

@@ -245,10 +245,10 @@ public class RobotContainer {
   /**
    * Flywheel shot for this cycle, from the current odometry pose and the fixed hub pose.
    *
-   * <p>Robot translation is {@link Drive#getPose()} with no vision blend, held pose, velocity
-   * filter, or lookahead. The hub translation is {@link Constants.Poses#hub}. Chassis speed still
-   * adjusts RPM. It does not choose the heading; {@link #calculateHubRotation()} does that from
-   * the same two poses.
+   * <p>Robot translation is {@link Drive#getPose()} with no vision blend, held pose, or lookahead.
+   * The hub translation is {@link Constants.Poses#hub} and is not filtered. Chassis velocity
+   * changes the aim lead and the regression distance. {@link #calculateHubRotation()} holds that
+   * lead.
    */
   private HubShot.Solution currentShot() {
     try {
@@ -267,14 +267,22 @@ public class RobotContainer {
       input.hub = hub.getTranslation();
       input.vxMetersPerSecond = field.vxMetersPerSecond;
       input.vyMetersPerSecond = field.vyMetersPerSecond;
-      // No filtered acceleration and no position lookahead. Both were moving the pose we aim from.
       input.axMetersPerSecondSquared = 0.0;
       input.ayMetersPerSecondSquared = 0.0;
       input.omegaRadiansPerSecond = field.omegaRadiansPerSecond;
-      input.headingRadians = pose.getRotation().getRadians();
+      // Put the muzzle on the hub line, not on whatever way the chassis is facing right now.
+      // Otherwise the aim swings as the robot rotates toward the shot.
+      double dx = hub.getX() - pose.getX();
+      double dy = hub.getY() - pose.getY();
+      if (dx * dx + dy * dy > 1e-6) {
+        input.headingRadians = Math.atan2(dy, dx) + Math.PI;
+      } else {
+        input.headingRadians = pose.getRotation().getRadians();
+      }
       input.shooterForwardMeters = Constants.Shooter.kShooterForwardMeters;
       input.shooterLeftMeters = Constants.Shooter.kShooterLeftMeters;
       input.lookaheadSeconds = 0.0;
+      input.velocitySeconds = Dashboard.velocityCompensation.get(0.20, 1.50);
       input.metersPerSecondPerRpm = Dashboard.exitSpeedPerRpm.get(0.001, 0.02);
       input.hoodPitchRadians = Math.toRadians(Dashboard.hoodPitch.get(20.0, 75.0));
       input.leadGainRadiansPerMps = Dashboard.leadGain.get(-0.20, 0.20);
@@ -349,13 +357,9 @@ public class RobotContainer {
   }
 
   /**
-   * Chassis heading that points the back of the robot at the hub.
-   *
-   * <p>The hub is the fixed alliance pose. The robot position is the current odometry pose. The
-   * bearing is {@code atan2} from that pose to the hub, plus 180° because the muzzle faces
-   * backward. Vision, a remembered pose, a velocity filter, lookahead, and the moving shot
-   * solution are not used. If either pose is missing, the target stays at the current gyro
-   * heading so a tap cannot command a made-up angle.
+   * Chassis heading for the shot. The hub pose is fixed and the robot pose is odometry. The held
+   * heading is the velocity-compensated shot direction plus 180°, because the muzzle faces
+   * backward. If the shot cannot be solved, the target stays on the current gyro heading.
    */
   private Rotation2d calculateHubRotation() {
     Pose2d robot = drive.getPose();
@@ -365,12 +369,11 @@ public class RobotContainer {
       measured = Rotation2d.kZero;
     }
 
-    // Stay on the current heading until both poses are real numbers and not the same point.
-    Rotation2d bearing =
-        HubShot.chassisHeading(
-            robot == null ? null : robot.getTranslation(),
-            hub == null ? null : hub.getTranslation());
-    Rotation2d aim = bearing == null ? measured : bearing;
+    HubShot.Solution shot = currentShot();
+    Rotation2d aim = measured;
+    if (shot.live && shot.aim != null && Double.isFinite(shot.aim.getRadians())) {
+      aim = shot.aim.plus(Rotation2d.k180deg);
+    }
     drive.setRotationTarget(aim);
 
     double error = aim.minus(measured).getDegrees();
