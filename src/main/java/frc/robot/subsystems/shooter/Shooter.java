@@ -97,9 +97,35 @@ public class Shooter extends ModularSubsystem implements Systerface {
 
   @Override
   public void periodic() {
+    // Push the live supplier every cycle while firing. Distance and chassis speed change the
+    // setpoint continuously, not only when the run-once command starts.
+    if (state == State.FIRING) {
+      applyVelocity(readVelocity(), left, right, feeder);
+    }
+
     logDevices();
 
     Logs.log(this, state);
+  }
+
+  /**
+   * Latest supplier value, with a finite magnitude at or below {@link Constants.Shooter#kMaxRpm}.
+   * A broken supplier returns the ferry speed rather than NaN or a runaway setpoint. Sign is kept
+   * so inverse still spins the flywheel backward.
+   */
+  private AngularVelocity readVelocity() {
+    try {
+      AngularVelocity target = velocity.get();
+      if (target == null || !Double.isFinite(target.in(RPM))) {
+        return Constants.Shooter.kSpeed;
+      }
+      double rpm =
+          Math.copySign(
+              Math.min(Math.abs(target.in(RPM)), Constants.Shooter.kMaxRpm), target.in(RPM));
+      return RPM.of(rpm);
+    } catch (RuntimeException ex) {
+      return Constants.Shooter.kSpeed;
+    }
   }
 
   private void applyVelocity(AngularVelocity velocity, Motor... motors) {
@@ -111,12 +137,13 @@ public class Shooter extends ModularSubsystem implements Systerface {
   }
 
   public void start() {
-    if (velocity.get().equals(RPM.of(0))) {
+    AngularVelocity commanded = readVelocity();
+    if (Math.abs(commanded.in(RPM)) < 1.0) {
       applyPercent(Constants.Shooter.kZero.in(RPM), left, right, feeder);
 
       setState(State.STOPPED);
     } else {
-      applyVelocity(velocity.get(), left, right, feeder);
+      applyVelocity(commanded, left, right, feeder);
 
       setState(State.FIRING);
     }
@@ -129,9 +156,10 @@ public class Shooter extends ModularSubsystem implements Systerface {
   }
 
   public boolean isReady() {
+    AngularVelocity target = readVelocity();
     return debouncer.calculate(
-        left.getVelocity().getValue().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance) &&
-        right.getVelocity().getValue().isNear(velocity.get(), Constants.Shooter.kVelocityTolerance));
+        left.getVelocity().getValue().isNear(target, Constants.Shooter.kVelocityTolerance) &&
+        right.getVelocity().getValue().isNear(target, Constants.Shooter.kVelocityTolerance));
   }
 
   public Command run() {

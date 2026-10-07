@@ -23,14 +23,13 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.constants.Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
-
-import com.google.flatbuffers.Constants;
 
 public class Gamepiece {
     protected static final double PERIOD = 0.02; // sec
@@ -577,11 +576,21 @@ public class Gamepiece {
         spawnFuel(launchPose.getTranslation(), new Translation3d(xVel, yVel, verticalVel));
     }
 
+    /**
+     * Launch one fuel from the shared muzzle. Position is {@link Constants.Shooter}. Hood stays
+     * 70° and turret yaw stays 180° (out the back), with the original speed and side spray.
+     *
+     * @param launchVelocity flywheel exit speed along the hood
+     */
     public void launchFuel(LinearVelocity launchVelocity) {
+        double sideSpray = (2 * Math.random() - 1) * (0.31 - FUEL_RADIUS);
         launchFuel(
-            launchVelocity.plus(InchesPerSecond.of((Math.random() - 0.5) * 32)), 
-            Degrees.of(70), Degrees.of(180).plus(Degrees.of((Math.random() - 0.5) * 10)), 
-            Inches.of(14.759196), Meters.of(-0.183302), Meters.of(((2 * Math.random() - 1) * (0.31 - FUEL_RADIUS))));
+            launchVelocity.plus(InchesPerSecond.of((Math.random() - 0.5) * 32)),
+            Degrees.of(Constants.Shooter.kHoodPitchDegrees),
+            Degrees.of(180).plus(Degrees.of((Math.random() - 0.5) * 10)),
+            Meters.of(Constants.Shooter.kShooterHeightMeters),
+            Meters.of(Constants.Shooter.kShooterForwardMeters),
+            Meters.of(Constants.Shooter.kShooterLeftMeters + sideSpray));
     }
 
     /**

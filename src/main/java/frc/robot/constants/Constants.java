@@ -6,6 +6,7 @@ import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.signals.RGBWColor;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.path.PathConstraints;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -58,6 +59,76 @@ public final class Constants {
 
     // Drivetrain alignment error tolerance.
     public static final Angle kAlignmentError = Degrees.of(4);
+
+    /** Extra aim trim, radians per m/s of sideways speed. The vector compensation is always on. */
+    public static final double kLeadGain = 0.0;
+
+    /** How far ahead to project the chassis for release latency, in seconds. */
+    public static final double kShotLookaheadSeconds = 0.10;
+
+    /**
+     * Tangential exit speed (m/s) per shooter RPM. {@code Handler} converts RPM with {@code
+     * lineate(velocity, Inches.of(1.2))}, which is {@code 2π * radius / 60}.
+     */
+    public static final double kHorizontalMetersPerSecondPerRPM =
+        Units.inchesToMeters(1.2) * (2.0 * Math.PI) / 60.0;
+
+    /**
+     * Fixed exit angle above horizontal, degrees. This shooter has no moving hood. {@code
+     * Gamepiece.launchFuel(LinearVelocity)} uses {@code Degrees.of(70)}.
+     */
+    public static final double kHoodPitchDegrees = 70.0;
+
+    /** Low-pass time constant for the chassis velocity used by the shot, seconds. */
+    public static final double kVelocityFilterSeconds = 0.06;
+
+    /**
+     * Muzzle relative to the robot center, robot frame (+X forward, +Y left, +Z up).
+     *
+     * <p>From {@code Gamepiece.launchFuel(LinearVelocity)}: {@code Meters.of(-0.183302)}
+     * launchForward, zero-mean launchRight, {@code Inches.of(14.759196)} launchHeight. The sim
+     * launch and HubShot both read these fields. Turret yaw {@code Degrees.of(180)} stays in the
+     * sim launch; the chassis aim adds the same half-turn so the back of the robot faces the hub.
+     */
+    public static final double kShooterForwardMeters = -0.183302;
+
+    public static final double kShooterLeftMeters = 0.0;
+
+    /** Muzzle height, meters. {@code Units.inchesToMeters(14.759196)} from the same launch call. */
+    public static final double kShooterHeightMeters = Units.inchesToMeters(14.759196);
+
+    /** Flight-time clamp, seconds. */
+    public static final double kMinFlightSeconds = 0.12;
+
+    public static final double kMaxFlightSeconds = 1.10;
+
+    /** Hard ceiling so a bad distance or speed cannot command a destructive flywheel setpoint. */
+    public static final double kMaxRpm = 5500.0;
+
+    /** Largest fraction the moving-shot RPM may drop below or rise above the stationary regression. */
+    public static final double kMinRpmScale = 0.70;
+
+    public static final double kMaxRpmScale = 1.40;
+
+    /** Largest heading offset velocity compensation may add, in degrees. */
+    public static final double kMaxLeadDegrees = 25.0;
+
+    /** Chassis speed used for compensation is clamped to this, in m/s. */
+    public static final double kMaxFieldSpeedMetersPerSecond = 5.5;
+
+    /** Floor on the modeled horizontal exit speed so a slow setpoint cannot divide the shot vector. */
+    public static final double kMinExitMetersPerSecond = 4.0;
+
+    /** Distances outside this window are clamped before the regression and the aim vector. */
+    public static final double kMinShotMeters = 0.30;
+
+    public static final double kMaxShotMeters = 8.0;
+
+    /** Limelight translations older than this are ignored for aiming. */
+    public static final double kVisionMaxAgeSeconds = 0.25;
+
+    /** Limelight translations farther than this from odometry are ignored for aiming. */
+    public static final double kVisionMaxDisagreementMeters = 1.25;
 
     // Current limits for shooter motors.
     public static final Current kCurrentLimit = Amps.of(80);
@@ -183,10 +254,19 @@ public final class Constants {
      *
      * @return
      */
+    /** Last alliance the driver station reported. Red until one arrives, matching the old fallback. */
+    private static Alliance lastAlliance = Alliance.Red;
+
+    /**
+     * Alliance color for this robot. An empty driver-station optional used to throw, because
+     * {@code Optional} is empty rather than null. This keeps the last color instead.
+     */
     public static Alliance getAlliance() {
       Optional<Alliance> alliance = DriverStation.getAlliance();
-      if (alliance == null) return Alliance.Red;
-      return alliance.get();
+      if (alliance != null && alliance.isPresent()) {
+        lastAlliance = alliance.get();
+      }
+      return lastAlliance;
     }
 
     /** Control haptic indicators based on time remaining in the match. */
@@ -433,14 +513,34 @@ public final class Constants {
   public static final double exponential = 1.00529;
 
   /**
+   * Distance regression in RPM, clamped. HubShot calls this directly so a log is not written on
+   * every flight-time iteration.
+   *
+   * @param meters distance to the hub
+   */
+  public static double regressRaw(double meters) {
+    if (!Double.isFinite(meters)) {
+      meters = 0.0;
+    }
+    meters = MathUtil.clamp(meters, Shooter.kMinShotMeters, Shooter.kMaxShotMeters);
+    double rpm = base * Math.pow(exponential, Units.metersToInches(meters));
+    if (!Double.isFinite(rpm)) {
+      return Shooter.kSpeed.in(RPM);
+    }
+    return MathUtil.clamp(rpm, 0.0, Shooter.kMaxRpm);
+  }
+
+  /**
    * Calculate shooter velocity from distance using an exponential regression.
    *
    * @param distance Distance to the target.
    * @return Shooter velocity in RPM.
    */
   public static AngularVelocity regress(Distance distance) {
-    Logger.recordOutput("Shooter/Distance", distance.in(Inches));
-    return RPM.of(base * Math.pow(exponential, distance.in(Inches)));
+    double meters = distance == null ? 0.0 : distance.in(Meters);
+    double rpm = regressRaw(meters);
+    Logger.recordOutput("Shooter/Distance", Units.metersToInches(meters));
+    return RPM.of(rpm);
   }
 
   public static enum Mode {

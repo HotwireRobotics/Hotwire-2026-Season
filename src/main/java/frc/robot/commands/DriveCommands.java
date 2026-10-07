@@ -8,14 +8,13 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.Waypoint;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -39,7 +38,6 @@ import org.littletonrobotics.junction.Logger;
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
   private static final double ANGLE_MAX_VELOCITY = 12.0;
-  private static final double ANGLE_MAX_ACCELERATION = 35.0;
   private static final double FF_START_DELAY = 2.0; // Secs
   private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
@@ -129,9 +127,12 @@ public class DriveCommands {
   }
 
   /**
-   * Field relative drive command using joystick for linear control and PID for angular control.
-   * Possible use cases include snapping to an angle, aiming at a vision target, or controlling
-   * absolute rotation with a joystick.
+   * Field-relative drive: left stick translates, and a PID holds a field heading.
+   *
+   * <p>WPILib's {@code ProfiledPIDController} writes a goal velocity of 0 on every {@code
+   * calculate(measurement, goal)}. That profile is for a heading that sits still. Hub bearing
+   * changes the whole time the robot translates, so this uses a continuous PID plus the measured
+   * rate of the heading goal. Output is clamped to {@link #ANGLE_MAX_VELOCITY}.
    */
   public static Command joystickDriveAtAngle(
       Drive drive,
@@ -139,28 +140,44 @@ public class DriveCommands {
       DoubleSupplier ySupplier,
       Supplier<Rotation2d> rotationSupplier) {
 
-    // Create PID controller
-    ProfiledPIDController angleController =
-        new ProfiledPIDController(
-            Control.ANGLE_KP,
-            0.0,
-            Control.ANGLE_KD,
-            new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
+    PIDController angleController = new PIDController(Control.ANGLE_KP, 0.0, Control.ANGLE_KD);
     angleController.enableContinuousInput(-Math.PI, Math.PI);
+    // Last goal sample, so the heading rate can be added as feedforward.
+    double[] lastGoal = {Double.NaN};
+    double[] lastTime = {Double.NaN};
 
-    // Construct command
     return Commands.run(
             () -> {
-              // Get linear velocity
               Translation2d linearVelocity =
                   getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
 
-              // Calculate angular speed
-              double omega =
-                  angleController.calculate(
-                      drive.getRotation().getRadians(), rotationSupplier.get().getRadians());
+              double measurement = drive.getRotation().getRadians();
+              double goal = rotationSupplier.get().getRadians();
+              if (!Double.isFinite(goal)) {
+                goal = measurement;
+              }
+              double now = Timer.getFPGATimestamp();
+              double rate = 0.0;
+              if (Double.isFinite(lastGoal[0]) && Double.isFinite(lastTime[0])) {
+                double dt = now - lastTime[0];
+                if (dt > 1e-4 && dt < 0.2) {
+                  rate = MathUtil.angleModulus(goal - lastGoal[0]) / dt;
+                }
+              }
+              lastGoal[0] = goal;
+              lastTime[0] = now;
 
-              // Convert to field relative speeds & send command
+              double maxOmega = Math.min(ANGLE_MAX_VELOCITY, drive.getMaxAngularSpeedRadPerSec());
+              if (!Double.isFinite(maxOmega) || maxOmega <= 0.0) {
+                maxOmega = ANGLE_MAX_VELOCITY;
+              }
+              rate = MathUtil.clamp(rate, -maxOmega, maxOmega);
+              double omega = angleController.calculate(measurement, goal) + rate;
+              if (!Double.isFinite(omega)) {
+                omega = 0.0;
+              }
+              omega = MathUtil.clamp(omega, -maxOmega, maxOmega);
+
               ChassisSpeeds speeds =
                   new ChassisSpeeds(
                       linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
@@ -177,9 +194,12 @@ public class DriveCommands {
                           : drive.getRotation()));
             },
             drive)
-
-        // Reset PID controller when command starts
-        .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+        .beforeStarting(
+            () -> {
+              angleController.reset();
+              lastGoal[0] = Double.NaN;
+              lastTime[0] = Double.NaN;
+            });
   }
 
   /**

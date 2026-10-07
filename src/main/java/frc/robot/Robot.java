@@ -132,12 +132,15 @@ public class Robot extends LoggedRobot {
 
     // Update field visualization.
     field.setRobotPose(container.drive.getPose());
-    // container.simulation.tick();
+    if (container.simulation != null) {
+      container.simulation.tick();
+    }
   }
 
   @Override
   public void disabledInit() {
     Logger.recordOutput("Robot/Mode", "Disabled");
+    container.releaseShootOnFly();
   }
 
   @Override
@@ -159,8 +162,9 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("Robot/AutonomousCommand", "None");
     }
     Constants.Tempo.startTime();
-
-    // container.simulation.autonomous();
+    if (container.simulation != null) {
+      container.simulation.autonomous();
+    }
   }
 
   @Override

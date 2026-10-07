@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Dashboard;
 import frc.robot.constants.LimelightHelpers;
@@ -122,6 +123,9 @@ public class LimelightArray extends SubsystemBase {
 
   private Pose2d lastPoseEstimate;
 
+  /** FPGA timestamp of {@link #lastPoseEstimate}, seconds. NaN until a valid estimate arrives. */
+  private double lastPoseTimestampSeconds = Double.NaN;
+
   // Suppliers for rotation and pose.
   private final Supplier<Pose2d> pose;
   private final Supplier<Rotation2d> gyro;
@@ -195,6 +199,7 @@ public class LimelightArray extends SubsystemBase {
       if (isValidEstimate(MT2estimate)) {
         measurements.add(MT2estimate);
         lastPoseEstimate = MT2estimate.pose;
+        lastPoseTimestampSeconds = MT2estimate.timestampSeconds;
 
         // Log detecting status and pose estimate.
         Logger.recordOutput(limelight + " Detecting", true);
@@ -232,6 +237,25 @@ public class LimelightArray extends SubsystemBase {
    * @return
    */
   public Pose2d getLastPoseEstimate() {
+    return lastPoseEstimate;
+  }
+
+  /**
+   * Last Limelight translation if it is finite and younger than {@code maxAgeSeconds}. Heading is
+   * not used from this pose; aim keeps the gyro heading.
+   */
+  public Pose2d getFreshPose(double maxAgeSeconds) {
+    if (lastPoseEstimate == null
+        || !Double.isFinite(lastPoseEstimate.getX())
+        || !Double.isFinite(lastPoseEstimate.getY())
+        || !Double.isFinite(lastPoseTimestampSeconds)
+        || !Double.isFinite(maxAgeSeconds)) {
+      return null;
+    }
+    double age = Timer.getFPGATimestamp() - lastPoseTimestampSeconds;
+    if (!Double.isFinite(age) || age < 0.0 || age > maxAgeSeconds) {
+      return null;
+    }
     return lastPoseEstimate;
   }
 

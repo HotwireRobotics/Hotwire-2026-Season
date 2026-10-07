@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
+import frc.robot.util.HubShot;
 import frc.robot.constants.Field;
 import frc.robot.constants.Constants.Mode;
 import frc.robot.constants.LimelightHelpers.PoseEstimate;
@@ -341,10 +342,33 @@ public class Drive extends SubsystemBase {
     return states;
   }
 
-  /** Returns the measured chassis speeds of the robot. */
+  /** Returns the measured chassis speeds of the robot (robot-relative). */
   @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
   public ChassisSpeeds getChassisSpeeds() {
     return kinematics.toChassisSpeeds(getModuleStates());
+  }
+
+  /**
+   * Measured chassis velocity in the field frame. Used to lead the hub and to add robot motion to
+   * a simulated fuel launch. A bad module or gyro sample returns zero instead of NaN.
+   */
+  public ChassisSpeeds getFieldVelocity() {
+    try {
+      ChassisSpeeds robotRelative = getChassisSpeeds();
+      Rotation2d rotation = getRotation();
+      if (!HubShot.isFinite(robotRelative)
+          || rotation == null
+          || !Double.isFinite(rotation.getRadians())) {
+        return new ChassisSpeeds();
+      }
+      ChassisSpeeds field = ChassisSpeeds.fromRobotRelativeSpeeds(robotRelative, rotation);
+      if (!HubShot.isFinite(field)) {
+        return new ChassisSpeeds();
+      }
+      return field;
+    } catch (RuntimeException ex) {
+      return new ChassisSpeeds();
+    }
   }
 
   /** Returns the position of each module in radians. */
