@@ -1,0 +1,83 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 3.5388157894736842,
+        "y": 5.487050438596491
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 3.2599451754385966,
+        "y": 5.496666666666665
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 3.336875,
+        "y": 5.487050438596491
+      },
+      "prevControl": {
+        "x": 2.914207115089921,
+        "y": 5.465375162447256
+      },
+      "nextControl": {
+        "x": 4.086940789473685,
+        "y": 5.525515350877192
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 5.683234649122808,
+        "y": 5.381271929824561
+      },
+      "prevControl": {
+        "x": 7.231447368421053,
+        "y": 5.410120614035087
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "AC-Bump-Dash-End"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.8679245283018867,
+      "rotationDegrees": 135.0
+    },
+    {
+      "waypointRelativePos": 1.70754716981132,
+      "rotationDegrees": 135.0
+    },
+    {
+      "waypointRelativePos": 1.9371069182389993,
+      "rotationDegrees": 0.0
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 6.0,
+    "maxAcceleration": 50.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 0.0
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": -178.85423716182478
+  },
+  "useDefaultConstraints": false
+}

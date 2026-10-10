@@ -239,10 +239,10 @@ public class RobotContainer {
     // autoChooser.addOption("CS-Bineutral", new PathPlannerAuto("CS-Bineutral"));
 
     // autoChooser.addOption("A-Shoot-Depot", new PathPlannerAuto("A-Shoot-Depot"));
-    autoChooser.addOption("A-Back-Up", new PathPlannerAuto("A-Back-Up"));
-    autoChooser.addOption("A-Bump-Neutral-Shoot Right", new PathPlannerAuto("A-Bump-Neutral-Shoot", false));
-    autoChooser.addOption("A-Bump-Neutral-Shoot Left",  new PathPlannerAuto("A-Bump-Neutral-Shoot", true));
-    // autoChooser.addOption("Annoying", new PathPlannerAuto("Annoying"));
+    autoChooser.addOption("Back-Up", new PathPlannerAuto("A-Back-Up"));
+    autoChooser.addOption("Bump Right", new PathPlannerAuto("A-Bump-Neutral-Shoot", false));
+    autoChooser.addOption("Bump Left",  new PathPlannerAuto("A-Bump-Neutral-Shoot", true));
+    autoChooser.addOption("Bump-Depot (Left)",  new PathPlannerAuto("AC-Bump-Depot", false));
   }
 
   /** Returns the Rotation2d the robot needs to face the hub. */

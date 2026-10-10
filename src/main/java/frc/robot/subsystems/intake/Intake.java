@@ -74,7 +74,7 @@ public class Intake extends ModularSubsystem implements Systerface {
     control = new PositionVoltage(Degrees.of(0));
 
     slot = new Slot0Configs().withKG(0.42).withGravityType(GravityTypeValue.Arm_Cosine);
-    configureProportional(8);
+    configureProportional(16);
 
     // Configuration
     right.setControl(control);
@@ -91,7 +91,7 @@ public class Intake extends ModularSubsystem implements Systerface {
   }
 
   public void configureProportional(double kP) {
-    slot.withKP(kP);
+    slot.withKP(kP).withKI(0.5);
   }
 
   // State system.

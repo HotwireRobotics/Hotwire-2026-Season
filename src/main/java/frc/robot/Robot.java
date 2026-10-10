@@ -5,12 +5,16 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 
+import java.util.Set;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.constants.Constants;
 import frc.robot.constants.LimelightHelpers;
 import frc.robot.subsystems.Logs;
@@ -24,6 +28,12 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 public class Robot extends LoggedRobot {
   private Command autonomousCommand;
+
+  // Acts in `AC-Bump-Depot` to delay pick-up.
+  private double    autonomousDelay = 0.0;
+  private Command autonomousDelayCommand = Commands.defer(
+    () -> {return Commands.waitSeconds(SmartDashboard.getNumber("Autonomous Delay", autonomousDelay));}, Set.of());
+
   private final RobotContainer container;
   public Pose2d poseEstimate = new Pose2d();
 
@@ -74,6 +84,7 @@ public class Robot extends LoggedRobot {
 
     // Robot test configuration.
     SmartDashboard.putNumber("Test Shooter RPM", container.testVelocity);
+    SmartDashboard.putNumber("Autonomous Delay", autonomousDelay);
     SmartDashboard.setPersistent("Test Shooter RPM");
     SmartDashboard.putData("Robot Pose (Field)", field);
   }

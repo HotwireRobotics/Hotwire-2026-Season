@@ -1,0 +1,59 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 5.683234649122808,
+        "y": 5.381271929824561
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 7.010274122807018,
+        "y": 4.563892543859649
+      },
+      "isLocked": false,
+      "linkedName": "AC-Bump-Dash-End"
+    },
+    {
+      "anchor": {
+        "x": 6.30828947368421,
+        "y": 3.236853070175438
+      },
+      "prevControl": {
+        "x": 6.375603070175438,
+        "y": 3.6599671052631573
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "AC-Collect-End"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.09748427672955984,
+      "rotationDegrees": -90.0
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -88.91907581333932
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 0.0
+  },
+  "useDefaultConstraints": true
+}
