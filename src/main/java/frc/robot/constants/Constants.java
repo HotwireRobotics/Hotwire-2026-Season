@@ -72,7 +72,7 @@ public final class Constants {
 
   public static class Hopper {
     // Static speed for hopper rollers.
-    public static final double kSpeed = 0.8;
+    public static final double kSpeed = 1.0;
   }
 
   public static class Control {
