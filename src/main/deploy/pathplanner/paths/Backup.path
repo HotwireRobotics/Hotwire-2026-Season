@@ -8,20 +8,20 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.907376834177416,
-        "y": 3.966482078449735
+        "x": 3.1265474060822895,
+        "y": 4.49742397137746
       },
       "isLocked": false,
       "linkedName": "Hub Start"
     },
     {
       "anchor": {
-        "x": 2.169,
-        "y": 3.5563506261180677
+        "x": 2.8831663685152056,
+        "y": 4.015767543859649
       },
       "prevControl": {
-        "x": 2.8342415026833634,
-        "y": 3.8321824686940964
+        "x": 3.386153846153846,
+        "y": 4.85438282647585
       },
       "nextControl": null,
       "isLocked": false,
@@ -32,14 +32,18 @@
     {
       "waypointRelativePos": 0.4088050314465409,
       "rotationDegrees": 180.0
+    },
+    {
+      "waypointRelativePos": 0.8449197860962564,
+      "rotationDegrees": 0.0
     }
   ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 1.0,
-    "maxAcceleration": 2.0,
+    "maxVelocity": 3.0,
+    "maxAcceleration": 1.0,
     "maxAngularVelocity": 100.0,
     "maxAngularAcceleration": 500.0,
     "nominalVoltage": 12.0,
@@ -47,7 +51,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 11.309932474020208
+    "rotation": 0.0
   },
   "reversed": false,
   "folder": null,

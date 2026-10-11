@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.1692486583184256,
-        "y": 3.5563506261180677
+        "x": 2.8831663685152056,
+        "y": 4.015767543859649
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.1530232558139537,
-        "y": 5.141334423939993
+        "x": 2.8669409660107337,
+        "y": 5.600751341681574
       },
       "isLocked": false,
       "linkedName": "Backup Centre"
@@ -67,7 +67,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 11.309932474020208
+    "rotation": 0.0
   },
   "useDefaultConstraints": true
 }

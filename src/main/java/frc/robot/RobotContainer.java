@@ -343,6 +343,11 @@ public class RobotContainer {
               .getTranslation(), Rotation2d.kZero)), drive)
               .ignoringDisable(true));
 
+    // Counter-defense X-drive.
+    Constants.Joysticks.driver
+      .x()
+      .whileTrue(drive.stopX());
+
     // Toggle intake between raised and lowered positions to aggitate fuel.
     Constants.Joysticks.operator
         .povUp()
