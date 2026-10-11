@@ -102,14 +102,14 @@ public class RobotContainer {
               return Constants.Shooter.kSpeed;
             case REGRESSION:
               // Conditional shooting.
-              if (aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get()) {
-                return Constants.regress(
-                  Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
-                      .getTranslation()
-                      .getNorm()));
-              } else {
-                return Constants.Shooter.kZero;
-              }
+              // if (aligned.getAsBoolean() || !Dashboard.alignmentRequirement.get()) {
+              return Constants.regress(
+                Meters.of(drive.getPose().minus(Constants.Poses.hub.getPose())
+                    .getTranslation()
+                    .getNorm()));
+              // } else {
+              //   return Constants.Shooter.kZero;
+              // }
             case TESTING:
               // Allow testing of shooter velocity via dashboard input, for characterization purposes.
               return RPM.of(SmartDashboard.getNumber("Test Shooter RPM", testVelocity));
@@ -387,8 +387,8 @@ public class RobotContainer {
     // Toggle regression velocity control.
     Constants.Joysticks.operator
         .x()
-        .whileTrue(velocity(VelocityType.REGRESSION).alongWith(firingOrientation()))
-        .whileFalse(velocity(VelocityType.STATIC));
+        .whileTrue(velocity(VelocityType.REGRESSION))
+        .whileFalse(velocity   (VelocityType.STATIC));
   }
 
   /**
